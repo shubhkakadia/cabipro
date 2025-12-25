@@ -80,7 +80,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white sm:px-6 sm:py-20 lg:px-8">
+      <section className="relative overflow-hidden bg-white sm:px-6 sm:py-20 lg:px-8 py-10 px-4">
         <div className="mx-auto max-w-4xl text-center">
           <div
             className="relative min-h-[200px] sm:min-h-[250px] lg:min-h-[280px] flex items-center justify-center"
@@ -114,12 +114,12 @@ export default function Home() {
             >
               Join Waitlist
             </button>
-            <button
+            {/* <button
               onClick={() => router.push("/pricing")}
               className="cursor-pointer rounded-lg border-2 border-gray-900 px-8 py-4 text-base font-medium text-gray-900 hover:bg-gray-50 transition-colors"
             >
               View Pricing
-            </button>
+            </button> */}
           </div>
         </div>
       </section>
