@@ -1,0 +1,328 @@
+Privacy Policy — CabiPro
+
+Last Updated: [insert date]
+
+CabiPro (“we”, “us”, “our”) is committed to protecting your personal information and respecting your privacy.
+
+This Privacy Policy explains how we collect, use, store, and disclose information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).
+
+By using CabiPro or visiting our website, you agree to this Privacy Policy.
+
+If you have any questions, we’re here to help: shubhkakadia@gmail.com
+
+1. What This Policy Covers
+
+This policy applies to:
+
+our website
+
+our SaaS platform (CabiPro)
+
+communications and support interactions
+
+any services we provide to you
+
+It explains how we handle personal information — meaning information about an identifiable person — and certain business data you store inside CabiPro.
+
+2. Information We Collect
+
+We collect information only when reasonably necessary for our functions and services, as required under APP 3.
+
+2.1 Information you provide directly
+
+This includes information you submit when you:
+
+create an account
+
+join our waitlist
+
+book a demo
+
+contact support
+
+fill out forms
+
+use features inside the platform
+
+We may collect:
+
+name
+
+email address
+
+phone number
+
+business name
+
+role or job title
+
+account login details (passwords are encrypted)
+
+communication and support messages
+
+billing and subscription details (processed securely through third-party providers)
+
+We do not collect sensitive information unless absolutely necessary — and only with your consent.
+
+2.2 Business data you store in CabiPro
+
+CabiPro is designed for cabinet manufacturing operations. You may upload or generate data such as:
+
+customer information
+
+supplier records
+
+production schedules
+
+materials and inventory data
+
+employee details (e.g., names, job roles)
+
+project notes, drawings, photos, and documents
+
+This remains your data.
+We process it only to provide the service and support you, in line with APP 6.
+
+We do not use your business data for:
+
+advertising
+
+third-party sales
+
+unrelated data analytics
+
+We only access it when necessary (for support, security, or maintenance).
+
+2.3 Information collected automatically
+
+When you visit our website or use our app, we may collect:
+
+IP address
+
+browser and device type
+
+usage and navigation patterns
+
+pages viewed and actions taken
+
+diagnostic and error logs
+
+We use this to:
+
+improve performance
+
+detect fraud or misuse
+
+enhance features and usability
+
+maintain security
+
+This type of information is handled in accordance with APP 11 (security obligations).
+
+3. Why We Collect Your Information
+
+We collect and use information to:
+
+create and manage accounts
+
+provide and maintain access to CabiPro
+
+improve the reliability and performance of our services
+
+communicate about updates, changes, or service issues
+
+respond to enquiries and support requests
+
+process payments and subscription management
+
+ensure security, fraud prevention, and compliance
+
+develop new features and improvements
+
+meet legal and regulatory requirements
+
+We do not sell personal information.
+
+4. Cookies & Tracking Tools
+
+We use cookies and similar technologies to:
+
+keep you signed in
+
+remember preferences
+
+measure site performance
+
+improve functionality
+
+You may adjust cookie settings via your browser; however, some features may not work properly if cookies are disabled.
+
+5. How We Protect Your Data
+
+In accordance with APP 11, we take reasonable steps to safeguard personal information using measures such as:
+
+encrypted data transmission (HTTPS/TLS)
+
+secure cloud infrastructure
+
+restricted, role-based system access
+
+periodic security reviews
+
+data backups and redundancy
+
+monitoring and logging for suspicious activity
+
+While no system is completely risk-free, we continuously work to maintain strong protections.
+
+6. Notifiable Data Breaches (NDB Scheme)
+
+If a data breach occurs that is likely to result in serious harm, we will:
+
+investigate promptly
+
+take corrective measures
+
+notify affected individuals where required
+
+notify the Office of the Australian Information Commissioner (OAIC), in line with the NDB scheme
+
+Transparency matters — and we will always act responsibly.
+
+7. Sharing Your Information
+
+We may share information with trusted third-party service providers who assist us in delivering CabiPro, such as:
+
+cloud hosting services
+
+email and notification services
+
+analytics platforms
+
+payment processors
+
+customer support tools
+
+These providers:
+
+operate under confidentiality agreements
+
+may only use data to perform agreed services
+
+must comply with privacy protections equivalent to Australian standards
+
+We may disclose information where legally required — for example:
+
+responding to lawful requests
+
+preventing fraud or wrongdoing
+
+enforcing our terms
+
+If our business structure changes (e.g., sale or merger), we will notify you and ensure continued protection under applicable laws.
+
+8. Overseas Transfers
+
+Some service providers may store or process information overseas.
+
+Where this occurs, we take reasonable steps (consistent with APP 8) to ensure that such providers:
+
+protect information adequately, and
+
+handle it in line with the Australian Privacy Principles.
+
+9. Data Retention
+
+We retain information only as long as necessary for:
+
+account management
+
+service provision
+
+legal compliance
+
+dispute resolution
+
+security or audit purposes
+
+When data is no longer required, we take reasonable steps to delete or de-identify it in accordance with APP 11.
+
+If you cancel your account, you may request deletion of stored data unless retention is required by law.
+
+10. Your Rights Under Australian Privacy Law
+
+Under the Australian Privacy Principles, you have the right to:
+
+request access to personal information we hold about you
+
+ask for corrections to inaccurate or incomplete information
+
+request deletion where lawful and reasonable
+
+opt out of marketing communications
+
+raise concerns or complaints about privacy handling
+
+To submit a request, contact us at:
+
+📧 shubhkakadia@gmail.com
+
+We may need to verify your identity before processing requests, which we will handle promptly and fairly.
+
+11. Marketing Communications
+
+We may send occasional service updates, news, or product information.
+
+You can opt out at any time using the unsubscribe link provided or by contacting us directly.
+
+Essential service notifications (security alerts, billing issues, etc.) may still be sent where necessary.
+
+12. Complaints & Dispute Resolution
+
+If you believe we have breached the Australian Privacy Principles, please contact us first — we will investigate and respond:
+
+📧 shubhkakadia@gmail.com
+
+If you are not satisfied with our response, you may contact the:
+
+Office of the Australian Information Commissioner (OAIC)
+Website: https://www.oaic.gov.au
+
+Phone: 1300 363 992
+
+We respect your right to escalate concerns.
+
+13. Children’s Privacy
+
+CabiPro is intended for business use and is not directed at children.
+
+We do not knowingly collect personal information from individuals under 16. If such information is identified, we will delete it.
+
+14. Links to Third-Party Sites
+
+Our platform or website may include links to external sites.
+We are not responsible for their privacy practices and encourage you to review their policies separately.
+
+15. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time to reflect:
+
+legal changes
+
+platform updates
+
+security improvements
+
+Any updates will be posted on this page with a revised “Last Updated” date.
+Continued use of CabiPro indicates acceptance of the updated policy.
+
+16. Contact Us
+
+If you have questions, feedback, or privacy concerns, please contact:
+
+CabiPro Privacy Officer
+📧 shubhkakadia@gmail.com
+
+Australia
+
+We believe privacy should be clear, respectful, and transparent — and we’re always happy to clarify anything further.

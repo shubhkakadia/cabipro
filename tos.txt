@@ -1,0 +1,251 @@
+Terms of Service — CabiPro
+
+Last Updated: [insert date]
+
+Welcome to CabiPro.
+
+CabiPro (“we”, “us”, “our”) provides software designed to help cabinet manufacturing businesses manage jobs, materials, production, suppliers, and operations.
+
+By accessing or using CabiPro, you agree to these Terms of Service (“Terms”).
+If you do not agree, you must not use the platform.
+
+These Terms operate alongside our Privacy Policy.
+
+1. Who May Use CabiPro
+
+To use CabiPro, you must:
+
+be at least 18 years old
+
+have the authority to enter agreements on behalf of your business
+
+provide accurate information when creating your account
+
+keep your login credentials secure
+
+You are responsible for all activity performed under your account.
+
+If we believe your account is being misused, accessed fraudulently, or violates these Terms, we may suspend or restrict access.
+
+2. Your Account & Responsibilities
+
+You agree to:
+
+keep account details accurate and up to date
+
+maintain the confidentiality of passwords
+
+ensure only authorised people in your business access your account
+
+use the platform in accordance with applicable laws
+
+You must not:
+
+attempt to hack, bypass security, or interfere with systems
+
+misuse the service for unlawful or harmful activities
+
+upload malicious files or code
+
+resell, distribute, or clone the platform
+
+reverse-engineer CabiPro
+
+You remain responsible for all content your business uploads into the system.
+
+3. Business Data Ownership
+
+Everything you upload into CabiPro — including customer details, supplier data, production records, materials, drawings, files, and project notes — remains your business data.
+
+We do NOT claim ownership over your operational data.
+
+We only process this data to:
+
+provide and maintain the service
+
+troubleshoot issues
+
+improve stability and security
+
+comply with legal obligations
+
+We will never sell your operational data.
+
+If your subscription ends, you may request a copy of your data before deletion (unless prohibited by law).
+
+4. Software Licence
+
+We grant you a limited, non-exclusive, non-transferable licence to use CabiPro for your internal business operations only.
+
+You may not:
+
+rent, lease, or sublicense CabiPro
+
+incorporate it into another product
+
+modify or build competing services using it
+
+share access with external third parties without consent
+
+All software, interfaces, and content created by CabiPro remain our intellectual property.
+
+5. Subscription Plans & Billing
+
+CabiPro operates on a subscription basis.
+
+5.1 Payments
+
+Plan pricing, billing frequency, and user limits are shown on our pricing page.
+By subscribing, you authorise us or our payment partners to charge applicable fees.
+
+Payments are:
+
+due in advance
+
+non-refundable except as required by law
+
+If payment fails, we may suspend access until resolved.
+
+5.2 Trials & Promotions
+
+Free trials may be offered.
+Trials convert to paid plans unless cancelled before the trial ends.
+
+We may change plan features or pricing with reasonable notice.
+
+5.3 Taxes
+
+Prices may exclude local taxes, duties, or GST unless otherwise stated.
+You are responsible for applicable taxes based on region and business registration.
+
+6. Cancellation & Termination
+6.1 You may cancel anytime
+
+You can cancel your subscription through your account or by contacting us.
+Cancellation stops future billing — but does not issue refunds for prior periods unless legally required.
+
+6.2 We may suspend or terminate accounts if:
+
+Terms are violated
+
+unlawful or fraudulent activity occurs
+
+non-payment continues
+
+system misuse puts others at risk
+
+Where reasonable, we will notify you first.
+
+7. Service Availability & Updates
+
+We aim to provide CabiPro reliably and continuously, but:
+
+occasional downtime may occur for maintenance
+
+we may update features, interfaces, or integrations
+
+some legacy features may be discontinued if necessary
+
+We will take reasonable steps to minimise disruption.
+
+8. Support
+
+Support may be provided by email, in-app, or other channels depending on your plan level.
+
+We aim to respond promptly, but response times may vary.
+
+9. Third-Party Services & Integrations
+
+CabiPro may integrate with third-party tools (e.g., email services, accounting tools, storage providers).
+
+We are not responsible for:
+
+failures caused by external providers
+
+loss arising from changes made to integrations outside our control
+
+Use of third-party services is subject to their own terms and policies.
+
+10. Security
+
+We use reasonable technical, physical, and administrative measures to protect data.
+
+However, no system is completely secure.
+
+You acknowledge:
+
+we cannot guarantee absolute protection against cyber threats
+
+you are responsible for secure passwords and authorised access
+
+you must notify us immediately if you suspect a breach
+
+We comply with Australia’s Notifiable Data Breaches scheme and will notify affected users where legally required.
+
+11. Warranties & Disclaimers
+
+CabiPro is provided “as is” and “as available”.
+
+To the fullest extent permitted by law, we do not guarantee that:
+
+the platform will be free from errors or interruptions
+
+all features will meet every business need
+
+integrations or external systems will always operate consistently
+
+We provide tools — business decisions remain your responsibility.
+
+Nothing in this section limits consumer rights under Australian Consumer Law.
+
+12. Limitation of Liability
+
+To the extent permitted by law:
+
+we are not liable for indirect, incidental, or consequential losses
+
+we are not responsible for loss of profits, data, or business interruption
+
+total liability for any claim is limited to the subscription fees paid in the previous 12 months
+
+This does not exclude liability where it cannot be excluded under law.
+
+13. Australian Consumer Law (ACL)
+
+Nothing in these Terms limits your rights under the Australian Consumer Law.
+
+If services fail to meet statutory guarantees, you may be entitled to remedies including repair, replacement, refund, or compensation — depending on the circumstances.
+
+14. Intellectual Property
+
+All CabiPro branding, software code, design, content, and documentation are owned by us or licensed appropriately.
+
+You may use them as part of the subscription — but cannot copy, reproduce, or exploit them without permission.
+
+15. Confidentiality
+
+We agree to treat your data as confidential.
+You agree not to disclose pricing, system internals, or proprietary information shared during onboarding or support except as required by law.
+
+16. Changes to These Terms
+
+We may update these Terms periodically.
+
+When changes are significant, we will provide reasonable notice.
+Continued use of CabiPro after updates means you accept the revised Terms.
+
+17. Governing Law
+
+These Terms are governed by the laws of Australia.
+Any disputes will be handled within the appropriate courts or tribunals in Australia.
+
+18. Contact Us
+
+If you have questions about these Terms or the platform, contact:
+
+CabiPro Support
+📧 shubhkakadia@gmail.com
+
+Australia
+
+We encourage questions — clarity matters.
