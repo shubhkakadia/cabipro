@@ -54,13 +54,23 @@ export default function Home() {
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
-    // TODO: Replace with your actual newsletter API endpoint
     try {
-      // Simulate API call - replace with actual implementation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to subscribe");
+      }
+
       setSubmitStatus("success");
       setEmail("");
-    } catch {
+    } catch (error) {
+      console.error("Error subscribing:", error);
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);

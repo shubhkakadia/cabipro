@@ -14,11 +14,26 @@ export default function Waitlist() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email }),
+      });
 
-    setSubmitted(true);
-    setIsSubmitting(false);
+      if (!response.ok) {
+        throw new Error("Failed to join waitlist");
+      }
+
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to join waitlist. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -82,20 +97,7 @@ export default function Waitlist() {
                 </svg>
                 Priority access when we launch
               </li>
-              <li className="flex items-start">
-                <svg
-                  className="mr-2 h-5 w-5 shrink-0 text-blue-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Exclusive updates and behind-the-scenes content
-              </li>
+
             </ul>
           </div>
           <div className="mt-10">
