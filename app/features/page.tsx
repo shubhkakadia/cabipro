@@ -23,6 +23,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Features() {
   const router = useRouter();
@@ -248,16 +249,17 @@ export default function Features() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
+      <section className="relative bg-gray-50 px-4 py-16 sm:px-6 sm:py-32 lg:px-8">
+        <Image src="/cabinet_making.png" alt="Features Image" width={1000} height={200} className="absolute top-0 left-0 w-full object-cover brightness-70" />
+        <div className="relative mx-auto max-w-4xl text-center z-10">
           <h1
-            className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl"
+            className="text-4xl font-bold tracking-tight text-gray-100 sm:text-5xl lg:text-6xl drop-shadow-2xl"
             data-aos="fade-up"
           >
             Built for cabinet manufacturers
           </h1>
           <p
-            className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600"
+            className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-200 drop-shadow-2xl"
             data-aos="fade-up"
             data-aos-delay="100"
           >
@@ -268,8 +270,33 @@ export default function Features() {
       </section>
 
       {/* Features Grid */}
-      <section className="bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <section className="relative bg-gray-100 px-4 py-12 sm:px-6 lg:px-8 z-20 overflow-hidden">
+        {/* Animated Background Illustrations */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Floating circles */}
+          <div className="absolute top-20 left-10 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl animate-float-1"></div>
+          <div className="absolute top-60 right-20 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl animate-float-2"></div>
+          <div className="absolute bottom-40 left-1/4 w-72 h-72 bg-indigo-200/20 rounded-full blur-3xl animate-float-3"></div>
+          
+          {/* Grid pattern */}
+          <svg className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" className="animate-grid-move" />
+          </svg>
+          
+          {/* Geometric shapes */}
+          <div className="absolute top-1/4 right-1/4 w-32 h-32 border-2 border-gray-300/30 rounded-lg rotate-45 animate-spin-slow"></div>
+          <div className="absolute bottom-1/3 left-1/3 w-24 h-24 border-2 border-gray-300/30 rounded-full animate-pulse-slow"></div>
+          <svg className="absolute top-1/2 left-1/2 w-48 h-48 text-gray-300/20 animate-rotate-slow" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" strokeDasharray="5,5" />
+          </svg>
+        </div>
+        
+        <div className="relative mx-auto max-w-7xl">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;

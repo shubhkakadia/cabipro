@@ -1,29 +1,39 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-3 z-50 w-[95%] mx-auto border rounded-2xl border-gray-200 bg-white/90 backdrop-blur-xs shadow-lg">
+    <header
+      className={`fixed top-3 left-1/2 -translate-x-1/2 w-[95%] z-50 border border-gray-200 bg-white/90 backdrop-blur-xs shadow-lg ${
+        mobileMenuOpen ? "rounded-t-2xl" : "rounded-2xl"
+      } transition-all duration-300 ease-in-out`}
+    >
       <nav className="mx-auto flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center">
           <Link href="/" className="text-2xl font-bold text-gray-900">
             CabiPro
           </Link>
         </div>
-        
+
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="/features" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+          <Link
+            href="/features"
+            className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
             Features
           </Link>
           {/* <Link href="/pricing" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
             Pricing
           </Link> */}
-          <Link href="/contact" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+          <Link
+            href="/contact"
+            className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
             Contact
           </Link>
           <Link
@@ -49,9 +59,19 @@ export default function Header() {
             stroke="currentColor"
           >
             {mobileMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             )}
           </svg>
         </button>
@@ -59,10 +79,10 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       <div
-        className={`border-t border-gray-200 bg-white md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`absolute left-0 right-0 border-t rounded-b-2xl shadow-lg border-gray-200 bg-white md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           mobileMenuOpen
-            ? 'max-h-96 opacity-100'
-            : 'max-h-0 opacity-0'
+            ? "max-h-96 opacity-100 animate-in fade-in-0 zoom-in-95"
+            : "max-h-0 opacity-0 animate-out fade-out-0 zoom-out-95"
         }`}
       >
         <div className="space-y-1 px-4 pb-4 pt-2">
@@ -99,4 +119,3 @@ export default function Header() {
     </header>
   );
 }
-

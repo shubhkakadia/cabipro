@@ -203,7 +203,7 @@ export default function Pricing() {
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative rounded-2xl bg-white p-8 shadow-lg ${
+                className={`relative rounded-2xl bg-white p-6 sm:p-8 shadow-lg ${
                   plan.popular ? "ring-2 ring-gray-900 lg:scale-105" : ""
                 }`}
                 data-aos="fade-up"
@@ -225,20 +225,20 @@ export default function Pricing() {
                   </p>
                   <div className="mt-6">
                     {typeof plan.price[billingCycle] === "number" ? (
-                      <div className="flex items-baseline justify-center">
-                        <span className="text-5xl font-bold tracking-tight text-gray-900">
+                      <div className="flex items-baseline justify-center flex-wrap">
+                        <span className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900">
                           $
                           <AnimatedCounter
                             value={plan.price[billingCycle]}
                             duration={2}
                           />
                         </span>
-                        <span className="ml-2 text-lg font-semibold text-gray-600">
+                        <span className="ml-2 text-base sm:text-lg font-semibold text-gray-600">
                           /month
                         </span>
                       </div>
                     ) : (
-                      <div className="text-5xl font-bold tracking-tight text-gray-900">
+                      <div className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900">
                         {plan.price[billingCycle]}
                       </div>
                     )}
@@ -637,16 +637,16 @@ export default function Pricing() {
             Our team is here to help. Get in touch and we&apos;ll find the
             perfect plan for you.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-x-6">
             <button
               onClick={() => router.push("/contact")}
-              className="cursor-pointer rounded-lg bg-white px-8 py-4 text-base font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+              className="cursor-pointer w-full sm:w-auto rounded-lg bg-white px-8 py-4 text-base font-medium text-gray-900 hover:bg-gray-100 transition-colors"
             >
               Contact Us
             </button>
             <button
               onClick={() => router.push("/waitlist")}
-              className="cursor-pointer rounded-lg border-2 border-white px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition-colors"
+              className="cursor-pointer w-full sm:w-auto rounded-lg border-2 border-white px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition-colors"
             >
               Join Waitlist
             </button>

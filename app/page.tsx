@@ -7,12 +7,10 @@ import {
   DollarSign,
   Factory,
   FileImage,
-  CreditCard,
   Truck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import FeatureCarousel from "@/components/FeatureCarousel";
 
 const taglines = [
   "From Enquiry to Installation — All in One System.",
@@ -79,15 +77,17 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
+      <Image src="/inventory.png" alt="Hero Image" width={1000} height={1000} className="absolute top-0 left-0 w-full h-full object-cover brightness-70" />
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white sm:px-6 sm:py-20 lg:px-8 py-10 px-4">
-        <div className="mx-auto max-w-4xl text-center">
+      <section className="overflow-hidden bg-white sm:px-6 sm:py-20 lg:px-8 py-10 px-4">
+        
+        <div className="mx-auto max-w-4xl text-center relative z-10">
           <div
             className="relative min-h-[200px] sm:min-h-[250px] lg:min-h-[280px] flex items-center justify-center"
             data-aos="fade-up"
           >
             <h1
-              className={`text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:text-7xl transition-opacity duration-500 ${
+              className={`text-4xl font-bold tracking-tight text-gray-100 sm:text-6xl lg:text-7xl transition-opacity duration-500 drop-shadow-2xl ${
                 isVisible ? "opacity-100" : "opacity-0"
               }`}
             >
@@ -95,7 +95,7 @@ export default function Home() {
             </h1>
           </div>
           <p
-            className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600"
+            className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-100"
             data-aos="fade-up"
             data-aos-delay="100"
           >
@@ -104,13 +104,13 @@ export default function Home() {
             and optimize your manufacturing floor, all in one place.
           </p>
           <div
-            className="mt-10 flex items-center justify-center gap-x-6"
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-x-6"
             data-aos="fade-up"
             data-aos-delay="200"
           >
             <button
               onClick={() => router.push("/waitlist")}
-              className="cursor-pointer rounded-lg bg-gray-900 px-8 py-4 text-base font-medium text-white hover:bg-gray-800 transition-colors"
+              className="cursor-pointer w-full sm:w-auto rounded-lg bg-white px-8 py-4 text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors"
             >
               Join Waitlist
             </button>
@@ -125,7 +125,7 @@ export default function Home() {
       </section>
 
       {/* Social Proof Section */}
-      <section className="bg-gray-900 py-12 sm:py-16">
+      <section className="bg-gray-900 py-12 sm:py-16 z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <p
             className="text-center text-sm font-semibold uppercase tracking-wide text-gray-500 mb-8"
@@ -306,7 +306,7 @@ export default function Home() {
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex-1 w-full lg:w-auto" data-aos="fade-left">
+            <div className="flex-1 w-full lg:w-auto" data-aos="fade-up">
               <form onSubmit={handleSubscribe}>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -320,7 +320,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="cursor-pointer rounded-lg bg-gray-900 px-6 py-3 text-base font-medium text-white hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    className="cursor-pointer w-full sm:w-auto rounded-lg bg-gray-900 px-6 py-3 text-base font-medium text-white hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                   >
                     {isSubmitting ? "Subscribing..." : "Subscribe"}
                   </button>
@@ -359,19 +359,19 @@ export default function Home() {
             organized, efficient operations.
           </p>
           <div
-            className="mt-10 flex items-center justify-center gap-x-6"
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-x-6"
             data-aos="fade-up"
             data-aos-delay="200"
           >
             <Link
               href="/waitlist"
-              className="rounded-lg bg-white px-8 py-4 text-base font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+              className="w-full sm:w-auto text-center rounded-lg bg-white px-8 py-4 text-base font-medium text-gray-900 hover:bg-gray-100 transition-colors"
             >
               Join Waitlist
             </Link>
             <Link
               href="/contact"
-              className="rounded-lg border-2 border-white px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition-colors"
+              className="w-full sm:w-auto text-center rounded-lg border-2 border-white px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition-colors"
             >
               Contact Sales
             </Link>
