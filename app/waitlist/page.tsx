@@ -38,11 +38,11 @@ export default function Waitlist() {
 
   if (submitted) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+      <div className="flex min-h-[60vh] items-center justify-center px-4 pt-24 sm:py-16 lg:py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <svg
-              className="mx-auto h-16 w-16 text-green-500"
+              className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-green-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -55,23 +55,23 @@ export default function Waitlist() {
               />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gray-900 px-2">
             You&apos;re on the list!
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-7 sm:leading-8 text-gray-600 px-2">
             Thanks for joining the waitlist, {name || "there"}! We&apos;ll send
             you an email at{" "}
-            <span className="font-semibold text-gray-900">{email}</span> as soon
+            <span className="font-semibold text-gray-900 break-words">{email}</span> as soon
             as we launch.
           </p>
-          <div className="mt-8 rounded-lg bg-blue-50 p-6 text-left">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="mt-6 sm:mt-8 rounded-lg bg-blue-50 p-5 sm:p-6 text-left">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-2">
               🎉 Early Access Benefits
             </h3>
-            <ul className="space-y-2 text-gray-700">
+            <ul className="space-y-2 text-sm sm:text-base text-gray-700">
               <li className="flex items-start">
                 <svg
-                  className="mr-2 h-5 w-5 shrink-0 text-blue-500"
+                  className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-blue-500 mt-0.5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -81,11 +81,11 @@ export default function Waitlist() {
                     clipRule="evenodd"
                   />
                 </svg>
-                20% discount on your first year
+                <span className="leading-relaxed">20% discount on your first year</span>
               </li>
               <li className="flex items-start">
                 <svg
-                  className="mr-2 h-5 w-5 shrink-0 text-blue-500"
+                  className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-blue-500 mt-0.5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -95,15 +95,14 @@ export default function Waitlist() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Priority access when we launch
+                <span className="leading-relaxed">Priority access when we launch</span>
               </li>
-
             </ul>
           </div>
-          <div className="mt-10">
+          <div className="mt-8 sm:mt-10 px-2">
             <button
               onClick={() => router.push("/")}
-              className="cursor-pointer rounded-lg bg-gray-900 px-8 py-4 text-base font-medium text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+              className="cursor-pointer w-full sm:w-auto rounded-lg bg-gray-900 px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 touch-manipulation"
             >
               Back to Home
             </button>
@@ -140,17 +139,17 @@ export default function Waitlist() {
         </svg>
       </div>
       
-      <div className="relative flex items-center justify-center px-4 py-20 sm:px-6 sm:py-32 lg:px-8">
-        <div className="mx-auto max-w-2xl">
-        <div className="text-center mb-12">
+      <div className="relative flex items-center justify-center px-4 pt-24 pb-12 sm:py-16 lg:py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl w-full">
+        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
           <h1
-            className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 px-2 leading-tight"
             data-aos="fade-up"
           >
             Join the waitlist
           </h1>
           <p
-            className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600"
+            className="mx-auto mt-4 sm:mt-6 max-w-xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-600 px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
@@ -161,11 +160,11 @@ export default function Waitlist() {
         </div>
 
         <div
-          className="rounded-2xl bg-white p-8 shadow-lg sm:p-10"
+          className="rounded-2xl bg-white p-6 sm:p-8 lg:p-10 shadow-lg"
           data-aos="fade-up"
           data-aos-delay="200"
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
               <label
                 htmlFor="name"
@@ -180,7 +179,7 @@ export default function Waitlist() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 "
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 touch-manipulation"
                 placeholder="John Doe"
               />
             </div>
@@ -198,31 +197,31 @@ export default function Waitlist() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 "
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 touch-manipulation"
                 placeholder="john@company.com"
               />
             </div>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="cursor-pointer w-full rounded-lg bg-gray-900 px-8 py-4 text-base font-medium text-white hover:bg-gray-800 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+              className="cursor-pointer w-full rounded-lg bg-gray-900 px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-900 touch-manipulation"
             >
               {isSubmitting ? "Joining..." : "Join Waitlist"}
             </button>
           </form>
 
           <div
-            className="mt-8 rounded-lg bg-gray-100 p-6"
+            className="mt-6 sm:mt-8 rounded-lg bg-gray-100 p-5 sm:p-6"
             data-aos="fade-up"
             data-aos-delay="300"
           >
             <h3 className="text-sm font-semibold text-gray-900 mb-3">
               What you&apos;ll get:
             </h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <ul className="space-y-2 text-xs sm:text-sm text-gray-600">
               <li className="flex items-start">
                 <svg
-                  className="mr-2 h-5 w-5 shrink-0 text-green-500"
+                  className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-green-500 mt-0.5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -232,11 +231,11 @@ export default function Waitlist() {
                     clipRule="evenodd"
                   />
                 </svg>
-                20% early-bird discount on your first year
+                <span className="leading-relaxed">20% early-bird discount on your first year</span>
               </li>
               <li className="flex items-start">
                 <svg
-                  className="mr-2 h-5 w-5 shrink-0 text-green-500"
+                  className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-green-500 mt-0.5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -246,7 +245,7 @@ export default function Waitlist() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Priority access when we launch
+                <span className="leading-relaxed">Priority access when we launch</span>
               </li>
             </ul>
           </div>

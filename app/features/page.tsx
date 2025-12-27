@@ -249,17 +249,23 @@ export default function Features() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative bg-gray-50 px-4 py-16 sm:px-6 sm:py-32 lg:px-8">
-        <Image src="/cabinet_making.png" alt="Features Image" width={1000} height={200} className="absolute top-0 left-0 w-full object-cover brightness-70" />
+      <section className="relative bg-gray-50 px-4 pt-24 pb-12 sm:px-6 sm:py-20 lg:px-8 lg:py-32 overflow-hidden">
+        <Image
+          src="/cabinet_making.png"
+          alt="Features Image"
+          width={1000}
+          height={200}
+          className="absolute top-0 left-0 w-full h-full object-cover brightness-70"
+        />
         <div className="relative mx-auto max-w-4xl text-center z-10">
           <h1
-            className="text-4xl font-bold tracking-tight text-gray-100 sm:text-5xl lg:text-6xl drop-shadow-2xl"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-100 drop-shadow-2xl px-2 leading-tight"
             data-aos="fade-up"
           >
             Built for cabinet manufacturers
           </h1>
           <p
-            className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-200 drop-shadow-2xl"
+            className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-200 drop-shadow-2xl px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
@@ -270,7 +276,7 @@ export default function Features() {
       </section>
 
       {/* Features Grid */}
-      <section className="relative bg-gray-100 px-4 py-12 sm:px-6 lg:px-8 z-20 overflow-hidden">
+      <section className="relative bg-gray-100 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 z-20 overflow-hidden">
         {/* Animated Background Illustrations */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Floating circles */}
@@ -297,36 +303,36 @@ export default function Features() {
         </div>
         
         <div className="relative mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
               return (
                 <div
                   key={index}
-                  className="flex gap-6"
+                  className="flex gap-4 sm:gap-6"
                   data-aos="fade-up"
                   data-aos-delay={index * 100}
                 >
                   <div className="shrink-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
-                      <IconComponent className="h-6 w-6" />
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+                      <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3 leading-tight">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 mb-4 leading-relaxed">
+                    <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">
                       {feature.description}
                     </p>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5 sm:space-y-2">
                       {feature.benefits.map((benefit, i) => (
                         <li
                           key={i}
-                          className="flex items-start text-sm text-gray-600"
+                          className="flex items-start text-xs sm:text-sm text-gray-600"
                         >
                           <svg
-                            className="mr-2 h-5 w-5 shrink-0 text-green-500"
+                            className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-green-500 mt-0.5"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -336,7 +342,7 @@ export default function Features() {
                               clipRule="evenodd"
                             />
                           </svg>
-                          {benefit}
+                          <span className="leading-relaxed">{benefit}</span>
                         </li>
                       ))}
                     </ul>
@@ -349,17 +355,17 @@ export default function Features() {
       </section>
 
       {/* Why It's Better Section */}
-      <section className="bg-gray-50 px-4 py-20 sm:px-6 lg:px-8">
+      <section className="bg-gray-50 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-7xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
             <h2
-              className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
               data-aos="fade-up"
             >
               Why cabinet manufacturers choose CabiPro
             </h2>
             <p
-              className="mx-auto mt-4 max-w-2xl text-lg text-gray-600"
+              className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
               data-aos="fade-up"
               data-aos-delay="100"
             >
@@ -367,51 +373,51 @@ export default function Features() {
               production workflow because we&apos;ve lived it.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
             <div
-              className="rounded-xl bg-white p-8 shadow-sm"
+              className="rounded-xl bg-white p-6 sm:p-8 shadow-sm"
               data-aos="fade-up"
               data-aos-delay="200"
             >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
-                <Target className="h-6 w-6" />
+              <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+                <Target className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
                 Built for Manufacturing
               </h3>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 Not a generic project management tool. Every feature is designed
                 specifically for how cabinet manufacturing actually works.
               </p>
             </div>
             <div
-              className="rounded-xl bg-white p-8 shadow-sm"
+              className="rounded-xl bg-white p-6 sm:p-8 shadow-sm"
               data-aos="fade-up"
               data-aos-delay="300"
             >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
-                <Zap className="h-6 w-6" />
+              <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+                <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
                 Get Organized Fast
               </h3>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 Start tracking production orders and managing materials in
                 minutes. No complex setup or training required.
               </p>
             </div>
             <div
-              className="rounded-xl bg-white p-8 shadow-sm"
+              className="rounded-xl bg-white p-6 sm:p-8 shadow-sm"
               data-aos="fade-up"
               data-aos-delay="400"
             >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
-                <Wrench className="h-6 w-6" />
+              <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+                <Wrench className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
                 Scales With You
               </h3>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 From small manufacturers to large production facilities, CabiPro
                 scales with your business. Add production teams and features as
                 you grow.
@@ -422,25 +428,25 @@ export default function Features() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gray-900 px-4 py-16 sm:px-6 lg:px-8">
+      <section className="bg-gray-900 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-4xl text-center">
           <h2
-            className="text-3xl font-bold tracking-tight text-white sm:text-4xl"
+            className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white px-2"
             data-aos="fade-up"
           >
             Ready to see it in action?
           </h2>
           <p
-            className="mx-auto mt-4 max-w-2xl text-lg text-gray-300"
+            className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-300 px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
             Join the waitlist to get early access and exclusive pricing.
           </p>
-          <div className="mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
             <button
               onClick={() => router.push("/waitlist")}
-              className="cursor-pointer rounded-lg border-2 border-white px-8 py-4 text-base font-medium text-white hover:bg-white/10 transition-colors"
+              className="cursor-pointer w-full sm:w-auto rounded-lg border-2 border-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-white hover:bg-white/10 transition-colors touch-manipulation"
             >
               Join Waitlist
             </button>
