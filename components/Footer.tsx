@@ -30,6 +30,11 @@ export default function Footer() {
                 </Link>
               </li> */}
               <li>
+                <Link href="/blogs" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  Blogs
+                </Link>
+              </li>
+              <li>
                 <Link href="/waitlist" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   Join Waitlist
                 </Link>

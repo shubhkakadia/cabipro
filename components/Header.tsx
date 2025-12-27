@@ -31,6 +31,12 @@ export default function Header() {
             Pricing
           </Link> */}
           <Link
+            href="/blogs"
+            className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            Blogs
+          </Link>
+          <Link
             href="/contact"
             className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
           >
@@ -100,6 +106,13 @@ export default function Header() {
           >
             Pricing
           </Link> */}
+          <Link
+            href="/blogs"
+            className="block rounded-md px-3 py-2.5 sm:py-2 text-sm sm:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors touch-manipulation"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Blogs
+          </Link>
           <Link
             href="/contact"
             className="block rounded-md px-3 py-2.5 sm:py-2 text-sm sm:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors touch-manipulation"
