@@ -229,7 +229,7 @@ export default function Contact() {
                     </div>
                     <div className="ml-3 sm:ml-4">
                       <h3 className="text-sm font-semibold text-gray-900">Email</h3>
-                      <p className="mt-1 text-sm text-gray-600 break-words">
+                      <p className="mt-1 text-sm text-gray-600 wrap-break-words">
                         <a href="mailto:shubhkakadia@gmail.com" className="hover:text-gray-900 transition-colors">
                           shubhkakadia@gmail.com
                         </a>

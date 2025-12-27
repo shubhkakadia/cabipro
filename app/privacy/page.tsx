@@ -289,7 +289,7 @@ export default function PrivacyPolicy() {
               To submit a request, contact us at:
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium break-words">shubhkakadia@gmail.com</a>
+              <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium wrap-break-words">shubhkakadia@gmail.com</a>
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
               We may need to verify your identity before processing requests, which we will handle promptly and fairly.
@@ -351,7 +351,7 @@ export default function PrivacyPolicy() {
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-5">
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
-                <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium break-words">shubhkakadia@gmail.com</a>
+                <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium wrapbreak-words">shubhkakadia@gmail.com</a>
               </p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                 South Australia, Australia

@@ -69,7 +69,7 @@ export default function Footer() {
                 </div>
                 <div className="ml-2 sm:ml-3">
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <a href="mailto:shubhkakadia@gmail.com" className="hover:text-gray-900 transition-colors break-words">
+                    <a href="mailto:shubhkakadia@gmail.com" className="hover:text-gray-900 transition-colors wrap-break-words">
                       shubhkakadia@gmail.com
                     </a>
                   </p>

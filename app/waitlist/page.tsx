@@ -61,7 +61,7 @@ export default function Waitlist() {
           <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-7 sm:leading-8 text-gray-600 px-2">
             Thanks for joining the waitlist, {name || "there"}! We&apos;ll send
             you an email at{" "}
-            <span className="font-semibold text-gray-900 break-words">{email}</span> as soon
+            <span className="font-semibold text-gray-900 wrap-break-words">{email}</span> as soon
             as we launch.
           </p>
           <div className="mt-6 sm:mt-8 rounded-lg bg-blue-50 p-5 sm:p-6 text-left">
