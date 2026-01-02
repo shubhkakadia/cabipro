@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import AOSProvider from "@/components/AOSProvider";
+import ConditionalLayout from "@/components/ConditionalLayout";
+import ReduxProvider from "@/components/ReduxProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
   description: "Streamline your cabinet manufacturing operations with job tracking, material management, production scheduling, and more. Built specifically for cabinet manufacturers.",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,14 +31,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
-      <body className="min-h-screen bg-white text-gray-900 antialiased font-sans">
-        <AOSProvider>
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </AOSProvider>
+      <body className="bg-white text-gray-900 antialiased font-sans">
+        <ReduxProvider>
+          <AOSProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </AOSProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

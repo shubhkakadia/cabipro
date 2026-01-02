@@ -23,12 +23,11 @@ export async function POST(request: NextRequest) {
 
     // Send email via Mailgun
     const emailText = `New Contact Form Submission
-
-Name: ${name}
-Email: ${email}
-Company: ${company || "Not provided"}
-Message:
-${message}`;
+    Name: ${name}
+    Email: ${email}
+    Company: ${company || "Not provided"}
+    Message:
+    ${message}`;
 
     const emailHtml = `
       <h2>New Contact Form Submission</h2>
@@ -62,4 +61,3 @@ ${message}`;
     );
   }
 }
-
