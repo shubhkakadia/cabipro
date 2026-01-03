@@ -123,16 +123,6 @@ export default function Sidebar() {
   return (
     <div className="bg-white w-60 h-[calc(100vh-4rem)] border-r border-emerald-200">
       <div className="flex flex-col h-full px-4 py-4 gap-4">
-        {/* <Link href="/" className="flex flex-col items-center gap-2 py-2">
-          <Image
-            loading="lazy"
-            src="/logo.webp"
-            alt="logo"
-            width={120}
-            height={120}
-            className="drop-shadow-sm"
-          />
-        </Link> */}
 
         <div className="flex flex-col justify-between flex-1 min-h-0 gap-4">
           <div className="flex flex-col overflow-y-auto pr-1 gap-1">

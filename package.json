@@ -14,6 +14,13 @@
     "@prisma/client": "^7.2.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@reduxjs/toolkit": "^2.11.2",
+    "@tiptap/extension-color": "^3.14.0",
+    "@tiptap/extension-highlight": "^3.14.0",
+    "@tiptap/extension-text-align": "^3.14.0",
+    "@tiptap/extension-text-style": "^3.14.0",
+    "@tiptap/extension-underline": "^3.14.0",
+    "@tiptap/react": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
     "aos": "^3.0.0-beta.6",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
@@ -38,7 +45,8 @@
     "react-redux": "^9.2.0",
     "react-toastify": "^11.0.5",
     "sharp": "^0.34.5",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.4.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

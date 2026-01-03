@@ -12,8 +12,8 @@ const emptySubscribe = () => () => {};
 function useIsMounted() {
   return useSyncExternalStore(
     emptySubscribe,
-    () => true,  // Client returns true
-    () => false  // Server returns false
+    () => true, // Client returns true
+    () => false // Server returns false
   );
 }
 
@@ -26,28 +26,36 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
   const mounted = useIsMounted();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { logout } = useLogout();
-  
+
   const user = useAppSelector((state) => state.user);
-  
+
   // Normalize logo path - remove /public prefix if present (Next.js serves public folder from root)
-  const normalizeLogoPath = (path: string | null | undefined): string => {
-    if (!path) return "/logo.webp";
+  const normalizeLogoPath = (
+    path: string | null | undefined
+  ): string | null => {
+    if (!path) return null;
     // Remove /public prefix if it exists, since Next.js serves public folder from root
-    const normalized = path.startsWith("/public/") ? path.replace("/public", "") : path;
+    const normalized = path.startsWith("/public/")
+      ? path.replace("/public", "")
+      : path;
     return normalized.startsWith("/") ? normalized : `/${normalized}`;
   };
-  
+
   // Get logo source - use default during SSR, actual logo after mount to avoid hydration mismatch
   // During SSR and initial client render, this will be "/logo.webp"
   // After hydration, mounted will be true and we'll use the actual logo from Redux
-  const logoSrc = mounted && user.organizationLogo 
-    ? normalizeLogoPath(user.organizationLogo) 
-    : "/logo.webp";
+  const logoSrc =
+    mounted && user.organizationLogo
+      ? normalizeLogoPath(user.organizationLogo) || "/versel.png"
+      : "/versel.png";
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
@@ -80,7 +88,8 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
     return first + last || "U";
   };
 
-  const settingsPath = variant === "admin" ? "/admin/settings" : "/app/settings";
+  const settingsPath =
+    variant === "admin" ? "/admin/settings" : "/app/settings";
   const dashboardPath = variant === "admin" ? "/admin" : "/app";
 
   // Get the display name based on variant
@@ -89,7 +98,7 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
       return "CabiPro Admin";
     }
     // For client, show organization name (only after mount to avoid hydration mismatch)
-    return mounted ? (user.organizationName || "Dashboard") : "Dashboard";
+    return mounted ? user.organizationName || "Dashboard" : "Dashboard";
   };
 
   // Get the display name for user profile (organization name for client, "CabiPro Admin" for admin)
@@ -98,7 +107,7 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
       return "CabiPro Admin";
     }
     // For client, show organization name (only after mount to avoid hydration mismatch)
-    return mounted ? (user.organizationName || "User") : "";
+    return mounted ? user.organizationName || "User" : "";
   };
 
   return (
@@ -106,25 +115,29 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
       <nav className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo / Brand */}
         <div className="flex items-center gap-3">
-          <Link 
-            href={dashboardPath} 
+          <Link
+            href={dashboardPath}
             className="flex items-center gap-2 text-xl font-bold text-slate-900 transition-colors hover:text-emerald-600"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white shadow-md">
-            <Image
-            loading="lazy"
-            src={logoSrc}
-            alt="logo"
-            width={120}
-            height={120}
-            className="drop-shadow-sm rounded-lg"
-            suppressHydrationWarning
-          />
+              <Image
+                loading="lazy"
+                src={logoSrc}
+                alt="logo"
+                width={120}
+                height={120}
+                className="drop-shadow-sm rounded-lg"
+                suppressHydrationWarning
+              />
             </div>
 
             <span className="hidden sm:inline">{getDisplayName()}</span>
             <span className="sm:hidden">
-              {variant === "admin" ? "Admin" : (mounted ? (user.organizationName || "Dashboard") : "Dashboard")}
+              {variant === "admin"
+                ? "Admin"
+                : mounted
+                ? user.organizationName || "Dashboard"
+                : "Dashboard"}
             </span>
           </Link>
         </div>
@@ -152,17 +165,20 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
                 {getInitials()}
               </div>
             )}
-            
+
             {/* Name */}
             <div className="hidden flex-col sm:flex">
               <span className="text-sm font-medium text-slate-700">
-                {mounted ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User" : ""}
+                {mounted
+                  ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                    "User"
+                  : ""}
               </span>
               <p className="text-xs text-slate-500">
                 {getProfileDisplayName()}
               </p>
             </div>
-            
+
             {/* Chevron */}
             <svg
               className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${
@@ -173,7 +189,11 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
               stroke="currentColor"
               strokeWidth={2}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
@@ -190,12 +210,17 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
             {/* User Info Header */}
             <div className="border-b border-slate-100 px-4 py-3">
               <p className="text-sm font-medium text-slate-900">
-                {mounted ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User" : ""}
+                {mounted
+                  ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                    "User"
+                  : ""}
               </p>
               <p className="text-xs text-slate-500">
                 {getProfileDisplayName()}
               </p>
-              <p className="truncate text-xs text-slate-500 mt-1">{mounted ? user.email : ""}</p>
+              <p className="truncate text-xs text-slate-500 mt-1">
+                {mounted ? user.email : ""}
+              </p>
             </div>
 
             {/* Menu Items */}
@@ -254,4 +279,3 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
     </header>
   );
 }
-

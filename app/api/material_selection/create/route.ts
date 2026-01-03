@@ -1,0 +1,378 @@
+import { prisma } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
+import { withLogging } from "@/lib/withLogging";
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireAuth(request);
+
+    // Parse request body
+    const {
+      lot_id,
+      project_id,
+      quote_id,
+      ceiling_height,
+      bulkhead_height,
+      kicker_height,
+      cabinetry_height,
+      notes,
+      is_current = true, // Default to true - new versions are typically current
+      areas = [], // Array of areas with nested items
+    } = await request.json();
+
+    // Validate required fields
+    if (!lot_id) {
+      return NextResponse.json(
+        { status: false, message: "lot_id is required" },
+        { status: 400 }
+      );
+    }
+
+    // Verify that lot exists and belongs to this organization
+    const lot = await prisma.lot.findFirst({
+      where: {
+        id: lot_id,
+        organization_id: user.organizationId,
+      },
+      include: {
+        project: true,
+      },
+    });
+
+    if (!lot) {
+      return NextResponse.json(
+        {
+          status: false,
+          message: "Lot not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    // If project_id is provided, verify it exists and belongs to this organization
+    if (project_id) {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: project_id,
+          organization_id: user.organizationId,
+        },
+      });
+
+      if (!project) {
+        return NextResponse.json(
+          {
+            status: false,
+            message: "Project not found",
+          },
+          { status: 404 }
+        );
+      }
+    }
+
+    // If quote_id is provided, verify it exists and belongs to this organization
+    if (quote_id) {
+      const quote = await prisma.quote.findFirst({
+        where: {
+          id: quote_id,
+          organization_id: user.organizationId,
+        },
+      });
+
+      if (!quote) {
+        return NextResponse.json(
+          {
+            status: false,
+            message: "Quote not found",
+          },
+          { status: 404 }
+        );
+      }
+    }
+
+    // Validate areas data if provided
+    if (areas && Array.isArray(areas)) {
+      for (let i = 0; i < areas.length; i++) {
+        const area = areas[i];
+        if (!area.area_name) {
+          return NextResponse.json(
+            {
+              status: false,
+              message: `Area at index ${i} is missing required field: area_name`,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Validate items if provided
+        if (area.items && Array.isArray(area.items)) {
+          for (let j = 0; j < area.items.length; j++) {
+            const item = area.items[j];
+            if (!item.name) {
+              return NextResponse.json(
+                {
+                  status: false,
+                  message: `Item at index ${j} in area "${area.area_name}" is missing required field: name`,
+                },
+                { status: 400 }
+              );
+            }
+          }
+        }
+      }
+    }
+
+    // Use a transaction to ensure data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if material_selection exists for this lot_id
+      let materialSelection = await tx.material_selection.findFirst({
+        where: {
+          lot_id: lot.id,
+          organization_id: user.organizationId,
+        },
+      });
+
+      // If material_selection doesn't exist, create it with user_id
+      if (!materialSelection) {
+        materialSelection = await tx.material_selection.create({
+          data: {
+            organization_id: user.organizationId,
+            lot_id: lot.id,
+            project_id: project_id || null,
+            quote_id: quote_id || null,
+            createdBy_id: user.userId,
+          },
+        });
+
+        // Update the lot to link it to the material_selection
+        await tx.lot.update({
+          where: { id: lot.id },
+          data: { material_selection_id: materialSelection.id },
+        });
+      } else {
+        // If material_selection exists, only update project_id or quote_id if provided
+        // Don't update createdBy_id - it should remain as the original creator
+        if (project_id || quote_id !== undefined) {
+          materialSelection = await tx.material_selection.update({
+            where: { id: materialSelection.id },
+            data: {
+              ...(project_id && { project_id }),
+              ...(quote_id !== undefined && { quote_id: quote_id || null }),
+            },
+          });
+        }
+      }
+
+      const materialSelectionId = materialSelection.id;
+
+      // Find the highest version number for this specific material_selection_id
+      // This ensures version numbers are scoped to the same lot_id (since material_selection is unique per lot_id)
+      const latestVersion = await tx.material_selection_versions.findFirst({
+        where: {
+          material_selection_id: materialSelectionId, // Scoped to this material_selection (which is unique per lot_id)
+        },
+        orderBy: { version_number: "desc" },
+        select: { version_number: true },
+      });
+
+      // Calculate next version number - increments only for the same material_selection (same lot_id)
+      const nextVersionNumber = latestVersion
+        ? latestVersion.version_number + 1
+        : 1;
+
+      // If this version should be the current version, set all other versions to is_current: false
+      if (is_current) {
+        await tx.material_selection_versions.updateMany({
+          where: {
+            material_selection_id: materialSelectionId,
+            is_current: true,
+          },
+          data: {
+            is_current: false,
+          },
+        });
+      }
+
+      // Prepare areas data with nested items
+      const areasData = areas.map(
+        (area: {
+          area_name: string;
+          area_instance_id?: number;
+          bed_option?: string | null;
+          notes?: string | null;
+          items?: Array<{
+            name: string;
+            category?: string | null;
+            is_applicable?: boolean;
+            item_notes?: string | null;
+          }>;
+        }) => {
+          const areaData: {
+            area_name: string;
+            area_instance_id: number;
+            bed_option: string | null;
+            notes: string | null;
+            items?: {
+              create: Array<{
+                name: string;
+                category: string | null;
+                is_applicable: boolean;
+                item_notes: string | null;
+              }>;
+            };
+          } = {
+            area_name: area.area_name,
+            area_instance_id: area.area_instance_id || 1,
+            bed_option: area.bed_option || null,
+            notes: area.notes || null,
+          };
+
+          // Add nested items if provided
+          if (area.items && Array.isArray(area.items) && area.items.length > 0) {
+            areaData.items = {
+              create: area.items.map(
+                (item: {
+                  name: string;
+                  category?: string | null;
+                  is_applicable?: boolean;
+                  item_notes?: string | null;
+                }) => ({
+                  name: item.name,
+                  category: item.category || null,
+                  is_applicable:
+                    item.is_applicable !== undefined ? item.is_applicable : false,
+                  item_notes: item.item_notes || null,
+                })
+              ),
+            };
+          }
+
+          return areaData;
+        }
+      );
+
+      // Create the new version with nested areas and items
+      // Prisma handles Decimal conversion automatically for MySQL Decimal fields
+      // We can pass numbers or strings directly
+      const versionData = {
+        material_selection_id: materialSelectionId,
+        version_number: nextVersionNumber,
+        is_current,
+        quote_id: quote_id || null,
+        notes: notes || null,
+        // Handle Decimal fields - convert empty strings to null, otherwise use the value
+        ceiling_height:
+          ceiling_height !== undefined &&
+          ceiling_height !== null &&
+          ceiling_height !== ""
+            ? ceiling_height
+            : null,
+        bulkhead_height:
+          bulkhead_height !== undefined &&
+          bulkhead_height !== null &&
+          bulkhead_height !== ""
+            ? bulkhead_height
+            : null,
+        kicker_height:
+          kicker_height !== undefined &&
+          kicker_height !== null &&
+          kicker_height !== ""
+            ? kicker_height
+            : null,
+        cabinetry_height:
+          cabinetry_height !== undefined &&
+          cabinetry_height !== null &&
+          cabinetry_height !== ""
+            ? cabinetry_height
+            : null,
+        // Add nested areas if provided
+        ...(areasData.length > 0 && {
+          areas: {
+            create: areasData,
+          },
+        }),
+      };
+
+      const newVersion = await tx.material_selection_versions.create({
+        data: versionData,
+        include: {
+          areas: {
+            include: {
+              items: true,
+            },
+          },
+        },
+      });
+
+      // Update material_selection's current_version_id if this is the current version
+      if (is_current) {
+        await tx.material_selection.update({
+          where: { id: materialSelectionId },
+          data: { current_version_id: newVersion.id },
+        });
+      }
+
+      // Return material_selection, version with areas and items
+      return {
+        material_selection: materialSelection,
+        version: newVersion,
+      };
+    });
+
+    // Fetch media separately
+    const media = await prisma.media.findMany({
+      where: {
+        material_selection_id: result.material_selection.id,
+        organization_id: user.organizationId,
+        is_deleted: false,
+      },
+    });
+
+    // Add media to the response
+    const resultWithMedia = {
+      ...result,
+      material_selection: {
+        ...result.material_selection,
+        media: media,
+      },
+    };
+
+    const logged = await withLogging(
+      request,
+      "material_selection",
+      result.material_selection.id,
+      "CREATE",
+      `Material selection and version created successfully for lot: ${lot.name} for project: ${lot.project.name}`
+    );
+
+    if (!logged) {
+      console.error(
+        `Failed to log material selection creation: ${result.material_selection.id}`
+      );
+    }
+
+    return NextResponse.json(
+      {
+        status: true,
+        message: "Material selection and version created successfully",
+        data: resultWithMedia,
+        ...(logged
+          ? {}
+          : { warning: "Note: Creation succeeded but logging failed" }),
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json(
+        { status: false, message: error.message },
+        { status: error.statusCode }
+      );
+    }
+    console.error("Error creating material selection version:", error);
+    return NextResponse.json(
+      { status: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
