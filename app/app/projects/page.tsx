@@ -1,10 +1,7 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import TabsController from "@/components/tabscontroller";
-// import PaginationFooter from "@/components/PaginationFooter";
+import PaginationFooter from "@/components/PaginationFooter";
 import {
   Plus,
   Search,
@@ -17,15 +14,9 @@ import {
   ChevronDown,
   AlertTriangle,
 } from "lucide-react";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
-// import { useDispatch } from "react-redux";
-// import { replaceTab } from "@/state/reducer/tabs";
-// import { v4 as uuidv4 } from "uuid";
-// import { useExcelExport } from "@/hooks/useExcelExport";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
 
 // Type definitions
@@ -53,7 +44,6 @@ interface Project {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  // const dispatch = useDispatch();
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("client_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "relevance">(
@@ -451,24 +441,48 @@ export default function ProjectsPage() {
     return null; // No icon for relevance
   };
 
-  // Excel export placeholder
-  const isExporting = false;
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    return {
+      "Project ID": (project: Project) => project.project_id || "",
+      "Project Name": (project: Project) => project.name || "",
+      "Number of Lots": (project: Project) =>
+        (project.lots ? project.lots.length : 0).toString(),
+      Client: (project: Project) => project.client?.client_name || "",
+      "Client Type": (project: Project) => project.client?.client_type || "",
+      "Created At": (project: Project) =>
+        project.createdAt
+          ? new Date(project.createdAt).toLocaleDateString()
+          : "",
+      "Updated At": (project: Project) =>
+        project.updatedAt
+          ? new Date(project.updatedAt).toLocaleDateString()
+          : "",
+    };
+  }, []);
+
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport({
+    columnMap,
+    filenamePrefix: "projects",
+    sheetName: "Projects",
+    selectedColumns:
+      selectedColumns.length === availableColumns.length
+        ? undefined
+        : selectedColumns,
+  }) as {
+    exportToExcel: (data: Project[]) => Promise<void>;
+    isExporting: boolean;
+  };
+
   const handleExportToExcel = () => {
-    toast.info("Excel export feature coming soon", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-    });
+    exportToExcel(filteredAndSortedProjects);
   };
 
   // Helper function to get client name from project
   const getClientName = (project: Project): string | null => {
     return project?.client?.client_name || null;
   };
-
-  // Pagination calculations
-  const totalPages =
-    itemsPerPage === 0 ? 1 : Math.ceil(totalItems / itemsPerPage);
 
   return (
     <div className="bg-tertiary">
@@ -954,47 +968,14 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Fixed Pagination Footer */}
-                    {!loading && !error && paginatedProjects.length > 0 && (
-                      <div className="p-4 border-t border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-sm text-slate-600">
-                            Showing {startIndex + 1} to{" "}
-                            {Math.min(endIndex, totalItems)} of {totalItems}{" "}
-                            results
-                          </div>
-                          <select
-                            value={itemsPerPage}
-                            onChange={(e) =>
-                              handleItemsPerPageChange(Number(e.target.value))
-                            }
-                            className="text-sm border border-slate-300 rounded px-2 py-1"
-                          >
-                            <option value={25}>25 per page</option>
-                            <option value={50}>50 per page</option>
-                            <option value={100}>100 per page</option>
-                            <option value={0}>All</option>
-                          </select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Previous
-                          </button>
-                          <span className="text-sm text-slate-600">
-                            Page {currentPage} of {totalPages}
-                          </span>
-                          <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage >= totalPages}
-                            className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      </div>
+                    {!loading && !error && (
+                      <PaginationFooter
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
+                        onItemsPerPageChange={handleItemsPerPageChange}
+                      />
                     )}
                   </div>
                 </div>

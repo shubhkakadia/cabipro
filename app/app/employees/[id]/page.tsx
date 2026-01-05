@@ -1,7 +1,5 @@
 "use client";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import TabsController from "@/components/tabscontroller";
 import {
   ChevronLeft,
   ChevronDown,
@@ -27,15 +25,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { CiMenuKebab } from "react-icons/ci";
-// import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { validatePhone, formatPhoneToNational } from "@/components/validators";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 import Image from "next/image";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import { useUploadProgress } from "@/hooks/useUploadProgress";
+import { useUploadProgress } from "@/hooks/useUploadProgress";
 import AppHeader from "@/components/AppHeader";
 
 // Type definitions
@@ -134,11 +130,20 @@ type DayOfWeek = keyof Availability;
 export default function EmployeeDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  // Upload progress placeholder
-  const showProgressToast = () => {};
-  const completeUpload = () => {};
-  const dismissProgressToast = () => {};
-  const getUploadProgressHandler = () => (_progressEvent: unknown) => {};
+  // Upload progress hook
+  const {
+    showProgressToast,
+    completeUpload,
+    dismissProgressToast,
+    getUploadProgressHandler,
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number
+    ) => (progressEvent: { loaded: number; total?: number }) => void;
+  };
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -472,7 +477,7 @@ export default function EmployeeDetailPage() {
 
       // Show progress toast only if there's an image file
       if (imageFile) {
-        showProgressToast();
+        showProgressToast(1); // 1 file being uploaded
       }
 
       const response = await axios.patch(`/api/employee/${id}`, dataToSend, {
@@ -481,13 +486,13 @@ export default function EmployeeDetailPage() {
           "Content-Type": contentType,
         },
         ...(imageFile && {
-          onUploadProgress: getUploadProgressHandler(),
+          onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
         }),
       });
 
       if (response.data.status) {
         if (imageFile) {
-          completeUpload();
+          completeUpload(1); // 1 file uploaded
         } else {
           toast.success("Employee updated successfully");
         }
@@ -1163,7 +1168,7 @@ export default function EmployeeDetailPage() {
                         </button>
 
                         {showDropdown && (
-                          <div className="absolute right-0 mt-2 w-50 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+                          <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
                             <div className="py-1">
                               <button
                                 onClick={() => {
@@ -2276,142 +2281,138 @@ export default function EmployeeDetailPage() {
                 </div>
 
                 {/* Module Access - Only visible to master-admin */}
-                {
-                  <div className="flex items-start gap-3">
-                    <div className="w-full">
-                      <div className="text-xs uppercase tracking-wide text-slate-500 mb-3">
-                        Module Access
-                      </div>
-                      <div className="space-y-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
-                        {moduleStructure.map((module) => (
-                          <div key={module.key}>
-                            {module.isParent ? (
-                              <>
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center flex-1">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        toggleModuleExpansion(module.key)
-                                      }
-                                      disabled={
-                                        !(isEditingUser || isCreatingUser)
-                                      }
-                                      className="cursor-pointer p-1 hover:bg-slate-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {expandedModules[module.key] ? (
-                                        <ChevronDown className="w-4 h-4 text-slate-600" />
-                                      ) : (
-                                        <ChevronRight className="w-4 h-4 text-slate-600" />
-                                      )}
-                                    </button>
-                                    <label
-                                      htmlFor={module.key}
-                                      className="ml-2 text-sm font-semibold text-slate-700 cursor-pointer flex-1"
-                                    >
-                                      {module.label}
-                                    </label>
-                                  </div>
-                                  <input
-                                    type="checkbox"
-                                    id={module.key}
-                                    checked={
-                                      module.children?.every(
-                                        (child) =>
-                                          moduleAccess[child.key] === true
-                                      ) || false
+                <div className="flex items-start gap-3">
+                  <div className="w-full">
+                    <div className="text-xs uppercase tracking-wide text-slate-500 mb-3">
+                      Module Access
+                    </div>
+                    <div className="space-y-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                      {moduleStructure.map((module) => (
+                        <div key={module.key}>
+                          {module.isParent ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center flex-1">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      toggleModuleExpansion(module.key)
                                     }
-                                    ref={(el) => {
-                                      if (el && module.children) {
-                                        const checkedCount =
-                                          module.children.filter(
-                                            (child) =>
-                                              moduleAccess[child.key] === true
-                                          ).length;
-                                        el.indeterminate =
-                                          checkedCount > 0 &&
-                                          checkedCount < module.children.length;
-                                      }
-                                    }}
-                                    onChange={(e) => {
-                                      // Toggle all children when parent is clicked
-                                      module.children?.forEach((child) => {
-                                        handleModuleAccessChange(
-                                          child.key,
-                                          e.target.checked
-                                        );
-                                      });
-                                    }}
                                     disabled={
                                       !(isEditingUser || isCreatingUser)
                                     }
-                                    className="cursor-pointer w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
-                                  />
+                                    className="cursor-pointer p-1 hover:bg-slate-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    {expandedModules[module.key] ? (
+                                      <ChevronDown className="w-4 h-4 text-slate-600" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4 text-slate-600" />
+                                    )}
+                                  </button>
+                                  <label
+                                    htmlFor={module.key}
+                                    className="ml-2 text-sm font-semibold text-slate-700 cursor-pointer flex-1"
+                                  >
+                                    {module.label}
+                                  </label>
                                 </div>
-                                {expandedModules[module.key] && (
-                                  <div className="ml-6 mt-2 space-y-2">
-                                    {module.children?.map((child) => (
-                                      <div
-                                        key={child.key}
-                                        className="flex items-center justify-between"
-                                      >
-                                        <label
-                                          htmlFor={child.key}
-                                          className="text-sm text-slate-600 cursor-pointer flex-1"
-                                        >
-                                          {child.label}
-                                        </label>
-                                        <input
-                                          type="checkbox"
-                                          id={child.key}
-                                          checked={
-                                            moduleAccess[child.key] === true
-                                          }
-                                          onChange={(e) =>
-                                            handleModuleAccessChange(
-                                              child.key,
-                                              e.target.checked
-                                            )
-                                          }
-                                          disabled={
-                                            !(isEditingUser || isCreatingUser)
-                                          }
-                                          className="cursor-pointer w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <div className="flex items-center justify-between">
-                                <label
-                                  htmlFor={module.key}
-                                  className="text-sm font-semibold text-slate-700 cursor-pointer flex-1"
-                                >
-                                  {module.label}
-                                </label>
                                 <input
                                   type="checkbox"
                                   id={module.key}
-                                  checked={moduleAccess[module.key] === true}
-                                  onChange={(e) =>
-                                    handleModuleAccessChange(
-                                      module.key,
-                                      e.target.checked
-                                    )
+                                  checked={
+                                    module.children?.every(
+                                      (child) =>
+                                        moduleAccess[child.key] === true
+                                    ) || false
                                   }
+                                  ref={(el) => {
+                                    if (el && module.children) {
+                                      const checkedCount =
+                                        module.children.filter(
+                                          (child) =>
+                                            moduleAccess[child.key] === true
+                                        ).length;
+                                      el.indeterminate =
+                                        checkedCount > 0 &&
+                                        checkedCount < module.children.length;
+                                    }
+                                  }}
+                                  onChange={(e) => {
+                                    // Toggle all children when parent is clicked
+                                    module.children?.forEach((child) => {
+                                      handleModuleAccessChange(
+                                        child.key,
+                                        e.target.checked
+                                      );
+                                    });
+                                  }}
                                   disabled={!(isEditingUser || isCreatingUser)}
                                   className="cursor-pointer w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
                                 />
                               </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                              {expandedModules[module.key] && (
+                                <div className="ml-6 mt-2 space-y-2">
+                                  {module.children?.map((child) => (
+                                    <div
+                                      key={child.key}
+                                      className="flex items-center justify-between"
+                                    >
+                                      <label
+                                        htmlFor={child.key}
+                                        className="text-sm text-slate-600 cursor-pointer flex-1"
+                                      >
+                                        {child.label}
+                                      </label>
+                                      <input
+                                        type="checkbox"
+                                        id={child.key}
+                                        checked={
+                                          moduleAccess[child.key] === true
+                                        }
+                                        onChange={(e) =>
+                                          handleModuleAccessChange(
+                                            child.key,
+                                            e.target.checked
+                                          )
+                                        }
+                                        disabled={
+                                          !(isEditingUser || isCreatingUser)
+                                        }
+                                        className="cursor-pointer w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <label
+                                htmlFor={module.key}
+                                className="text-sm font-semibold text-slate-700 cursor-pointer flex-1"
+                              >
+                                {module.label}
+                              </label>
+                              <input
+                                type="checkbox"
+                                id={module.key}
+                                checked={moduleAccess[module.key] === true}
+                                onChange={(e) =>
+                                  handleModuleAccessChange(
+                                    module.key,
+                                    e.target.checked
+                                  )
+                                }
+                                disabled={!(isEditingUser || isCreatingUser)}
+                                className="cursor-pointer w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                }
+                </div>
               </div>
 
               {/* Action Buttons */}

@@ -122,10 +122,10 @@ export async function POST(request: NextRequest) {
       // Upload logo file before transaction
       try {
         const uploadResult = await uploadFile(logoFile, {
-          uploadDir: "public/uploads",
-          subDir: uniqueSlug,
+          subDir: "",
           filenameStrategy: "unique",
           idPrefix: "logo",
+          organizationSlug: uniqueSlug,
         });
 
         // Normalize path for Next.js - remove /public prefix since Next.js serves public folder from root

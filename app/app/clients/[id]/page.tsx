@@ -31,7 +31,6 @@ import "react-toastify/dist/ReactToastify.css";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import ContactSection from "@/components/ContactSection";
 import { CiMenuKebab } from "react-icons/ci";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import { validatePhone, formatPhoneToNational } from "@/components/validators";
 import AppHeader from "@/components/AppHeader";
 
@@ -690,7 +689,7 @@ export default function ClientDetailPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex mt-16 h-[calc(100vh-64px)]">
         <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto">

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     // Verify lot exists and belongs to this organization
     const lot = await prisma.lot.findFirst({
       where: {
-        id: lot_id,
+        lot_id: lot_id,
         organization_id: user.organizationId,
       },
     });

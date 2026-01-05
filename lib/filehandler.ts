@@ -30,12 +30,12 @@ export async function writeFileToDisk(
  */
 export async function convertImageToWebP(
   imageBuffer: Buffer,
-  mimeType: string
+  _mimeType: string
 ): Promise<Buffer> {
   try {
     // Convert to WebP with quality optimization
     const webpBuffer = await sharp(imageBuffer)
-      .webp({ quality: 90 })
+      .webp({ quality: 100 })
       .toBuffer();
     return webpBuffer;
   } catch (error) {
@@ -119,7 +119,12 @@ export async function getFileMetadata(
 }
 
 export function getRelativePath(absolutePath: string): string {
-  return path.relative(process.cwd(), absolutePath).replaceAll("\\", "/");
+  const relative = path.relative(process.cwd(), absolutePath).replaceAll("\\", "/");
+  // Remove "public/" prefix if present, so database stores paths starting from "uploads/"
+  if (relative.startsWith("public/")) {
+    return relative.substring("public/".length);
+  }
+  return relative;
 }
 
 export async function generateUniqueBaseName(prefix = ""): Promise<string> {
@@ -131,6 +136,7 @@ export async function generateUniqueBaseName(prefix = ""): Promise<string> {
 export interface UploadFileOptions {
   uploadDir?: string;
   subDir?: string;
+  organizationSlug?: string;
   filenameStrategy?: "unique" | "id-based" | "original";
   idPrefix?: string;
   maxSize?: number;
@@ -155,8 +161,9 @@ export async function uploadFile(
   options: UploadFileOptions = {}
 ): Promise<UploadFileResult> {
   const {
-    uploadDir = "mediauploads",
+    uploadDir = "public/uploads",
     subDir = "",
+    organizationSlug,
     filenameStrategy = "unique",
     idPrefix = "",
     maxSize = null,
@@ -167,6 +174,11 @@ export async function uploadFile(
   // Validate file
   if (!file || !(file instanceof File)) {
     throw new Error("Invalid file provided");
+  }
+
+  // Validate organization slug if provided
+  if (organizationSlug && !/^[a-z0-9-]+$/.test(organizationSlug)) {
+    throw new Error("Invalid organization slug format");
   }
 
   // Validate file size
@@ -192,6 +204,7 @@ export async function uploadFile(
 
   // Build target directory
   const dirParts = [uploadDir];
+  if (organizationSlug) dirParts.push(organizationSlug);
   if (subDir) dirParts.push(subDir);
   const targetDir = path.join(process.cwd(), ...dirParts);
   await fs.promises.mkdir(targetDir, { recursive: true });

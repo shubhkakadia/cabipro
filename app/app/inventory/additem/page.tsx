@@ -1,16 +1,19 @@
 "use client";
-// import CRMLayout from "@/components/tabs";
-// import TabsController from "@/components/tabscontroller";
-import { ChevronLeft, ChevronDown, Upload, X, Package, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronDown,
+  Upload,
+  X,
+  Package,
+  Plus,
+} from "lucide-react";
 import Sidebar from "@/components/sidebar";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import Image from "next/image";
-// import { useUploadProgress } from "@/hooks/useUploadProgress";
+import { useUploadProgress } from "@/hooks/useUploadProgress";
 import { useRouter } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 
@@ -42,7 +45,7 @@ interface Errors {
 }
 
 interface Supplier {
-  supplier_id: string;
+  id: string;
   name: string;
   [key: string]: unknown;
 }
@@ -54,19 +57,29 @@ interface ConfigItem {
 
 export default function AddItemPage() {
   const router = useRouter();
-  // Upload progress placeholder functions
-  const showProgressToast = () => {};
-  const completeUpload = () => {};
-  const dismissProgressToast = () => {};
-  const getUploadProgressHandler = () => (_progressEvent: unknown) => {};
-  
+  // Upload progress hook
+  const {
+    showProgressToast,
+    completeUpload,
+    dismissProgressToast,
+    getUploadProgressHandler,
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number
+    ) => (progressEvent: { loaded: number; total?: number }) => void;
+  };
+
   const [errors, setErrors] = useState<Errors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSubCategoryDropdownOpen, setIsSubCategoryDropdownOpen] =
     useState(false);
   const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
-  const [isMeasuringUnitDropdownOpen, setIsMeasuringUnitDropdownOpen] = useState(false);
+  const [isMeasuringUnitDropdownOpen, setIsMeasuringUnitDropdownOpen] =
+    useState(false);
   const [isFinishDropdownOpen, setIsFinishDropdownOpen] = useState(false);
   const [isFaceDropdownOpen, setIsFaceDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("Sheet");
@@ -77,9 +90,12 @@ export default function AddItemPage() {
   const [faceSearchTerm, setFaceSearchTerm] = useState("");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
-  const [measuringUnitOptions, setMeasuringUnitOptions] = useState<string[]>([]);
+  const [measuringUnitOptions, setMeasuringUnitOptions] = useState<string[]>(
+    []
+  );
   const [loadingMeasuringUnits, setLoadingMeasuringUnits] = useState(false);
-  const [showCreateMeasuringUnitModal, setShowCreateMeasuringUnitModal] = useState(false);
+  const [showCreateMeasuringUnitModal, setShowCreateMeasuringUnitModal] =
+    useState(false);
   const [newMeasuringUnitValue, setNewMeasuringUnitValue] = useState("");
   const [isCreatingMeasuringUnit, setIsCreatingMeasuringUnit] = useState(false);
   const [finishOptions, setFinishOptions] = useState<string[]>([]);
@@ -135,14 +151,18 @@ export default function AddItemPage() {
     face.toLowerCase().includes(faceSearchTerm.toLowerCase())
   );
 
-  const [hardwareSubCategories, setHardwareSubCategories] = useState<string[]>([]);
+  const [hardwareSubCategories, setHardwareSubCategories] = useState<string[]>(
+    []
+  );
   const [loadingSubCategories, setLoadingSubCategories] = useState(false);
-  const [showCreateSubCategoryModal, setShowCreateSubCategoryModal] = useState(false);
+  const [showCreateSubCategoryModal, setShowCreateSubCategoryModal] =
+    useState(false);
   const [newSubCategoryValue, setNewSubCategoryValue] = useState("");
   const [isCreatingSubCategory, setIsCreatingSubCategory] = useState(false);
 
-  const filteredSubCategories = hardwareSubCategories.filter((subCategory: string) =>
-    subCategory.toLowerCase().includes(subCategorySearchTerm.toLowerCase())
+  const filteredSubCategories = hardwareSubCategories.filter(
+    (subCategory: string) =>
+      subCategory.toLowerCase().includes(subCategorySearchTerm.toLowerCase())
   );
 
   // Fetch suppliers on component mount
@@ -183,16 +203,21 @@ export default function AddItemPage() {
           },
         }
       );
-      
+
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
-        const subCategories = (response.data.data as ConfigItem[]).map((item: ConfigItem) => item.value);
+        const subCategories = (response.data.data as ConfigItem[]).map(
+          (item: ConfigItem) => item.value
+        );
         setHardwareSubCategories(subCategories);
       }
     } catch (err) {
       console.error("Error fetching hardware sub categories:", err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Error fetching hardware sub categories");
+        toast.error(
+          err.response?.data?.message ||
+            "Error fetching hardware sub categories"
+        );
       }
       // Fallback to empty array if API fails
       setHardwareSubCategories([]);
@@ -220,16 +245,20 @@ export default function AddItemPage() {
           },
         }
       );
-      
+
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
-        const units = (response.data.data as ConfigItem[]).map((item: ConfigItem) => item.value);
+        const units = (response.data.data as ConfigItem[]).map(
+          (item: ConfigItem) => item.value
+        );
         setMeasuringUnitOptions(units);
       }
     } catch (err) {
       console.error("Error fetching measuring units:", err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Error fetching measuring units");
+        toast.error(
+          err.response?.data?.message || "Error fetching measuring units"
+        );
       }
       // Fallback to empty array if API fails
       setMeasuringUnitOptions([]);
@@ -257,10 +286,12 @@ export default function AddItemPage() {
           },
         }
       );
-      
+
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
-        const finishes = (response.data.data as ConfigItem[]).map((item: ConfigItem) => item.value);
+        const finishes = (response.data.data as ConfigItem[]).map(
+          (item: ConfigItem) => item.value
+        );
         setFinishOptions(finishes);
       }
     } catch (err) {
@@ -297,9 +328,15 @@ export default function AddItemPage() {
       const target = event.target as HTMLElement;
       const dropdowns = [
         { ref: dropdownRef, setIsOpen: setIsDropdownOpen },
-        { ref: subCategoryDropdownRef, setIsOpen: setIsSubCategoryDropdownOpen },
+        {
+          ref: subCategoryDropdownRef,
+          setIsOpen: setIsSubCategoryDropdownOpen,
+        },
         { ref: supplierDropdownRef, setIsOpen: setIsSupplierDropdownOpen },
-        { ref: measuringUnitDropdownRef, setIsOpen: setIsMeasuringUnitDropdownOpen },
+        {
+          ref: measuringUnitDropdownRef,
+          setIsOpen: setIsMeasuringUnitDropdownOpen,
+        },
         { ref: finishDropdownRef, setIsOpen: setIsFinishDropdownOpen },
         { ref: faceDropdownRef, setIsOpen: setIsFaceDropdownOpen },
       ];
@@ -361,7 +398,9 @@ export default function AddItemPage() {
     setIsSubCategoryDropdownOpen(false);
   };
 
-  const handleSubCategorySearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSubCategorySearchChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setSubCategorySearchTerm(e.target.value);
     setIsSubCategoryDropdownOpen(true);
     // Update form data with user input
@@ -394,7 +433,7 @@ export default function AddItemPage() {
           },
         }
       );
-      
+
       if (response.data.status) {
         toast.success("Hardware sub category created successfully");
         // Refresh sub categories list
@@ -414,7 +453,8 @@ export default function AddItemPage() {
     } catch (err) {
       console.error("Error creating sub category:", err);
       if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || "Failed to create sub category";
+        const errorMessage =
+          err.response?.data?.message || "Failed to create sub category";
         toast.error(errorMessage);
       } else {
         toast.error("Failed to create sub category");
@@ -433,7 +473,9 @@ export default function AddItemPage() {
     setIsSupplierDropdownOpen(false);
   };
 
-  const handleSupplierSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSupplierSearchChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setSupplierSearchTerm(e.target.value);
     setIsSupplierDropdownOpen(true);
   };
@@ -452,7 +494,9 @@ export default function AddItemPage() {
     setIsMeasuringUnitDropdownOpen(false);
   };
 
-  const handleMeasuringUnitSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMeasuringUnitSearchChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const value = e.target.value;
     setMeasuringUnitSearchTerm(value);
     setIsMeasuringUnitDropdownOpen(true);
@@ -529,7 +573,7 @@ export default function AddItemPage() {
           },
         }
       );
-      
+
       if (response.data.status) {
         toast.success("Finish created successfully");
         // Refresh finishes list
@@ -549,7 +593,8 @@ export default function AddItemPage() {
     } catch (err) {
       console.error("Error creating finish:", err);
       if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || "Failed to create finish";
+        const errorMessage =
+          err.response?.data?.message || "Failed to create finish";
         toast.error(errorMessage);
       } else {
         toast.error("Failed to create finish");
@@ -582,7 +627,7 @@ export default function AddItemPage() {
           },
         }
       );
-      
+
       if (response.data.status) {
         toast.success("Measuring unit created successfully");
         // Refresh measuring units list
@@ -602,7 +647,8 @@ export default function AddItemPage() {
     } catch (err) {
       console.error("Error creating measuring unit:", err);
       if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || "Failed to create measuring unit";
+        const errorMessage =
+          err.response?.data?.message || "Failed to create measuring unit";
         toast.error(errorMessage);
       } else {
         toast.error("Failed to create measuring unit");
@@ -612,11 +658,19 @@ export default function AddItemPage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const target = e.target;
     const name = target.name;
-    const value = target.type === "checkbox" ? (target as HTMLInputElement).checked : target.value;
-    const inputValue = target.type === "checkbox" ? (target as HTMLInputElement).checked : target.value;
+    const value =
+      target.type === "checkbox"
+        ? (target as HTMLInputElement).checked
+        : target.value;
+    const inputValue =
+      target.type === "checkbox"
+        ? (target as HTMLInputElement).checked
+        : target.value;
 
     setFormData((prev) => {
       const updated: FormData = {
@@ -625,7 +679,11 @@ export default function AddItemPage() {
       } as FormData;
 
       // If is_sunmica is checked, set face to "single side" and mark it as auto-set
-      if (name === "is_sunmica" && target.type === "checkbox" && (target as HTMLInputElement).checked) {
+      if (
+        name === "is_sunmica" &&
+        target.type === "checkbox" &&
+        (target as HTMLInputElement).checked
+      ) {
         // Only auto-set if face wasn't already "single side" (preserve user's manual entry)
         if (prev.face !== "single side") {
           updated.face = "single side";
@@ -637,7 +695,11 @@ export default function AddItemPage() {
         }
       }
       // If is_sunmica is unchecked, only clear face if it was auto-set by the checkbox
-      if (name === "is_sunmica" && target.type === "checkbox" && !(target as HTMLInputElement).checked) {
+      if (
+        name === "is_sunmica" &&
+        target.type === "checkbox" &&
+        !(target as HTMLInputElement).checked
+      ) {
         if (faceAutoSetRef.current && prev.face === "single side") {
           updated.face = "";
           setFaceSearchTerm("");
@@ -682,7 +744,7 @@ export default function AddItemPage() {
 
       // Show progress toast only if there's an image file
       if (hasImageFile) {
-        showProgressToast();
+        showProgressToast(1); // 1 file being uploaded
       }
 
       const response = await axios.post("/api/item/create", data, {
@@ -691,12 +753,12 @@ export default function AddItemPage() {
           "Content-Type": "multipart/form-data",
         },
         ...(hasImageFile && {
-          onUploadProgress: getUploadProgressHandler(),
+          onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
         }),
       });
       if (response.data.status) {
         if (hasImageFile) {
-          completeUpload();
+          completeUpload(1); // 1 file was uploaded
         } else {
           toast.success("Item created successfully", {
             position: "top-right",
@@ -754,10 +816,14 @@ export default function AddItemPage() {
         dismissProgressToast();
       }
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to create item. Please try again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to create item. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
       } else {
         toast.error("Failed to create item. Please try again.", {
           position: "top-right",
@@ -803,6 +869,7 @@ export default function AddItemPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-full w-full overflow-y-auto">
             <div className="px-4 py-2">
+              {/* Header */}
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => router.back()}
@@ -815,19 +882,20 @@ export default function AddItemPage() {
                 </h1>
               </div>
 
-                {/* form */}
-                <div className="bg-white rounded-lg shadow-lg p-6">
-                  <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Item Image Section */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-2 mb-4">
+              {/* form */}
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Item Image Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="space-y-6 col-span-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-4 flex-0">
                         <Package className="w-5 h-5 text-primary" />
                         <h2 className="text-xl font-bold text-slate-800">
                           Item Image
                         </h2>
                       </div>
 
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center justify-center flex-1">
                         <div className="relative group">
                           <input
                             ref={fileInputRef}
@@ -840,7 +908,7 @@ export default function AddItemPage() {
 
                           {imagePreview ? (
                             <div className="relative">
-                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+                              <div className="w-50 h-50 rounded-full overflow-hidden border-4 border-primary shadow-lg">
                                 <Image
                                   loading="lazy"
                                   src={imagePreview}
@@ -868,7 +936,7 @@ export default function AddItemPage() {
                           ) : (
                             <label
                               htmlFor="image-upload"
-                              className="w-32 h-32 rounded-full border-4 border-dashed border-slate-300 hover:border-primary bg-slate-50 hover:bg-blue-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group-hover:shadow-lg"
+                              className="w-50 h-50 rounded-full border-4 border-dashed border-slate-300 hover:border-primary bg-slate-50 hover:bg-blue-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group-hover:shadow-lg"
                             >
                               <Upload className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors mb-2" />
                               <span className="text-xs text-slate-500 group-hover:text-primary font-medium">
@@ -891,7 +959,7 @@ export default function AddItemPage() {
                     </div>
 
                     {/* Basic Information Section */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 col-span-3">
                       <div className="flex items-center gap-2 mb-4">
                         <Package className="w-5 h-5 text-primary" />
                         <h2 className="text-xl font-bold text-slate-800">
@@ -899,7 +967,7 @@ export default function AddItemPage() {
                         </h2>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="relative" ref={dropdownRef}>
                           <label className="block text-sm font-medium text-slate-700 mb-2">
                             Category
@@ -919,8 +987,9 @@ export default function AddItemPage() {
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                               <ChevronDown
-                                className={`w-5 h-5 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
-                                  }`}
+                                className={`w-5 h-5 transition-transform duration-200 ${
+                                  isDropdownOpen ? "rotate-180" : ""
+                                }`}
                               />
                             </button>
                           </div>
@@ -962,6 +1031,120 @@ export default function AddItemPage() {
                             className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
                             placeholder="Eg. 100"
                           />
+                        </div>
+
+                        <div
+                          className="relative"
+                          ref={measuringUnitDropdownRef}
+                        >
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Measurement Unit{" "}
+                            <span className="text-slate-400">(Optional)</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={
+                                measuringUnitSearchTerm ||
+                                formData.measurement_unit
+                              }
+                              onChange={handleMeasuringUnitSearchChange}
+                              onFocus={() =>
+                                setIsMeasuringUnitDropdownOpen(true)
+                              }
+                              className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                              placeholder="Search or type a measuring unit..."
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsMeasuringUnitDropdownOpen(
+                                  !isMeasuringUnitDropdownOpen
+                                )
+                              }
+                              className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              <ChevronDown
+                                className={`w-5 h-5 transition-transform ${
+                                  isMeasuringUnitDropdownOpen
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          {isMeasuringUnitDropdownOpen && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                              {loadingMeasuringUnits ? (
+                                <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                  Loading measuring units...
+                                </div>
+                              ) : filteredMeasuringUnits.length > 0 ? (
+                                <>
+                                  {filteredMeasuringUnits.map((unit, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      onClick={() =>
+                                        handleMeasuringUnitSelect(unit)
+                                      }
+                                      className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
+                                    >
+                                      {unit}
+                                    </button>
+                                  ))}
+                                  {measuringUnitSearchTerm &&
+                                    !filteredMeasuringUnits.some(
+                                      (u: string) =>
+                                        u.toLowerCase() ===
+                                        measuringUnitSearchTerm.toLowerCase()
+                                    ) && (
+                                      <div className="border-t border-slate-200">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setNewMeasuringUnitValue(
+                                              measuringUnitSearchTerm
+                                            );
+                                            setShowCreateMeasuringUnitModal(
+                                              true
+                                            );
+                                          }}
+                                          className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                          Create &quot;{measuringUnitSearchTerm}
+                                          &quot;
+                                        </button>
+                                      </div>
+                                    )}
+                                </>
+                              ) : (
+                                <div className="px-4 py-3">
+                                  <div className="text-sm text-slate-500 mb-2">
+                                    No matching measuring units found
+                                  </div>
+                                  {measuringUnitSearchTerm && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setNewMeasuringUnitValue(
+                                          measuringUnitSearchTerm
+                                        );
+                                        setShowCreateMeasuringUnitModal(true);
+                                      }}
+                                      className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      Create &quot;{measuringUnitSearchTerm}
+                                      &quot;
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         <div>
@@ -1009,8 +1192,9 @@ export default function AddItemPage() {
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                               <ChevronDown
-                                className={`w-5 h-5 transition-transform duration-200 ${isSupplierDropdownOpen ? "rotate-180" : ""
-                                  }`}
+                                className={`w-5 h-5 transition-transform duration-200 ${
+                                  isSupplierDropdownOpen ? "rotate-180" : ""
+                                }`}
                               />
                             </button>
                           </div>
@@ -1020,11 +1204,11 @@ export default function AddItemPage() {
                               {filteredSuppliers.length > 0 ? (
                                 filteredSuppliers.map((supplier) => (
                                   <button
-                                    key={supplier.supplier_id}
+                                    key={supplier.id}
                                     type="button"
                                     onClick={() =>
                                       handleSupplierSelect(
-                                        supplier.supplier_id,
+                                        supplier.id,
                                         supplier.name
                                       )
                                     }
@@ -1035,7 +1219,7 @@ export default function AddItemPage() {
                                         {supplier.name}
                                       </div>
                                       <div className="text-xs text-slate-500">
-                                        id: {supplier.supplier_id}
+                                        id: {supplier.id}
                                       </div>
                                     </div>
                                   </button>
@@ -1048,91 +1232,7 @@ export default function AddItemPage() {
                             </div>
                           )}
                         </div>
-                        <div className="relative" ref={measuringUnitDropdownRef}>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Measurement Unit{" "}
-                            <span className="text-slate-400">(Optional)</span>
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={measuringUnitSearchTerm || formData.measurement_unit}
-                              onChange={handleMeasuringUnitSearchChange}
-                              onFocus={() => setIsMeasuringUnitDropdownOpen(true)}
-                              className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                              placeholder="Search or type a measuring unit..."
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setIsMeasuringUnitDropdownOpen(!isMeasuringUnitDropdownOpen)
-                              }
-                              className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                            >
-                              <ChevronDown
-                                className={`w-5 h-5 transition-transform ${isMeasuringUnitDropdownOpen ? "rotate-180" : ""
-                                  }`}
-                              />
-                            </button>
-                          </div>
 
-                          {isMeasuringUnitDropdownOpen && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                              {loadingMeasuringUnits ? (
-                                <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                                  Loading measuring units...
-                                </div>
-                              ) : filteredMeasuringUnits.length > 0 ? (
-                                <>
-                                  {filteredMeasuringUnits.map((unit, index) => (
-                                    <button
-                                      key={index}
-                                      type="button"
-                                      onClick={() => handleMeasuringUnitSelect(unit)}
-                                      className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
-                                    >
-                                      {unit}
-                                    </button>
-                                  ))}
-                                      {measuringUnitSearchTerm && !filteredMeasuringUnits.some((u: string) => u.toLowerCase() === measuringUnitSearchTerm.toLowerCase()) && (
-                                        <div className="border-t border-slate-200">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setNewMeasuringUnitValue(measuringUnitSearchTerm);
-                                              setShowCreateMeasuringUnitModal(true);
-                                            }}
-                                            className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
-                                          >
-                                            <Plus className="w-4 h-4" />
-                                            Create &quot;{measuringUnitSearchTerm}&quot;
-                                          </button>
-                                        </div>
-                                      )}
-                                </>
-                              ) : (
-                                <div className="px-4 py-3">
-                                  <div className="text-sm text-slate-500 mb-2">
-                                    No matching measuring units found
-                                  </div>
-                                  {measuringUnitSearchTerm && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setNewMeasuringUnitValue(measuringUnitSearchTerm);
-                                        setShowCreateMeasuringUnitModal(true);
-                                      }}
-                                      className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
-                                    >
-                                      <Plus className="w-4 h-4" />
-                                      Create &quot;{measuringUnitSearchTerm}&quot;
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-700 mb-2">
                             Supplier Reference{" "}
@@ -1182,153 +1282,202 @@ export default function AddItemPage() {
                         )}
                       </div>
                     </div>
-                    {/* Category Details Section */}
-                    {selectedCategory && (
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Package className="w-5 h-5 text-primary" />
-                          <h2 className="text-xl font-bold text-slate-800">
-                            {selectedCategory} Details
-                          </h2>
-                        </div>
+                  </div>
 
-                        {selectedCategory.toLowerCase() === "sheet" && (
-                          <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                              {[
-                                "brand",
-                                "color",
-                                "finish",
-                                "face",
-                                "dimensions",
-                              ].map((field) => (
-                                <div key={field}>
-                                  {field === "finish" ? (
-                                    <div className="relative" ref={finishDropdownRef}>
-                                      <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                        {field}
-                                      </label>
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={finishSearchTerm || formData.finish}
-                                          onChange={handleFinishSearchChange}
-                                          onFocus={() => setIsFinishDropdownOpen(true)}
-                                          className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                          placeholder="Search or type a finish..."
+                  {/* Category Details Section */}
+                  {selectedCategory && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Package className="w-5 h-5 text-primary" />
+                        <h2 className="text-xl font-bold text-slate-800">
+                          {selectedCategory} Details
+                        </h2>
+                      </div>
+
+                      {selectedCategory.toLowerCase() === "sheet" && (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                              "brand",
+                              "color",
+                              "finish",
+                              "face",
+                              "dimensions",
+                            ].map((field) => (
+                              <div key={field}>
+                                {field === "finish" ? (
+                                  <div
+                                    className="relative"
+                                    ref={finishDropdownRef}
+                                  >
+                                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                                      {field}
+                                    </label>
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={
+                                          finishSearchTerm || formData.finish
+                                        }
+                                        onChange={handleFinishSearchChange}
+                                        onFocus={() =>
+                                          setIsFinishDropdownOpen(true)
+                                        }
+                                        className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                        placeholder="Search or type a finish..."
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setIsFinishDropdownOpen(
+                                            !isFinishDropdownOpen
+                                          )
+                                        }
+                                        className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                      >
+                                        <ChevronDown
+                                          className={`w-5 h-5 transition-transform ${
+                                            isFinishDropdownOpen
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                                         />
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setIsFinishDropdownOpen(!isFinishDropdownOpen)
-                                          }
-                                          className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                        >
-                                          <ChevronDown
-                                            className={`w-5 h-5 transition-transform ${isFinishDropdownOpen ? "rotate-180" : ""
-                                              }`}
-                                          />
-                                        </button>
-                                      </div>
+                                      </button>
+                                    </div>
 
-                                      {isFinishDropdownOpen && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                          {loadingFinishes ? (
-                                            <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                                              Loading finishes...
-                                            </div>
-                                          ) : filteredFinishes.length > 0 ? (
-                                            <>
-                                              {filteredFinishes.map((finish, index) => (
+                                    {isFinishDropdownOpen && (
+                                      <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                        {loadingFinishes ? (
+                                          <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                            Loading finishes...
+                                          </div>
+                                        ) : filteredFinishes.length > 0 ? (
+                                          <>
+                                            {filteredFinishes.map(
+                                              (finish, index) => (
                                                 <button
                                                   key={index}
                                                   type="button"
-                                                  onClick={() => handleFinishSelect(finish)}
+                                                  onClick={() =>
+                                                    handleFinishSelect(finish)
+                                                  }
                                                   className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
                                                 >
                                                   {finish}
                                                 </button>
-                                              ))}
-                                              {finishSearchTerm && !filteredFinishes.some(f => f.toLowerCase() === finishSearchTerm.toLowerCase()) && (
+                                              )
+                                            )}
+                                            {finishSearchTerm &&
+                                              !filteredFinishes.some(
+                                                (f) =>
+                                                  f.toLowerCase() ===
+                                                  finishSearchTerm.toLowerCase()
+                                              ) && (
                                                 <div className="border-t border-slate-200">
                                                   <button
                                                     type="button"
                                                     onClick={() => {
-                                                      setNewFinishValue(finishSearchTerm);
-                                                      setShowCreateFinishModal(true);
+                                                      setNewFinishValue(
+                                                        finishSearchTerm
+                                                      );
+                                                      setShowCreateFinishModal(
+                                                        true
+                                                      );
                                                     }}
                                                     className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
                                                   >
                                                     <Plus className="w-4 h-4" />
-                                                    Create &quot;{finishSearchTerm}&quot;
+                                                    Create &quot;
+                                                    {finishSearchTerm}&quot;
                                                   </button>
                                                 </div>
                                               )}
-                                            </>
-                                          ) : (
-                                            <div className="px-4 py-3">
-                                              <div className="text-sm text-slate-500 mb-2">
-                                                No matching finishes found
-                                              </div>
-                                              {finishSearchTerm && (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    setNewFinishValue(finishSearchTerm);
-                                                    setShowCreateFinishModal(true);
-                                                  }}
-                                                  className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                  <Plus className="w-4 h-4" />
-                                                  Create &quot;{finishSearchTerm}&quot;
-                                                </button>
-                                              )}
+                                          </>
+                                        ) : (
+                                          <div className="px-4 py-3">
+                                            <div className="text-sm text-slate-500 mb-2">
+                                              No matching finishes found
                                             </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : field === "face" ? (
-                                    <div className="relative" ref={faceDropdownRef}>
-                                      <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                        {field}
-                                      </label>
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={faceSearchTerm || formData.face || ""}
-                                          onChange={handleFaceSearchChange}
-                                          onFocus={() => setIsFaceDropdownOpen(true)}
-                                          disabled={formData.is_sunmica}
-                                          className={`w-full text-sm text-slate-800 px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${formData.is_sunmica
+                                            {finishSearchTerm && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setNewFinishValue(
+                                                    finishSearchTerm
+                                                  );
+                                                  setShowCreateFinishModal(
+                                                    true
+                                                  );
+                                                }}
+                                                className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                              >
+                                                <Plus className="w-4 h-4" />
+                                                Create &quot;{finishSearchTerm}
+                                                &quot;
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : field === "face" ? (
+                                  <div
+                                    className="relative"
+                                    ref={faceDropdownRef}
+                                  >
+                                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                                      {field}
+                                    </label>
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={
+                                          faceSearchTerm || formData.face || ""
+                                        }
+                                        onChange={handleFaceSearchChange}
+                                        onFocus={() =>
+                                          setIsFaceDropdownOpen(true)
+                                        }
+                                        disabled={formData.is_sunmica}
+                                        className={`w-full text-sm text-slate-800 px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${
+                                          formData.is_sunmica
                                             ? "bg-slate-100 cursor-not-allowed border-slate-300"
                                             : "border-slate-300"
-                                            }`}
-                                          placeholder="Select face..."
+                                        }`}
+                                        placeholder="Select face..."
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setIsFaceDropdownOpen(
+                                            !isFaceDropdownOpen
+                                          )
+                                        }
+                                        disabled={formData.is_sunmica}
+                                        className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+                                      >
+                                        <ChevronDown
+                                          className={`w-5 h-5 transition-transform ${
+                                            isFaceDropdownOpen
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                                         />
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setIsFaceDropdownOpen(!isFaceDropdownOpen)
-                                          }
-                                          disabled={formData.is_sunmica}
-                                          className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
-                                        >
-                                          <ChevronDown
-                                            className={`w-5 h-5 transition-transform ${isFaceDropdownOpen ? "rotate-180" : ""
-                                              }`}
-                                          />
-                                        </button>
-                                      </div>
+                                      </button>
+                                    </div>
 
-                                      {isFaceDropdownOpen && !formData.is_sunmica && (
+                                    {isFaceDropdownOpen &&
+                                      !formData.is_sunmica && (
                                         <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
                                           {filteredFaces.length > 0 ? (
                                             filteredFaces.map((face, index) => (
                                               <button
                                                 key={index}
                                                 type="button"
-                                                onClick={() => handleFaceSelect(face)}
+                                                onClick={() =>
+                                                  handleFaceSelect(face)
+                                                }
                                                 className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
                                               >
                                                 {face}
@@ -1341,358 +1490,422 @@ export default function AddItemPage() {
                                           )}
                                         </div>
                                       )}
-                                    </div>
-                                  ) : (
-                                    <div>
-                                      <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                        {field}
-                                      </label>
-                                      <input
-                                        type="text"
-                                        name={field}
-                                        value={formData[field as keyof FormData] as string}
-                                        onChange={handleInputChange}
-                                        className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                        placeholder={`Enter ${field}`}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            <div>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  name="is_sunmica"
-                                  checked={formData.is_sunmica}
-                                  onChange={handleInputChange}
-                                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-2 focus:ring-primary cursor-pointer"
-                                />
-                                <span className="text-sm font-medium text-slate-700">
-                                  Is Sunmica
-                                </span>
-                              </label>
-                              {formData.is_sunmica && (
-                                <p className="mt-1 text-xs text-slate-500">
-                                  Face field is automatically set to &quot;single side&quot; for
-                                  sunmica items
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {selectedCategory.toLowerCase() === "handle" && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {[
-                              "brand",
-                              "color",
-                              "type",
-                              "material",
-                              "dimensions",
-                            ].map((field) => (
-                              <div key={field}>
-                                <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                  {field}
-                                </label>
-                                <input
-                                  type="text"
-                                  name={field}
-                                  value={formData[field as keyof FormData] as string}
-                                  onChange={handleInputChange}
-                                  className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                  placeholder={`Enter ${field}`}
-                                />
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                                      {field}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name={field}
+                                      value={
+                                        formData[
+                                          field as keyof FormData
+                                        ] as string
+                                      }
+                                      onChange={handleInputChange}
+                                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                      placeholder={`Enter ${field}`}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
-                        )}
+                          <div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                name="is_sunmica"
+                                checked={formData.is_sunmica}
+                                onChange={handleInputChange}
+                                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-2 focus:ring-primary cursor-pointer"
+                              />
+                              <span className="text-sm font-medium text-slate-700">
+                                Is Sunmica
+                              </span>
+                            </label>
+                            {formData.is_sunmica && (
+                              <p className="mt-1 text-xs text-slate-500">
+                                Face field is automatically set to &quot;single
+                                side&quot; for sunmica items
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
-                        {selectedCategory.toLowerCase() === "hardware" && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div
-                              className="relative"
-                              ref={subCategoryDropdownRef}
-                            >
+                      {selectedCategory.toLowerCase() === "handle" && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {[
+                            "brand",
+                            "color",
+                            "type",
+                            "material",
+                            "dimensions",
+                          ].map((field) => (
+                            <div key={field}>
                               <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                Sub Category
+                                {field}
                               </label>
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={subCategorySearchTerm}
-                                  onChange={handleSubCategorySearchChange}
-                                  onFocus={() =>
-                                    setIsSubCategoryDropdownOpen(true)
+                              <input
+                                type="text"
+                                name={field}
+                                value={
+                                  formData[field as keyof FormData] as string
+                                }
+                                onChange={handleInputChange}
+                                className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                placeholder={`Enter ${field}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selectedCategory.toLowerCase() === "hardware" && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div
+                            className="relative"
+                            ref={subCategoryDropdownRef}
+                          >
+                            <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                              Sub Category
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={subCategorySearchTerm}
+                                onChange={handleSubCategorySearchChange}
+                                onFocus={() =>
+                                  setIsSubCategoryDropdownOpen(true)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    setIsSubCategoryDropdownOpen(false);
+                                    // The form data is already updated in handleSubCategorySearchChange
                                   }
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      e.preventDefault();
-                                      setIsSubCategoryDropdownOpen(false);
-                                      // The form data is already updated in handleSubCategorySearchChange
-                                    }
-                                  }}
-                                  className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                  placeholder="Search or select sub category..."
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setIsSubCategoryDropdownOpen(
-                                      !isSubCategoryDropdownOpen
-                                    )
-                                  }
-                                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                >
-                                  <ChevronDown
-                                    className={`w-5 h-5 transition-transform duration-200 ${isSubCategoryDropdownOpen
+                                }}
+                                className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                placeholder="Search or select sub category..."
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setIsSubCategoryDropdownOpen(
+                                    !isSubCategoryDropdownOpen
+                                  )
+                                }
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                              >
+                                <ChevronDown
+                                  className={`w-5 h-5 transition-transform duration-200 ${
+                                    isSubCategoryDropdownOpen
                                       ? "rotate-180"
                                       : ""
-                                      }`}
-                                  />
-                                </button>
-                              </div>
+                                  }`}
+                                />
+                              </button>
+                            </div>
 
-                              {isSubCategoryDropdownOpen && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                  {loadingSubCategories ? (
-                                    <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                                      Loading sub categories...
-                                    </div>
-                                  ) : filteredSubCategories.length > 0 ? (
-                                    <>
-                                      {filteredSubCategories.map(
-                                        (subCategory, index) => (
-                                          <button
-                                            key={index}
-                                            type="button"
-                                            onClick={() =>
-                                              handleSubCategorySelect(subCategory)
-                                            }
-                                            className="w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
-                                          >
-                                            {subCategory}
-                                          </button>
-                                        )
-                                      )}
-                                      {subCategorySearchTerm && !filteredSubCategories.some((sc: string) => sc.toLowerCase() === subCategorySearchTerm.toLowerCase()) && (
+                            {isSubCategoryDropdownOpen && (
+                              <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                {loadingSubCategories ? (
+                                  <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                    Loading sub categories...
+                                  </div>
+                                ) : filteredSubCategories.length > 0 ? (
+                                  <>
+                                    {filteredSubCategories.map(
+                                      (subCategory, index) => (
+                                        <button
+                                          key={index}
+                                          type="button"
+                                          onClick={() =>
+                                            handleSubCategorySelect(subCategory)
+                                          }
+                                          className="w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
+                                        >
+                                          {subCategory}
+                                        </button>
+                                      )
+                                    )}
+                                    {subCategorySearchTerm &&
+                                      !filteredSubCategories.some(
+                                        (sc: string) =>
+                                          sc.toLowerCase() ===
+                                          subCategorySearchTerm.toLowerCase()
+                                      ) && (
                                         <div className="border-t border-slate-200">
                                           <button
                                             type="button"
                                             onClick={() => {
-                                              setNewSubCategoryValue(subCategorySearchTerm);
-                                              setShowCreateSubCategoryModal(true);
+                                              setNewSubCategoryValue(
+                                                subCategorySearchTerm
+                                              );
+                                              setShowCreateSubCategoryModal(
+                                                true
+                                              );
                                             }}
                                             className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
                                           >
                                             <Plus className="w-4 h-4" />
-                                            Create &quot;{subCategorySearchTerm}&quot;
+                                            Create &quot;{subCategorySearchTerm}
+                                            &quot;
                                           </button>
                                         </div>
                                       )}
-                                    </>
-                                  ) : (
-                                    <div className="px-4 py-3">
-                                      <div className="text-sm text-slate-500 mb-2 text-center">
-                                        No matching sub categories found
-                                      </div>
-                                      {subCategorySearchTerm && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setNewSubCategoryValue(subCategorySearchTerm);
-                                            setShowCreateSubCategoryModal(true);
-                                          }}
-                                          className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
-                                        >
-                                          <Plus className="w-4 h-4" />
-                                          Create &quot;{subCategorySearchTerm}&quot;
-                                        </button>
-                                      )}
+                                  </>
+                                ) : (
+                                  <div className="px-4 py-3">
+                                    <div className="text-sm text-slate-500 mb-2 text-center">
+                                      No matching sub categories found
                                     </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            {["brand", "name", "type", "dimensions"].map(
-                              (field) => (
-                                <div key={field}>
-                                  <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                    {field.replace("_", " ")}
-                                  </label>
-                                  <input
-                                    type="text"
-                                    name={field}
-                                    value={formData[field as keyof FormData] as string}
-                                    onChange={handleInputChange}
-                                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                    placeholder={`Enter ${field.replace(
-                                      "_",
-                                      " "
-                                    )}`}
-                                  />
-                                </div>
-                              )
+                                    {subCategorySearchTerm && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setNewSubCategoryValue(
+                                            subCategorySearchTerm
+                                          );
+                                          setShowCreateSubCategoryModal(true);
+                                        }}
+                                        className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                        Create &quot;{subCategorySearchTerm}
+                                        &quot;
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
+                          {["brand", "name", "type", "dimensions"].map(
+                            (field) => (
+                              <div key={field}>
+                                <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                                  {field.replace("_", " ")}
+                                </label>
+                                <input
+                                  type="text"
+                                  name={field}
+                                  value={
+                                    formData[field as keyof FormData] as string
+                                  }
+                                  onChange={handleInputChange}
+                                  className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                  placeholder={`Enter ${field.replace(
+                                    "_",
+                                    " "
+                                  )}`}
+                                />
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
 
-                        {selectedCategory.toLowerCase() === "accessory" && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Item Name
-                              </label>
-                              <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                placeholder="Eg. Marker Pen"
-                              />
-                            </div>
+                      {selectedCategory.toLowerCase() === "accessory" && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                              Item Name
+                            </label>
+                            <input
+                              type="text"
+                              name="name"
+                              value={formData.name}
+                              onChange={handleInputChange}
+                              className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                              placeholder="Eg. Marker Pen"
+                            />
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {selectedCategory.toLowerCase() === "edging tape" && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {["brand", "color", "finish", "dimensions"].map(
-                              (field) => (
-                                <div key={field}>
-                                  {field === "finish" ? (
-                                    <div className="relative" ref={finishDropdownRef}>
-                                      <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                        {field}
-                                      </label>
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={finishSearchTerm || formData.finish}
-                                          onChange={handleFinishSearchChange}
-                                          onFocus={() => setIsFinishDropdownOpen(true)}
-                                          className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                          placeholder="Search or type a finish..."
+                      {selectedCategory.toLowerCase() === "edging tape" && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {["brand", "color", "finish", "dimensions"].map(
+                            (field) => (
+                              <div key={field}>
+                                {field === "finish" ? (
+                                  <div
+                                    className="relative"
+                                    ref={finishDropdownRef}
+                                  >
+                                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                                      {field}
+                                    </label>
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={
+                                          finishSearchTerm || formData.finish
+                                        }
+                                        onChange={handleFinishSearchChange}
+                                        onFocus={() =>
+                                          setIsFinishDropdownOpen(true)
+                                        }
+                                        className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                        placeholder="Search or type a finish..."
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setIsFinishDropdownOpen(
+                                            !isFinishDropdownOpen
+                                          )
+                                        }
+                                        className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                      >
+                                        <ChevronDown
+                                          className={`w-5 h-5 transition-transform ${
+                                            isFinishDropdownOpen
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                                         />
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setIsFinishDropdownOpen(!isFinishDropdownOpen)
-                                          }
-                                          className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                        >
-                                          <ChevronDown
-                                            className={`w-5 h-5 transition-transform ${isFinishDropdownOpen ? "rotate-180" : ""
-                                              }`}
-                                          />
-                                        </button>
-                                      </div>
+                                      </button>
+                                    </div>
 
-                                      {isFinishDropdownOpen && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                          {loadingFinishes ? (
-                                            <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                                              Loading finishes...
-                                            </div>
-                                          ) : filteredFinishes.length > 0 ? (
-                                            <>
-                                              {filteredFinishes.map((finish, index) => (
+                                    {isFinishDropdownOpen && (
+                                      <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                        {loadingFinishes ? (
+                                          <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                            Loading finishes...
+                                          </div>
+                                        ) : filteredFinishes.length > 0 ? (
+                                          <>
+                                            {filteredFinishes.map(
+                                              (finish, index) => (
                                                 <button
                                                   key={index}
                                                   type="button"
-                                                  onClick={() => handleFinishSelect(finish)}
+                                                  onClick={() =>
+                                                    handleFinishSelect(finish)
+                                                  }
                                                   className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
                                                 >
                                                   {finish}
                                                 </button>
-                                              ))}
-                                              {finishSearchTerm && !filteredFinishes.some(f => f.toLowerCase() === finishSearchTerm.toLowerCase()) && (
+                                              )
+                                            )}
+                                            {finishSearchTerm &&
+                                              !filteredFinishes.some(
+                                                (f) =>
+                                                  f.toLowerCase() ===
+                                                  finishSearchTerm.toLowerCase()
+                                              ) && (
                                                 <div className="border-t border-slate-200">
                                                   <button
                                                     type="button"
                                                     onClick={() => {
-                                                      setNewFinishValue(finishSearchTerm);
-                                                      setShowCreateFinishModal(true);
+                                                      setNewFinishValue(
+                                                        finishSearchTerm
+                                                      );
+                                                      setShowCreateFinishModal(
+                                                        true
+                                                      );
                                                     }}
                                                     className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
                                                   >
                                                     <Plus className="w-4 h-4" />
-                                                    Create &quot;{finishSearchTerm}&quot;
+                                                    Create &quot;
+                                                    {finishSearchTerm}&quot;
                                                   </button>
                                                 </div>
                                               )}
-                                            </>
-                                          ) : (
-                                            <div className="px-4 py-3">
-                                              <div className="text-sm text-slate-500 mb-2">
-                                                No matching finishes found
-                                              </div>
-                                              {finishSearchTerm && (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    setNewFinishValue(finishSearchTerm);
-                                                    setShowCreateFinishModal(true);
-                                                  }}
-                                                  className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                  <Plus className="w-4 h-4" />
-                                                  Create &quot;{finishSearchTerm}&quot;
-                                                </button>
-                                              )}
+                                          </>
+                                        ) : (
+                                          <div className="px-4 py-3">
+                                            <div className="text-sm text-slate-500 mb-2">
+                                              No matching finishes found
                                             </div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <div>
-                                      <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                                        {field}
-                                      </label>
-                                      <input
-                                        type="text"
-                                        name={field}
-                                        value={formData[field as keyof FormData] as string}
-                                        onChange={handleInputChange}
-                                        className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                                        placeholder={`Enter ${field}`}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                                            {finishSearchTerm && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setNewFinishValue(
+                                                    finishSearchTerm
+                                                  );
+                                                  setShowCreateFinishModal(
+                                                    true
+                                                  );
+                                                }}
+                                                className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                              >
+                                                <Plus className="w-4 h-4" />
+                                                Create &quot;{finishSearchTerm}
+                                                &quot;
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                                      {field}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name={field}
+                                      value={
+                                        formData[
+                                          field as keyof FormData
+                                        ] as string
+                                      }
+                                      onChange={handleInputChange}
+                                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                                      placeholder={`Enter ${field}`}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end pt-6 border-t border-slate-200">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={`cursor-pointer px-8 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${isSubmitting
+                  {/* Submit Button */}
+                  <div className="flex justify-end pt-6 border-t border-slate-200">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`cursor-pointer px-8 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${
+                        isSubmitting
                           ? "bg-slate-300 text-slate-500 cursor-not-allowed"
                           : "bg-primary/80 hover:bg-primary text-white"
-                          }`}
-                      >
-                        {isSubmitting ? "Adding Item..." : "Add Item"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                      }`}
+                    >
+                      {isSubmitting ? "Adding Item..." : "Add Item"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
       {/* Create Hardware Sub Category Modal */}
       {showCreateSubCategoryModal && (
-        <div className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateSubCategoryModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowCreateSubCategoryModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-6 border-b border-slate-200">
               <h2 className="text-xl font-bold text-slate-800">
                 Create New Hardware Sub Category
@@ -1733,10 +1946,14 @@ export default function AddItemPage() {
                 </button>
                 <button
                   onClick={handleCreateNewSubCategory}
-                  disabled={isCreatingSubCategory || !newSubCategoryValue?.trim()}
+                  disabled={
+                    isCreatingSubCategory || !newSubCategoryValue?.trim()
+                  }
                   className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {isCreatingSubCategory ? "Creating..." : "Create Sub Category"}
+                  {isCreatingSubCategory
+                    ? "Creating..."
+                    : "Create Sub Category"}
                 </button>
               </div>
             </div>
@@ -1746,8 +1963,14 @@ export default function AddItemPage() {
 
       {/* Create Finish Modal */}
       {showCreateFinishModal && (
-        <div className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateFinishModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowCreateFinishModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-6 border-b border-slate-200">
               <h2 className="text-xl font-bold text-slate-800">
                 Create New Finish
@@ -1801,8 +2024,14 @@ export default function AddItemPage() {
 
       {/* Create Measuring Unit Modal */}
       {showCreateMeasuringUnitModal && (
-        <div className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateMeasuringUnitModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowCreateMeasuringUnitModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-6 border-b border-slate-200">
               <h2 className="text-xl font-bold text-slate-800">
                 Create New Measuring Unit
@@ -1843,10 +2072,14 @@ export default function AddItemPage() {
                 </button>
                 <button
                   onClick={handleCreateNewMeasuringUnit}
-                  disabled={isCreatingMeasuringUnit || !newMeasuringUnitValue?.trim()}
+                  disabled={
+                    isCreatingMeasuringUnit || !newMeasuringUnitValue?.trim()
+                  }
                   className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {isCreatingMeasuringUnit ? "Creating..." : "Create Measuring Unit"}
+                  {isCreatingMeasuringUnit
+                    ? "Creating..."
+                    : "Create Measuring Unit"}
                 </button>
               </div>
             </div>

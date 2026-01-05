@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { validateAdminAuth } from "@/lib/validators/authFromToken";
+import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 
-export async function GET(request, { params }) {
+export async function GET(request: NextRequest) {
   try {
-    const authError = await validateAdminAuth(request);
-    if (authError) return authError;
+    const user = await requireAuth(request);
 
-    // Filter statements where supplier is not deleted
+    // Filter statements where supplier is not deleted and belongs to this organization
     const statements = await prisma.supplier_statement.findMany({
       where: {
         supplier: {
+          organization_id: user.organizationId,
           is_deleted: false,
         },
       },
@@ -18,13 +18,11 @@ export async function GET(request, { params }) {
         supplier: true,
         supplier_file: true,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
-    if (!statements) {
-      return NextResponse.json(
-        { status: false, message: "Statements not found" },
-        { status: 404 }
-      );
-    }
+    
     return NextResponse.json(
       {
         status: true,
@@ -34,6 +32,12 @@ export async function GET(request, { params }) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json(
+        { status: false, message: error.message },
+        { status: error.statusCode }
+      );
+    }
     console.error("Error in GET /api/supplier/statements:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },

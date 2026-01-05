@@ -1,6 +1,4 @@
 "use client";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import CRMLayout from "@/components/tabs";
 import React, {
   useEffect,
   useState,
@@ -9,8 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import Sidebar from "@/components/sidebar";
-// import { stages } from "@/components/constants";
-// import { useAuth } from "@/contexts/AuthContext";
+import { stages } from "@/components/constants";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -23,9 +20,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-// import { useDispatch } from "react-redux";
-// import { addTab, replaceTab } from "@/state/reducer/tabs";
-// import { v4 as uuidv4 } from "uuid";
 import AppHeader from "@/components/AppHeader";
 
 // Type definitions
@@ -60,21 +54,6 @@ interface Lot {
   [key: string]: unknown;
 }
 
-// Default stages if constants are not available
-const defaultStages = [
-  "Design",
-  "Order Materials",
-  "Cutting",
-  "Edge Banding",
-  "Drilling",
-  "Assembly",
-  "Installation",
-  "Final Inspection",
-];
-
-// Try to get stages from constants, fallback to default
-const stages = defaultStages;
-
 interface StageFilters {
   [stageName: string]: string;
 }
@@ -92,9 +71,7 @@ interface FilterButtonRefs {
 }
 
 export default function LotAtGlancePage() {
-  // const { getToken } = useAuth();
   const router = useRouter();
-  // const dispatch = useDispatch();
   const [activeLots, setActiveLots] = useState<Lot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

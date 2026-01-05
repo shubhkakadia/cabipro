@@ -7,7 +7,6 @@ import React, {
   useRef,
 } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -21,7 +20,6 @@ import {
   Tag,
   SwatchBook,
   X,
-  Download,
   ChevronDown,
   ChevronUp,
   Building2,
@@ -30,16 +28,13 @@ import {
   Plus,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// import TabsController from "@/components/tabscontroller";
 import Image from "next/image";
 import { CiMenuKebab } from "react-icons/ci";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import { useUploadProgress } from "@/hooks/useUploadProgress";
+import { useUploadProgress } from "@/hooks/useUploadProgress";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 import AppHeader from "@/components/AppHeader";
 
@@ -81,7 +76,7 @@ interface EdgingTape {
 }
 
 interface Supplier {
-  supplier_id: string;
+  id: string;
   name: string;
   [key: string]: unknown;
 }
@@ -106,7 +101,7 @@ interface StockTransaction {
 }
 
 interface Item {
-  item_id: string;
+  id: string;
   category: string;
   description?: string;
   quantity: number;
@@ -202,11 +197,20 @@ const InfoField: React.FC<InfoFieldProps> = ({
 export default function InventoryItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  // Upload progress placeholder functions
-  const showProgressToast = () => {};
-  const completeUpload = () => {};
-  const dismissProgressToast = () => {};
-  const getUploadProgressHandler = () => (_progressEvent: unknown) => {};
+  // Upload progress hook
+  const {
+    showProgressToast,
+    completeUpload,
+    dismissProgressToast,
+    getUploadProgressHandler,
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number
+    ) => (progressEvent: { loaded: number; total?: number }) => void;
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -634,7 +638,7 @@ export default function InventoryItemDetailPage() {
     setSupplierSearchTerm(supplier.name);
     setFormData({
       ...formData,
-      supplier_id: supplier.supplier_id,
+      supplier_id: supplier.id,
     });
     setIsSupplierDropdownOpen(false);
   };
@@ -913,7 +917,7 @@ export default function InventoryItemDetailPage() {
 
       // Show progress toast only if there's a new image file
       if (newImage) {
-        showProgressToast();
+        showProgressToast(1); // 1 file being uploaded
       }
 
       const response = await axios.patch(`/api/item/${id}`, formDataToSend, {
@@ -922,14 +926,14 @@ export default function InventoryItemDetailPage() {
           "Content-Type": "multipart/form-data",
         },
         ...(newImage && {
-          onUploadProgress: getUploadProgressHandler(),
+          onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
         }),
       });
 
       if (response.data.status) {
         setItem(response.data.data);
         if (newImage) {
-          completeUpload();
+          completeUpload(1); // 1 file uploaded
         } else {
           toast.success("Item updated successfully!", {
             position: "top-right",
@@ -1899,7 +1903,7 @@ export default function InventoryItemDetailPage() {
                                   if (imagePreview) {
                                     // New image preview (blob URL)
                                     setSelectedFile({
-                                      name: item.item_id || "item-image",
+                                      name: item.id || "item-image",
                                       type: "image",
                                       size: 0,
                                       url: imagePreview,
@@ -1910,7 +1914,7 @@ export default function InventoryItemDetailPage() {
                                     setSelectedFile({
                                       name:
                                         item.image.filename ||
-                                        item.item_id ||
+                                        item.id ||
                                         "item-image",
                                       type: "image",
                                       url: item.image.url.startsWith("/")
@@ -1930,7 +1934,7 @@ export default function InventoryItemDetailPage() {
                                       ? `/${item.image.url}`
                                       : "")
                                   }
-                                  alt={item.item_id}
+                                  alt={item.id}
                                   fill
                                   className="cursor-pointer object-cover rounded-lg border border-slate-200 transition-all duration-300 group-hover:scale-110"
                                 />
@@ -1974,7 +1978,7 @@ export default function InventoryItemDetailPage() {
                                 )}
                             </div>
                             <p className="text-xs text-slate-500 mb-3">
-                              ID: {item.item_id}
+                              ID: {item.id}
                             </p>
                             <div className="space-y-3">
                               <div>
@@ -2129,7 +2133,7 @@ export default function InventoryItemDetailPage() {
                                             filteredSuppliers.map(
                                               (supplier) => (
                                                 <button
-                                                  key={supplier.supplier_id}
+                                                  key={supplier.id}
                                                   type="button"
                                                   onClick={() =>
                                                     handleSupplierSelect(
@@ -2142,7 +2146,7 @@ export default function InventoryItemDetailPage() {
                                                     {supplier.name}
                                                   </div>
                                                   <div className="text-xs text-slate-500">
-                                                    {supplier.supplier_id}
+                                                    {supplier.id}
                                                   </div>
                                                 </button>
                                               )
@@ -2163,7 +2167,7 @@ export default function InventoryItemDetailPage() {
                                           onClick={() =>
                                             router.push(
                                               item.supplier
-                                                ? `/app/suppliers/${item.supplier.supplier_id}`
+                                                ? `/app/suppliers/${item.supplier.id}`
                                                 : "#"
                                             )
                                           }
@@ -2676,11 +2680,10 @@ export default function InventoryItemDetailPage() {
                       url: item.image.url.startsWith("/")
                         ? item.image.url
                         : `/${item.image.url}`,
-                      filename:
-                        item.image.filename || item.item_id || "item-image",
+                      filename: item.image.filename || item.id || "item-image",
                       mime_type: "image",
                       size: item.image.size || 0,
-                      id: item.image.id || item.item_id,
+                      id: item.image.id || item.id,
                     },
                   ]
                 : []
@@ -2697,7 +2700,7 @@ export default function InventoryItemDetailPage() {
           deleteWithInput={true}
           heading="Item"
           message="This will permanently delete this item from inventory. This action cannot be undone."
-          comparingName={item ? item.item_id : ""}
+          comparingName={item ? item.id : ""}
           isDeleting={isDeleting}
           entityType="item"
         />

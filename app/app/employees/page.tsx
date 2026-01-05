@@ -1,9 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import PaginationFooter from "@/components/PaginationFooter";
+import PaginationFooter from "@/components/PaginationFooter";
 import {
   ArrowUpDown,
   Funnel,
@@ -17,16 +15,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
-// import TabsController from "@/components/tabscontroller";
 import axios from "axios";
-// import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
-// import { useDispatch } from "react-redux";
-// import { replaceTab } from "@/state/reducer/tabs";
-// import { v4 as uuidv4 } from "uuid";
-// import { useExcelExport } from "@/hooks/useExcelExport";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
 
 // Type definitions
@@ -62,7 +53,6 @@ interface Employee {
 
 export default function EmployeesPage() {
   const router = useRouter();
-  // const dispatch = useDispatch();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,14 +119,68 @@ export default function EmployeesPage() {
     };
   }, []);
 
-  // Excel export placeholder
-  const isExporting = false;
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    return {
+      "Employee ID": (employee: Employee) => employee.employee_id || "",
+      "First Name": (employee: Employee) => employee.first_name || "",
+      "Last Name": (employee: Employee) => employee.last_name || "",
+      Email: (employee: Employee) => employee.email || "",
+      Phone: (employee: Employee) => employee.phone || "",
+      Role: (employee: Employee) => employee.role || "",
+      "Date of Birth": (employee: Employee) =>
+        employee.dob ? new Date(employee.dob).toLocaleDateString() : "",
+      "Join Date": (employee: Employee) =>
+        employee.join_date
+          ? new Date(employee.join_date).toLocaleDateString()
+          : "",
+      Address: (employee: Employee) => employee.address || "",
+      "Emergency Contact Name": (employee: Employee) =>
+        employee.emergency_contact_name || "",
+      "Emergency Contact Phone": (employee: Employee) =>
+        employee.emergency_contact_phone || "",
+      "Bank Account Name": (employee: Employee) =>
+        employee.bank_account_name || "",
+      "Bank Account Number": (employee: Employee) =>
+        employee.bank_account_number || "",
+      "Bank Account BSB": (employee: Employee) =>
+        employee.bank_account_bsb || "",
+      "Super Account Name": (employee: Employee) =>
+        employee.supper_account_name || "",
+      "Super Account Number": (employee: Employee) =>
+        employee.supper_account_number || "",
+      "TFN Number": (employee: Employee) => employee.tfn_number || "",
+      Education: (employee: Employee) => employee.education || "",
+      Availability: (employee: Employee) =>
+        JSON.stringify(employee.availability || {}),
+      Notes: (employee: Employee) => employee.notes || "",
+      "Created At": (employee: Employee) =>
+        employee.createdAt
+          ? new Date(employee.createdAt).toLocaleDateString()
+          : "",
+      "Updated At": (employee: Employee) =>
+        employee.updatedAt
+          ? new Date(employee.updatedAt).toLocaleDateString()
+          : "",
+    };
+  }, []);
+
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport({
+    columnMap,
+    filenamePrefix: "employees",
+    sheetName: "Employees",
+    selectedColumns:
+      selectedColumns.length === availableColumns.length
+        ? undefined
+        : selectedColumns,
+  }) as {
+    exportToExcel: (data: Employee[]) => Promise<void>;
+    isExporting: boolean;
+  };
+
   const handleExportToExcel = () => {
-    toast.info("Excel export feature coming soon", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-    });
+    exportToExcel(filteredAndSortedEmployees);
   };
 
   // Get distinct roles from employees data
@@ -252,6 +296,11 @@ export default function EmployeesPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
   };
 
   const handleRoleToggle = (role: string) => {
@@ -781,51 +830,14 @@ export default function EmployeesPage() {
                     </div>
 
                     {/* Fixed Pagination Footer */}
-                    {!loading && !error && paginatedEmployees.length > 0 && (
-                      <div className="p-4 border-t border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-sm text-slate-600">
-                            Showing {startIndex + 1} to{" "}
-                            {Math.min(endIndex, totalItems)} of {totalItems}{" "}
-                            results
-                          </div>
-                          <select
-                            value={itemsPerPage}
-                            onChange={(e) =>
-                              setItemsPerPage(Number(e.target.value))
-                            }
-                            className="text-sm border border-slate-300 rounded px-2 py-1"
-                          >
-                            <option value={25}>25 per page</option>
-                            <option value={50}>50 per page</option>
-                            <option value={100}>100 per page</option>
-                            <option value={0}>All</option>
-                          </select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Previous
-                          </button>
-                          <span className="text-sm text-slate-600">
-                            Page {currentPage} of{" "}
-                            {Math.ceil(totalItems / itemsPerPage) || 1}
-                          </span>
-                          <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={
-                              currentPage >=
-                              Math.ceil(totalItems / itemsPerPage)
-                            }
-                            className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      </div>
+                    {!loading && !error && (
+                      <PaginationFooter
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
+                        onItemsPerPageChange={handleItemsPerPageChange}
+                      />
                     )}
                   </div>
                 </div>

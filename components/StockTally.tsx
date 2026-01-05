@@ -13,20 +13,87 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { useAuth } from "@/contexts/AuthContext";
+// import { useAuth } from "@/contexts/AuthContext";
+
+// Type definitions
+interface Item {
+  item_id: string;
+  category?: string;
+  quantity?: number;
+  supplier_reference?: string;
+  sheet?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    type?: string;
+    material?: string;
+    dimensions?: string;
+  };
+  handle?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    type?: string;
+    material?: string;
+    dimensions?: string;
+  };
+  hardware?: {
+    brand?: string;
+    name?: string;
+    type?: string;
+    material?: string;
+    dimensions?: string;
+  };
+  accessory?: {
+    name?: string;
+    type?: string;
+    material?: string;
+  };
+  edging_tape?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    type?: string;
+    material?: string;
+    dimensions?: string;
+  };
+  [key: string]: unknown;
+}
+
+interface StockTallyPreviewItem {
+  item_id: string;
+  supplier_reference: string;
+  details: string;
+  dimensions: string;
+  current_quantity: number;
+  new_quantity: number;
+  difference: number;
+  type: "ADDED" | "WASTED";
+}
+
+interface StockTallyProps {
+  activeTab: string;
+  setShowStockTallyModal: (show: boolean) => void;
+  filteredAndSortedData: Item[];
+}
+
+type StockTallyStep = "download" | "upload" | "preview";
 
 export default function StockTally({
   activeTab,
   setShowStockTallyModal,
   filteredAndSortedData,
-}) {
-  const { getToken } = useAuth();
+}: StockTallyProps) {
+  // const { getToken } = useAuth();
 
-  const [stockTallyStep, setStockTallyStep] = useState("download"); // "download", "upload", "preview"
-  const [stockTallyFile, setStockTallyFile] = useState(null);
-  const [stockTallyPreviewData, setStockTallyPreviewData] = useState([]);
+  const [stockTallyStep, setStockTallyStep] =
+    useState<StockTallyStep>("download");
+  const [stockTallyFile, setStockTallyFile] = useState<File | null>(null);
+  const [stockTallyPreviewData, setStockTallyPreviewData] = useState<
+    StockTallyPreviewItem[]
+  >([]);
   const [isProcessingStockTally, setIsProcessingStockTally] = useState(false);
-  const [stockTallyError, setStockTallyError] = useState(null);
+  const [stockTallyError, setStockTallyError] = useState<string | null>(null);
 
   const handleCloseStockTally = () => {
     setShowStockTallyModal(false);
@@ -37,7 +104,7 @@ export default function StockTally({
   };
 
   // Get details string for an item based on category
-  const getItemDetails = (item) => {
+  const getItemDetails = (item: Item | null | undefined): string => {
     if (!item) return "";
     const category = item.category?.toLowerCase();
 
@@ -89,7 +156,7 @@ export default function StockTally({
   };
 
   // Get dimensions for an item based on category
-  const getItemDimensions = (item) => {
+  const getItemDimensions = (item: Item | null | undefined): string => {
     if (!item) return "";
     const category = item.category?.toLowerCase();
 
@@ -169,8 +236,10 @@ export default function StockTally({
     }
   };
 
-  const handleStockTallyFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleStockTallyFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
     if (file) {
       setStockTallyFile(file);
       setStockTallyError(null);
@@ -195,18 +264,26 @@ export default function StockTally({
 
       reader.onload = (e) => {
         try {
-          const data = new Uint8Array(e.target.result);
+          const result = e.target?.result;
+          if (!result || !(result instanceof ArrayBuffer)) {
+            setStockTallyError("Failed to read the file. Please try again.");
+            setIsProcessingStockTally(false);
+            return;
+          }
+          const data = new Uint8Array(result);
           const workbook = XLSX.read(data, { type: "array" });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          const jsonData = XLSX.utils.sheet_to_json(worksheet) as Array<
+            Record<string, unknown>
+          >;
 
           // Filter and validate items that have new stock quantity filled
-          const itemsToUpdate = [];
-          const errors = [];
+          const itemsToUpdate: StockTallyPreviewItem[] = [];
+          const errors: string[] = [];
 
           jsonData.forEach((row, index) => {
-            const itemId = row["Item ID"];
+            const itemId = row["Item ID"] as string | undefined;
             const newStockQty = row["New Stock Quantity"];
             const currentStockQty = row["Current Stock Quantity"];
 
@@ -225,10 +302,12 @@ export default function StockTally({
             }
 
             // Validate new stock quantity is a valid number
-            const parsedNewQty = parseFloat(newStockQty);
+            const parsedNewQty = parseFloat(String(newStockQty || ""));
             if (isNaN(parsedNewQty)) {
               errors.push(
-                `Row ${index + 2}: Invalid new stock quantity "${newStockQty}"`
+                `Row ${index + 2}: Invalid new stock quantity "${String(
+                  newStockQty
+                )}"`
               );
               return;
             }
@@ -242,7 +321,7 @@ export default function StockTally({
 
             // Find the original item from our data to get all details
             const originalItem = filteredAndSortedData.find(
-              (item) => item.item_id === itemId
+              (item: Item) => item.item_id === itemId
             );
 
             if (!originalItem) {
@@ -251,7 +330,9 @@ export default function StockTally({
             }
 
             const currentQty =
-              parseInt(currentStockQty) || originalItem.quantity || 0;
+              parseInt(String(currentStockQty || "")) ||
+              originalItem.quantity ||
+              0;
             const newQty = Math.floor(parsedNewQty);
 
             // Skip if no change
@@ -262,11 +343,14 @@ export default function StockTally({
             itemsToUpdate.push({
               item_id: itemId,
               supplier_reference:
-                row["Supplier Reference"] ||
+                (row["Supplier Reference"] as string) ||
                 originalItem.supplier_reference ||
                 "",
-              details: row["Details"] || getItemDetails(originalItem),
-              dimensions: row["Dimensions"] || getItemDimensions(originalItem),
+              details:
+                (row["Details"] as string) || getItemDetails(originalItem),
+              dimensions:
+                (row["Dimensions"] as string) ||
+                getItemDimensions(originalItem),
               current_quantity: currentQty,
               new_quantity: newQty,
               difference: newQty - currentQty,
@@ -323,13 +407,6 @@ export default function StockTally({
     try {
       setIsProcessingStockTally(true);
 
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.");
-        setIsProcessingStockTally(false);
-        return;
-      }
-
       // Prepare items for API
       const itemsToSend = stockTallyPreviewData.map((item) => ({
         item_id: item.item_id,
@@ -341,9 +418,7 @@ export default function StockTally({
         "/api/stock_tally",
         { items: itemsToSend },
         {
-          headers: {
-            Authorization: `Bearer ${sessionToken}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -362,16 +437,23 @@ export default function StockTally({
           autoClose: 3000,
         });
       }
-    } catch (error) {
-      console.error("Error saving stock tally:", error);
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to save stock tally. Please try again.",
-        {
+    } catch (err) {
+      console.error("Error saving stock tally:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to save stock tally. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to save stock tally. Please try again.", {
           position: "top-right",
           autoClose: 3000,
-        }
-      );
+        });
+      }
     } finally {
       setIsProcessingStockTally(false);
     }
@@ -417,10 +499,11 @@ export default function StockTally({
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-2">
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${stockTallyStep === "download"
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                    stockTallyStep === "download"
                       ? "bg-secondary text-white"
                       : "bg-green-500 text-white"
-                    }`}
+                  }`}
                 >
                   {stockTallyStep === "download" ? (
                     "1"
@@ -429,21 +512,23 @@ export default function StockTally({
                   )}
                 </div>
                 <span
-                  className={`text-sm font-medium ${stockTallyStep === "download"
+                  className={`text-sm font-medium ${
+                    stockTallyStep === "download"
                       ? "text-secondary"
                       : "text-green-600"
-                    }`}
+                  }`}
                 >
                   Download
                 </span>
                 <div className="w-12 h-0.5 bg-slate-200 mx-2" />
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${stockTallyStep === "upload"
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                    stockTallyStep === "upload"
                       ? "bg-secondary text-white"
                       : stockTallyStep === "preview"
-                        ? "bg-green-500 text-white"
-                        : "bg-slate-200 text-slate-500"
-                    }`}
+                      ? "bg-green-500 text-white"
+                      : "bg-slate-200 text-slate-500"
+                  }`}
                 >
                   {stockTallyStep === "preview" ? (
                     <Check className="h-4 w-4" />
@@ -452,29 +537,32 @@ export default function StockTally({
                   )}
                 </div>
                 <span
-                  className={`text-sm font-medium ${stockTallyStep === "upload"
+                  className={`text-sm font-medium ${
+                    stockTallyStep === "upload"
                       ? "text-secondary"
                       : stockTallyStep === "preview"
-                        ? "text-green-600"
-                        : "text-slate-400"
-                    }`}
+                      ? "text-green-600"
+                      : "text-slate-400"
+                  }`}
                 >
                   Upload
                 </span>
                 <div className="w-12 h-0.5 bg-slate-200 mx-2" />
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${stockTallyStep === "preview"
+                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                    stockTallyStep === "preview"
                       ? "bg-secondary text-white"
                       : "bg-slate-200 text-slate-500"
-                    }`}
+                  }`}
                 >
                   3
                 </div>
                 <span
-                  className={`text-sm font-medium ${stockTallyStep === "preview"
+                  className={`text-sm font-medium ${
+                    stockTallyStep === "preview"
                       ? "text-secondary"
                       : "text-slate-400"
-                    }`}
+                  }`}
                 >
                   Preview & Save
                 </span>
@@ -496,8 +584,8 @@ export default function StockTally({
                     <span className="font-medium text-secondary">
                       {filteredAndSortedData.length}
                     </span>{" "}
-                    items in the current view. Fill in the "New Stock Quantity"
-                    column for items you want to update.
+                    items in the current view. Fill in the &quot;New Stock
+                    Quantity&quot; column for items you want to update.
                   </p>
                   <div className="bg-slate-50 rounded-lg p-4 mb-6 text-left">
                     <h4 className="font-medium text-slate-700 mb-2">
@@ -531,10 +619,11 @@ export default function StockTally({
                   <button
                     onClick={handleDownloadStockTallyTemplate}
                     disabled={isProcessingStockTally}
-                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${isProcessingStockTally
+                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                      isProcessingStockTally
                         ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                         : "bg-secondary text-white hover:bg-secondary/90 cursor-pointer"
-                      }`}
+                    }`}
                   >
                     {isProcessingStockTally ? (
                       <>
@@ -564,15 +653,17 @@ export default function StockTally({
                   </h3>
                   <p className="text-slate-600 mb-6">
                     Upload the Excel file with your updated stock quantities.
-                    Only items with "New Stock Quantity" filled will be updated.
+                    Only items with &quot;New Stock Quantity&quot; filled will
+                    be updated.
                   </p>
 
                   {/* File Upload Area */}
                   <div
-                    className={`border-2 border-dashed rounded-lg p-8 mb-4 transition-colors ${stockTallyFile
+                    className={`border-2 border-dashed rounded-lg p-8 mb-4 transition-colors ${
+                      stockTallyFile
                         ? "border-green-400 bg-green-50"
                         : "border-slate-300 hover:border-secondary"
-                      }`}
+                    }`}
                   >
                     <input
                       type="file"
@@ -634,10 +725,11 @@ export default function StockTally({
                     <button
                       onClick={handleProcessStockTallyFile}
                       disabled={!stockTallyFile || isProcessingStockTally}
-                      className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all ${!stockTallyFile || isProcessingStockTally
+                      className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all ${
+                        !stockTallyFile || isProcessingStockTally
                           ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                           : "bg-secondary text-white hover:bg-secondary/90 cursor-pointer"
-                        }`}
+                      }`}
                     >
                       {isProcessingStockTally ? (
                         <>
@@ -732,10 +824,11 @@ export default function StockTally({
                             </td>
                             <td className="px-4 py-3 text-center">
                               <span
-                                className={`inline-flex items-center gap-1 font-medium ${item.difference > 0
+                                className={`inline-flex items-center gap-1 font-medium ${
+                                  item.difference > 0
                                     ? "text-green-600"
                                     : "text-red-600"
-                                  }`}
+                                }`}
                               >
                                 {item.difference > 0 ? (
                                   <ArrowUp className="h-3 w-3" />
@@ -748,10 +841,11 @@ export default function StockTally({
                             </td>
                             <td className="px-4 py-3 text-center">
                               <span
-                                className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${item.type === "ADDED"
+                                className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                  item.type === "ADDED"
                                     ? "bg-green-100 text-green-700"
                                     : "bg-red-100 text-red-700"
-                                  }`}
+                                }`}
                               >
                                 {item.type}
                               </span>
@@ -813,10 +907,11 @@ export default function StockTally({
               <button
                 onClick={handleSaveStockTally}
                 disabled={isProcessingStockTally}
-                className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all ${isProcessingStockTally
+                className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all ${
+                  isProcessingStockTally
                     ? "bg-slate-200 text-slate-500 cursor-not-allowed"
                     : "bg-primary text-white hover:bg-primary/90 cursor-pointer"
-                  }`}
+                }`}
               >
                 {isProcessingStockTally ? (
                   <>

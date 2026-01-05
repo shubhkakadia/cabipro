@@ -1,12 +1,8 @@
 "use client";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import CRMLayout from "@/components/tabs";
-// import TabsController from "@/components/tabscontroller";
 import { ChevronLeft, FolderOpen, ChevronDown, Layers } from "lucide-react";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
 import axios from "axios";
-// import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
@@ -28,8 +24,8 @@ interface Errors {
 }
 
 interface Client {
-  client_id: string;
-  client_name: string;
+  id: string;
+  name: string;
   [key: string]: unknown;
 }
 
@@ -93,12 +89,8 @@ export default function AddProjectPage() {
     } else {
       const filtered = clients.filter(
         (client: Client) =>
-          client.client_name
-            .toLowerCase()
-            .includes(clientSearchTerm.toLowerCase()) ||
-          client.client_id
-            .toLowerCase()
-            .includes(clientSearchTerm.toLowerCase())
+          client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+          client.id.toLowerCase().includes(clientSearchTerm.toLowerCase())
       );
       setFilteredClients(filtered);
     }
@@ -162,12 +154,14 @@ export default function AddProjectPage() {
     if (numLots > 0 && numLots <= 100) {
       const newLots = Array.from({ length: numLots }, (_, index) => {
         // Preserve existing lot data if available, otherwise create new with default lotId
-        return lots[index] || {
-          lotId: `lot ${index + 1}`,
-          clientName: "",
-          installationDueDate: "",
-          notes: "",
-        };
+        return (
+          lots[index] || {
+            lotId: `lot ${index + 1}`,
+            clientName: "",
+            installationDueDate: "",
+            notes: "",
+          }
+        );
       });
       setLots(newLots);
     } else if (numLots === 0 || value === "") {
@@ -175,7 +169,11 @@ export default function AddProjectPage() {
     }
   };
 
-  const handleLotChange = (index: number, field: keyof LotData, value: string) => {
+  const handleLotChange = (
+    index: number,
+    field: keyof LotData,
+    value: string
+  ) => {
     const updatedLots = [...lots];
     updatedLots[index] = {
       ...updatedLots[index],
@@ -202,16 +200,16 @@ export default function AddProjectPage() {
       const lotsToSend =
         lots && lots.length > 0
           ? lots.map((lot: LotData) => {
-            const fullLotId = formData.project_id
-              ? `${formData.project_id}-${lot.lotId}`
-              : lot.lotId;
-            return {
-              lotId: fullLotId,
-              clientName: lot.clientName,
-              installationDueDate: lot.installationDueDate || null,
-              notes: lot.notes || null,
-            };
-          })
+              const fullLotId = formData.project_id
+                ? `${formData.project_id}-${lot.lotId}`
+                : lot.lotId;
+              return {
+                lotId: fullLotId,
+                clientName: lot.clientName,
+                installationDueDate: lot.installationDueDate || null,
+                notes: lot.notes || null,
+              };
+            })
           : [];
 
       const data = {
@@ -326,6 +324,7 @@ export default function AddProjectPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-full w-full overflow-y-auto">
             <div className="px-4 py-2">
+              {/* Header */}
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => router.back()}
@@ -391,7 +390,10 @@ export default function AddProjectPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-4">
-                        <div className="relative flex-1" ref={clientDropdownRef}>
+                        <div
+                          className="relative flex-1"
+                          ref={clientDropdownRef}
+                        >
                           <label className="block text-sm font-medium text-slate-700 mb-2">
                             Client{" "}
                             <span className="text-slate-400">(Optional)</span>
@@ -413,8 +415,9 @@ export default function AddProjectPage() {
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                             >
                               <ChevronDown
-                                className={`w-5 h-5 transition-transform duration-200 ${isClientDropdownOpen ? "rotate-180" : ""
-                                  }`}
+                                className={`w-5 h-5 transition-transform duration-200 ${
+                                  isClientDropdownOpen ? "rotate-180" : ""
+                                }`}
                               />
                             </button>
                           </div>
@@ -424,22 +427,19 @@ export default function AddProjectPage() {
                               {filteredClients.length > 0 ? (
                                 filteredClients.map((client: Client) => (
                                   <button
-                                    key={client.client_id}
+                                    key={client.id}
                                     type="button"
                                     onClick={() =>
-                                      handleClientSelect(
-                                        client.client_id,
-                                        client.client_name
-                                      )
+                                      handleClientSelect(client.id, client.name)
                                     }
                                     className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
                                   >
                                     <div>
                                       <div className="font-medium">
-                                        {client.client_name}
+                                        {client.name}
                                       </div>
                                       <div className="text-xs text-slate-500">
-                                        id: {client.client_id}
+                                        id: {client.id}
                                       </div>
                                     </div>
                                   </button>
@@ -504,12 +504,15 @@ export default function AddProjectPage() {
                               <div className="flex flex-wrap gap-4">
                                 <div className="flex-1">
                                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Lot ID <span className="text-red-500">*</span>
+                                    Lot ID{" "}
+                                    <span className="text-red-500">*</span>
                                   </label>
                                   <input
                                     type="text"
                                     value={lot.lotId}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLInputElement>
+                                    ) =>
                                       handleLotChange(
                                         index,
                                         "lotId",
@@ -523,7 +526,9 @@ export default function AddProjectPage() {
                                   <p className="text-xs text-slate-500 mt-1">
                                     Lot ID will be:{" "}
                                     {formData.project_id
-                                      ? `${formData.project_id}-${lot.lotId || "XXX"}`
+                                      ? `${formData.project_id}-${
+                                          lot.lotId || "XXX"
+                                        }`
                                       : "PROJECT_ID-XXX"}
                                   </p>
                                 </div>
@@ -535,7 +540,9 @@ export default function AddProjectPage() {
                                   <input
                                     type="text"
                                     value={lot.clientName}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLInputElement>
+                                    ) =>
                                       handleLotChange(
                                         index,
                                         "clientName",
@@ -554,7 +561,9 @@ export default function AddProjectPage() {
                                   <input
                                     type="date"
                                     value={lot.installationDueDate}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLInputElement>
+                                    ) =>
                                       handleLotChange(
                                         index,
                                         "installationDueDate",
@@ -571,7 +580,9 @@ export default function AddProjectPage() {
                                 </label>
                                 <textarea
                                   value={lot.notes}
-                                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                  onChange={(
+                                    e: React.ChangeEvent<HTMLTextAreaElement>
+                                  ) =>
                                     handleLotChange(
                                       index,
                                       "notes",
@@ -595,10 +606,11 @@ export default function AddProjectPage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className={`cursor-pointer px-8 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${isLoading
-                        ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                        : "bg-primary/80 hover:bg-primary text-white"
-                        }`}
+                      className={`cursor-pointer px-8 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${
+                        isLoading
+                          ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                          : "bg-primary/80 hover:bg-primary text-white"
+                      }`}
                     >
                       {isLoading ? "Creating Project..." : "Create Project"}
                     </button>

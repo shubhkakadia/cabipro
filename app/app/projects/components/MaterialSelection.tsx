@@ -1,53 +1,161 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { Plus, X, Save, Download, FileText, FileUp, Trash, ChevronDown, Eye } from "lucide-react";
+import {
+  Plus,
+  X,
+  Save,
+  Download,
+  FileText,
+  FileUp,
+  Trash,
+  ChevronDown,
+} from "lucide-react";
 import { formData } from "./MaterialSelectionConstants";
-import { useAuth } from "@/contexts/AuthContext";
-import { getBaseUrl } from "@/lib/baseUrl";
 import axios from "axios";
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import Image from "next/image";
-import ViewMedia from "./ViewMedia";
+import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 
-export default function MaterialSelection({ lot_id, project_id }) {
-  const { getToken } = useAuth();
+// Type definitions
+interface MaterialSelectionProps {
+  lot_id: string;
+  project_id?: string;
+}
+
+interface Heights {
+  ceilingHeight: string;
+  bulkheadHeight: string;
+  kickerHeight: string;
+  cabinetryHeight: string;
+}
+
+interface BedTab {
+  id: string;
+  option: "WIR" | "BIR" | "Both" | null;
+}
+
+interface CustomArea {
+  id: string;
+  name: string;
+  originalNumber?: string;
+}
+
+interface CustomItem {
+  id: number;
+  name: string;
+  category: string | null;
+}
+
+interface MediaFile {
+  id: string;
+  filename: string;
+  url: string;
+  mime_type?: string;
+  file_type?: string;
+  extension?: string;
+  size?: number;
+}
+
+interface ExpandedSections {
+  images: boolean;
+  videos: boolean;
+  pdfs: boolean;
+  others: boolean;
+}
+
+interface Area {
+  area_name: string;
+  area_instance_id?: number;
+  bed_option?: string;
+  notes?: string;
+  items?: Array<{
+    name: string;
+    category?: string | null;
+    is_applicable: boolean;
+    item_notes?: string;
+  }>;
+}
+
+interface Version {
+  id: string;
+  version_number: number;
+  is_current?: boolean;
+  ceiling_height?: string | number;
+  bulkhead_height?: string | number;
+  kicker_height?: string | number;
+  cabinetry_height?: string | number;
+  areas?: Area[];
+}
+
+interface MaterialSelectionData {
+  id: string;
+  current_version_id: string;
+  currentVersion?: Version;
+  versions?: Version[];
+  media?: MediaFile[];
+  project?: {
+    name?: string;
+  };
+  lot?: {
+    lot_id?: string;
+    name?: string;
+  };
+}
+
+interface LotData {
+  startDate?: string;
+  [key: string]: unknown;
+}
+
+export default function MaterialSelection({
+  lot_id,
+  project_id,
+}: MaterialSelectionProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [materialSelectionData, setMaterialSelectionData] = useState(null);
-  const [selectedVersionId, setSelectedVersionId] = useState(null);
+  const [materialSelectionData, setMaterialSelectionData] =
+    useState<MaterialSelectionData | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
+    null
+  );
   const [activeTab, setActiveTab] = useState("Kitchen");
-  const [applicableItems, setApplicableItems] = useState({});
-  const [notes, setNotes] = useState({});
-  const [customItems, setCustomItems] = useState({});
-  const [areaNotes, setAreaNotes] = useState({});
-  const [heights, setHeights] = useState({
+  const [applicableItems, setApplicableItems] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
+  const [notes, setNotes] = useState<Record<string, Record<string, string>>>(
+    {}
+  );
+  const [customItems, setCustomItems] = useState<Record<string, CustomItem[]>>(
+    {}
+  );
+  const [areaNotes, setAreaNotes] = useState<Record<string, string>>({});
+  const [heights, setHeights] = useState<Heights>({
     ceilingHeight: "",
     bulkheadHeight: "",
     kickerHeight: "",
     cabinetryHeight: "",
   });
-  // Bed tabs: { bedId: { id, option: 'WIR' | 'BIR' | null } }
-  const [bedTabs, setBedTabs] = useState({});
-  // Custom areas: { areaId: { id, name: string } }
-  const [customAreas, setCustomAreas] = useState({});
-  // Lot data for PDF overview
-  const [lotData, setLotData] = useState(null);
+  const [bedTabs, setBedTabs] = useState<Record<string, BedTab>>({});
+  const [customAreas, setCustomAreas] = useState<Record<string, CustomArea>>(
+    {}
+  );
+  const [lotData, setLotData] = useState<LotData | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
 
   // File upload states
-  const [mediaFiles, setMediaFiles] = useState([]);
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
-  const [deletingMediaId, setDeletingMediaId] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({
+  const [deletingMediaId, setDeletingMediaId] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     images: false,
     videos: false,
     pdfs: false,
     others: false,
   });
   const [viewFileModal, setViewFileModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if current version is selected (editable)
   const isCurrentVersion = useMemo(() => {
@@ -57,14 +165,22 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
   // Helper function to create a unique key for items that includes category when it exists
   // This ensures items with the same name in different categories (WIR vs BIR) are distinct
-  const getItemKey = (itemName, category = null) => {
+  const getItemKey = (
+    itemName: string,
+    category: string | null = null
+  ): string => {
     if (category) {
       return `${category}:${itemName}`;
     }
     return itemName;
   };
 
-  const handleApplicableChange = (sectionKey, itemName, checked, category = null) => {
+  const handleApplicableChange = (
+    sectionKey: string,
+    itemName: string,
+    checked: boolean,
+    category: string | null = null
+  ) => {
     const itemKey = getItemKey(itemName, category);
     setApplicableItems((prev) => ({
       ...prev,
@@ -75,7 +191,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
     }));
   };
 
-  const handleNotesChange = (sectionKey, itemName, value, category = null) => {
+  const handleNotesChange = (
+    sectionKey: string,
+    itemName: string,
+    value: string,
+    category: string | null = null
+  ) => {
     const itemKey = getItemKey(itemName, category);
     setNotes((prev) => ({
       ...prev,
@@ -86,21 +207,24 @@ export default function MaterialSelection({ lot_id, project_id }) {
     }));
   };
 
-  const handleAreaNotesChange = (sectionKey, value) => {
+  const handleAreaNotesChange = (sectionKey: string, value: string) => {
     setAreaNotes((prev) => ({
       ...prev,
       [sectionKey]: value,
     }));
   };
 
-  const handleHeightChange = (heightKey, value) => {
+  const handleHeightChange = (heightKey: keyof Heights, value: string) => {
     setHeights((prev) => ({
       ...prev,
       [heightKey]: value,
     }));
   };
 
-  const handleAddCustomItem = (sectionKey, category = null) => {
+  const handleAddCustomItem = (
+    sectionKey: string,
+    category: string | null = null
+  ) => {
     const newItem = {
       id: Date.now(),
       name: "",
@@ -112,7 +236,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
     }));
   };
 
-  const handleRemoveCustomItem = (sectionKey, itemId) => {
+  const handleRemoveCustomItem = (sectionKey: string, itemId: number) => {
     // Get the custom item to remove from current state
     const itemToRemove = customItems[sectionKey]?.find(
       (item) => item.id === itemId
@@ -147,7 +271,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
     }
   };
 
-  const handleCustomItemNameChange = (sectionKey, itemId, value) => {
+  const handleCustomItemNameChange = (
+    sectionKey: string,
+    itemId: number,
+    value: string
+  ) => {
     // Get the current item to find its old name and category
     const currentItem = customItems[sectionKey]?.find(
       (item) => item.id === itemId
@@ -201,7 +329,10 @@ export default function MaterialSelection({ lot_id, project_id }) {
   // For other tabs, returns simple array of items
   // For custom areas, returns empty array (no predefined items)
   // bedOption: optional parameter to override bedTabs state (useful during form population)
-  const getSectionItems = (sectionKey, bedOption = null) => {
+  const getSectionItems = (
+    sectionKey: string,
+    bedOption: string | null = null
+  ): Array<{ category: string; items: string[] }> | string[] => {
     // Handle custom areas - return empty array (no predefined items)
     if (customAreas[sectionKey]) {
       return [];
@@ -264,22 +395,28 @@ export default function MaterialSelection({ lot_id, project_id }) {
       return groupedItems;
     }
 
-    const sectionData = formData[sectionKey];
+    const sectionData = (formData as Record<string, unknown>)[
+      sectionKey
+    ] as unknown;
     if (Array.isArray(sectionData)) {
       return sectionData;
     }
     // Handle nested structure (other than Bed)
     if (sectionData && typeof sectionData === "object") {
-      const allItems = [];
-      if (sectionData.Vanity && Array.isArray(sectionData.Vanity)) {
-        allItems.push(...sectionData.Vanity);
+      const allItems: string[] = [];
+      const sectionObj = sectionData as {
+        Vanity?: string[];
+        option?: { WIR?: string[]; BIR?: string[] };
+      };
+      if (sectionObj.Vanity && Array.isArray(sectionObj.Vanity)) {
+        allItems.push(...sectionObj.Vanity);
       }
-      if (sectionData.option) {
-        if (sectionData.option.WIR && Array.isArray(sectionData.option.WIR)) {
-          allItems.push(...sectionData.option.WIR);
+      if (sectionObj.option) {
+        if (sectionObj.option.WIR && Array.isArray(sectionObj.option.WIR)) {
+          allItems.push(...sectionObj.option.WIR);
         }
-        if (sectionData.option.BIR && Array.isArray(sectionData.option.BIR)) {
-          allItems.push(...sectionData.option.BIR);
+        if (sectionObj.option.BIR && Array.isArray(sectionObj.option.BIR)) {
+          allItems.push(...sectionObj.option.BIR);
         }
       }
       return allItems;
@@ -289,7 +426,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
   // Get all available tabs (including dynamic bed tabs and custom areas) - memoized for performance
   const allTabs = useMemo(() => {
-    const tabs = [];
+    const tabs: string[] = [];
     Object.keys(formData).forEach((key) => {
       if (key === "Bed") {
         // Add the first Bed tab
@@ -312,7 +449,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
   }, [bedTabs, customAreas]); // Recompute when bedTabs or customAreas changes
 
   // Calculate applicable items count for a tab
-  const getApplicableCount = (sectionKey) => {
+  const getApplicableCount = (sectionKey: string): number => {
     // Handle custom areas - count only custom items
     if (customAreas[sectionKey]) {
       const customItemsForSection = customItems[sectionKey] || [];
@@ -329,20 +466,24 @@ export default function MaterialSelection({ lot_id, project_id }) {
     if (
       sectionKey.startsWith("Bed") &&
       Array.isArray(sectionItems) &&
-      sectionItems[0]?.category
+      sectionItems.length > 0 &&
+      typeof sectionItems[0] === "object" &&
+      "category" in sectionItems[0]
     ) {
       // Bed tabs with grouped items
-      sectionItems.forEach((group) => {
-        group.items.forEach((itemName) => {
-          const itemKey = getItemKey(itemName, group.category);
-          if (applicableItems[sectionKey]?.[itemKey]) {
-            count++;
-          }
-        });
-      });
+      (sectionItems as Array<{ category: string; items: string[] }>).forEach(
+        (group) => {
+          group.items.forEach((itemName: string) => {
+            const itemKey = getItemKey(itemName, group.category);
+            if (applicableItems[sectionKey]?.[itemKey]) {
+              count++;
+            }
+          });
+        }
+      );
       // Count custom items
       const customItemsForSection = customItems[sectionKey] || [];
-      customItemsForSection.forEach((customItem) => {
+      customItemsForSection.forEach((customItem: CustomItem) => {
         if (customItem.name) {
           const itemKey = getItemKey(customItem.name, customItem.category);
           if (applicableItems[sectionKey]?.[itemKey]) {
@@ -352,7 +493,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
       });
     } else if (Array.isArray(sectionItems)) {
       // Regular tabs
-      sectionItems.forEach((itemName) => {
+      (sectionItems as string[]).forEach((itemName: string) => {
         const itemKey = getItemKey(itemName, null);
         if (applicableItems[sectionKey]?.[itemKey]) {
           count++;
@@ -360,7 +501,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
       });
       // Count custom items
       const customItemsForSection = customItems[sectionKey] || [];
-      customItemsForSection.forEach((customItem) => {
+      customItemsForSection.forEach((customItem: CustomItem) => {
         if (customItem.name) {
           const itemKey = getItemKey(customItem.name, customItem.category);
           if (applicableItems[sectionKey]?.[itemKey]) {
@@ -421,7 +562,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
     const newCustomArea = {
       id: newAreaId,
       name: newAreaId,
-      originalNumber: nextNumber.toString() // Store original number for default value
+      originalNumber: nextNumber.toString(), // Store original number for default value
     };
 
     setCustomAreas((prev) => ({
@@ -433,7 +574,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Handle renaming a custom area
-  const handleRenameCustomArea = (oldAreaId, newAreaName) => {
+  const handleRenameCustomArea = (oldAreaId: string, newAreaName: string) => {
     if (!newAreaName || newAreaName.trim() === "") {
       return; // Don't allow empty names
     }
@@ -446,7 +587,10 @@ export default function MaterialSelection({ lot_id, project_id }) {
     }
 
     // Check if new name already exists
-    if (customAreas[newAreaId] || formData[newAreaId]) {
+    if (
+      customAreas[newAreaId] ||
+      (formData as Record<string, unknown>)[newAreaId]
+    ) {
       toast.error("An area with this name already exists", {
         position: "top-right",
         autoClose: 3000,
@@ -514,7 +658,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Handle removing a custom area
-  const handleRemoveCustomArea = (areaId) => {
+  const handleRemoveCustomArea = (areaId: string) => {
     // If the removed area was active, switch to another tab first
     if (activeTab === areaId) {
       // Find another custom area or default to "Kitchen"
@@ -564,7 +708,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Handle removing a bed tab
-  const handleRemoveBedTab = (bedId) => {
+  const handleRemoveBedTab = (bedId: string) => {
     // Don't allow removing the first "Bed" tab
     if (bedId === "Bed") {
       return;
@@ -580,9 +724,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
         setActiveTab(remainingBedTabs[0]);
       } else {
         // Find first non-bed tab from formData
-        const nonBedTabs = Object.keys(formData).filter(
-          (key) => key !== "Bed"
-        );
+        const nonBedTabs = Object.keys(formData).filter((key) => key !== "Bed");
         setActiveTab(nonBedTabs.length > 0 ? nonBedTabs[0] : "Kitchen");
       }
     }
@@ -621,7 +763,10 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Handle selecting option for existing bed tab
-  const handleSelectBedOptionForTab = (bedId, option) => {
+  const handleSelectBedOptionForTab = (
+    bedId: string,
+    option: "WIR" | "BIR" | "Both" | null
+  ) => {
     setBedTabs((prev) => ({
       ...prev,
       [bedId]: {
@@ -637,21 +782,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
     try {
       setIsLoading(true);
-      const sessionToken = getToken();
-
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        return;
-      }
 
       const response = await axios.get(
-        `${getBaseUrl()}/api/material_selection/lot/${lot_id}`,
+        `/api/material_selection/lot/${lot_id}`,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -672,12 +808,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
         setMaterialSelectionData(null);
         setSelectedVersionId(null);
       }
-    } catch (error) {
-      console.error("Error fetching material selection:", error);
-      if (error.response?.status !== 404) {
+    } catch (err) {
+      console.error("Error fetching material selection:", err);
+      if (axios.isAxiosError(err) && err.response?.status !== 404) {
         toast.error(
-          error.response?.data?.message ||
-          "Failed to fetch material selection. Please try again.",
+          err.response?.data?.message ||
+            "Failed to fetch material selection. Please try again.",
           {
             position: "top-right",
             autoClose: 3000,
@@ -690,7 +826,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Populate form from version data
-  const populateFormFromVersion = (version) => {
+  const populateFormFromVersion = (version: Version | null | undefined) => {
     if (!version) {
       // Reset form
       setHeights({
@@ -724,12 +860,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
     });
 
     // Reset state
-    const newApplicableItems = {};
-    const newNotes = {};
-    const newCustomItems = {};
-    const newAreaNotes = {};
-    const newBedTabs = {};
-    const newCustomAreas = {};
+    const newApplicableItems: Record<string, Record<string, boolean>> = {};
+    const newNotes: Record<string, Record<string, string>> = {};
+    const newCustomItems: Record<string, CustomItem[]> = {};
+    const newAreaNotes: Record<string, string> = {};
+    const newBedTabs: Record<string, BedTab> = {};
+    const newCustomAreas: Record<string, CustomArea> = {};
 
     // Process areas
     if (version.areas && Array.isArray(version.areas)) {
@@ -746,7 +882,8 @@ export default function MaterialSelection({ lot_id, project_id }) {
           if (area.bed_option) {
             newBedTabs[areaName] = {
               id: areaName,
-              option: area.bed_option,
+              option:
+                (area.bed_option as "WIR" | "BIR" | "Both" | null) || null,
             };
           }
         } else if (areaName.startsWith("Custom Area")) {
@@ -758,7 +895,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
             name: areaName,
             originalNumber: originalNumber,
           };
-        } else if (!formData[areaName]) {
+        } else if (!(formData as Record<string, unknown>)[areaName]) {
           // If area doesn't exist in formData and is not a bed, treat it as custom area
           // Try to extract number if it matches pattern, otherwise use "1"
           const match = areaName.match(/Custom Area (\d+)/);
@@ -772,57 +909,38 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
         // Process items
         if (area.items && Array.isArray(area.items)) {
-          area.items.forEach((item) => {
-            // Use category-aware key for items
-            const itemKey = getItemKey(item.name, item.category || null);
+          area.items.forEach(
+            (item: {
+              name: string;
+              category?: string | null;
+              is_applicable?: boolean;
+              item_notes?: string;
+            }) => {
+              // Use category-aware key for items
+              const itemKey = getItemKey(item.name, item.category || null);
 
-            // Set applicable status
-            if (!newApplicableItems[areaName]) {
-              newApplicableItems[areaName] = {};
-            }
-            newApplicableItems[areaName][itemKey] =
-              item.is_applicable || false;
-
-            // Set item notes
-            if (item.item_notes) {
-              if (!newNotes[areaName]) {
-                newNotes[areaName] = {};
+              // Set applicable status
+              if (!newApplicableItems[areaName]) {
+                newApplicableItems[areaName] = {};
               }
-              newNotes[areaName][itemKey] = item.item_notes;
-            }
+              newApplicableItems[areaName][itemKey] =
+                item.is_applicable || false;
 
-            // For custom areas, all items are custom items
-            if (newCustomAreas[areaName] || (!formData[areaName] && !areaName.startsWith("Bed"))) {
-              // It's a custom area, so all items are custom
-              if (!newCustomItems[areaName]) {
-                newCustomItems[areaName] = [];
+              // Set item notes
+              if (item.item_notes) {
+                if (!newNotes[areaName]) {
+                  newNotes[areaName] = {};
+                }
+                newNotes[areaName][itemKey] = item.item_notes;
               }
-              // Check if custom item already exists
-              const exists = newCustomItems[areaName].some(
-                (ci) => ci.name === item.name && ci.category === item.category
-              );
-              if (!exists) {
-                newCustomItems[areaName].push({
-                  id: Date.now() + Math.random(), // Generate unique ID
-                  name: item.name,
-                  category: item.category || null,
-                });
-              }
-            } else {
-              // Check if item is custom (not in predefined list)
-              // For bed tabs, pass the bed_option directly so getSectionItems knows which items to include
-              const bedOptionForCheck = areaName.startsWith("Bed")
-                ? area.bed_option
-                : null;
-              const sectionItems = getSectionItems(areaName, bedOptionForCheck);
-              const isPredefined = checkIfItemIsPredefined(
-                areaName,
-                item.name,
-                sectionItems
-              );
 
-              if (!isPredefined) {
-                // It's a custom item
+              // For custom areas, all items are custom items
+              if (
+                newCustomAreas[areaName] ||
+                (!(formData as Record<string, unknown>)[areaName] &&
+                  !areaName.startsWith("Bed"))
+              ) {
+                // It's a custom area, so all items are custom
                 if (!newCustomItems[areaName]) {
                   newCustomItems[areaName] = [];
                 }
@@ -837,9 +955,46 @@ export default function MaterialSelection({ lot_id, project_id }) {
                     category: item.category || null,
                   });
                 }
+              } else {
+                // Check if item is custom (not in predefined list)
+                // For bed tabs, pass the bed_option directly so getSectionItems knows which items to include
+                const bedOptionForCheck = areaName.startsWith("Bed")
+                  ? area.bed_option
+                  : null;
+                const sectionItems = getSectionItems(
+                  areaName,
+                  bedOptionForCheck || null
+                );
+                const isPredefined = checkIfItemIsPredefined(
+                  areaName,
+                  item.name,
+                  sectionItems
+                );
+
+                if (!isPredefined) {
+                  // It's a custom item
+                  if (!newCustomItems[areaName]) {
+                    newCustomItems[areaName] = [];
+                  }
+                  // Check if custom item already exists
+                  const exists = newCustomItems[areaName]?.some(
+                    (ci: CustomItem) =>
+                      ci.name === item.name && ci.category === item.category
+                  );
+                  if (!exists) {
+                    if (!newCustomItems[areaName]) {
+                      newCustomItems[areaName] = [];
+                    }
+                    newCustomItems[areaName].push({
+                      id: Date.now() + Math.random(), // Generate unique ID
+                      name: item.name,
+                      category: item.category || null,
+                    });
+                  }
+                }
               }
             }
-          });
+          );
         }
       });
     }
@@ -858,28 +1013,36 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Helper function to check if item is predefined
-  const checkIfItemIsPredefined = (areaName, itemName, sectionItems) => {
+  const checkIfItemIsPredefined = (
+    areaName: string,
+    itemName: string,
+    sectionItems: Array<{ category: string; items: string[] }> | string[]
+  ): boolean => {
     if (!sectionItems || sectionItems.length === 0) return false;
 
     // Check if it's a bed tab with categories
     if (
       areaName.startsWith("Bed") &&
       Array.isArray(sectionItems) &&
-      sectionItems[0]?.category
+      sectionItems.length > 0 &&
+      typeof sectionItems[0] === "object" &&
+      "category" in sectionItems[0]
     ) {
-      return sectionItems.some((group) => group.items.includes(itemName));
+      return (
+        sectionItems as Array<{ category: string; items: string[] }>
+      ).some((group) => group.items.includes(itemName));
     }
 
     // Check regular tabs
     if (Array.isArray(sectionItems)) {
-      return sectionItems.includes(itemName);
+      return (sectionItems as string[]).includes(itemName);
     }
 
     return false;
   };
 
   // Handle version change
-  const handleVersionChange = async (versionId) => {
+  const handleVersionChange = async (versionId: string) => {
     if (!materialSelectionData) return;
 
     setSelectedVersionId(versionId);
@@ -893,21 +1056,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
     // For past versions, fetch the version data from API
     try {
       setIsLoading(true);
-      const sessionToken = getToken();
-
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        return;
-      }
 
       const response = await axios.get(
-        `${getBaseUrl()}/api/material_selection/version/${versionId}`,
+        `/api/material_selection/version/${versionId}`,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -925,16 +1079,23 @@ export default function MaterialSelection({ lot_id, project_id }) {
           autoClose: 3000,
         });
       }
-    } catch (error) {
-      console.error("Error fetching version:", error);
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to fetch version data. Please try again.",
-        {
+    } catch (err) {
+      console.error("Error fetching version:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to fetch version data. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to fetch version data. Please try again.", {
           position: "top-right",
           autoClose: 3000,
-        }
-      );
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -945,35 +1106,32 @@ export default function MaterialSelection({ lot_id, project_id }) {
     if (!lot_id) return;
 
     try {
-      const sessionToken = getToken();
-      if (!sessionToken) return;
-
       // Try to find lot by lot_id string first
       // The API might accept lot_id as a query parameter or we need to find it differently
       // For now, we'll try the standard API and handle gracefully if it fails
       try {
-        const response = await axios.get(
-          `${getBaseUrl()}/api/lot/${lot_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await axios.get(`/api/lot/${lot_id}`, {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
         if (response.data.status && response.data.data) {
           setLotData(response.data.data);
           return;
         }
-      } catch (apiError) {
+      } catch {
         // If API call fails, try to get lot data from material selection data
         // The material selection already includes lot info, but not startDate
         // We'll handle missing startDate gracefully in the PDF
-        console.log("Could not fetch lot details via API, will use available data");
+        console.log(
+          "Could not fetch lot details via API, will use available data"
+        );
       }
-    } catch (error) {
-      console.error("Error fetching lot data:", error);
+    } catch (err) {
+      console.error("Error fetching lot data:", err);
+      // Silently fail - lot data is optional for PDF
     }
   };
 
@@ -983,11 +1141,23 @@ export default function MaterialSelection({ lot_id, project_id }) {
       fetchMaterialSelection();
       fetchLotData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lot_id]);
 
   // Collect all data and format for API
   const collectFormData = () => {
-    const areasData = [];
+    const areasData: Array<{
+      area_name: string;
+      area_instance_id: number;
+      bed_option?: string | null;
+      notes?: string | null;
+      items: Array<{
+        name: string;
+        category: string | null;
+        is_applicable: boolean;
+        item_notes?: string | null;
+      }>;
+    }> = [];
 
     // Process all tabs (areas)
     allTabs.forEach((sectionKey) => {
@@ -999,8 +1169,8 @@ export default function MaterialSelection({ lot_id, project_id }) {
       // Get area notes (convert empty strings to null)
       const areaNote =
         areaNotes[sectionKey] &&
-          typeof areaNotes[sectionKey] === "string" &&
-          areaNotes[sectionKey].trim() !== ""
+        typeof areaNotes[sectionKey] === "string" &&
+        areaNotes[sectionKey].trim() !== ""
           ? areaNotes[sectionKey].trim()
           : null;
 
@@ -1008,16 +1178,25 @@ export default function MaterialSelection({ lot_id, project_id }) {
       const bedOption = isBedTab && bedConfig?.option ? bedConfig.option : null;
 
       // Collect items for this area - only items with data (is_applicable or has notes)
-      const items = [];
+      const items: Array<{
+        name: string;
+        category: string | null;
+        is_applicable: boolean;
+        item_notes: string | null;
+      }> = [];
 
       // Helper function to check if item has data (with category support)
-      const itemHasData = (itemName, category = null) => {
+      const itemHasData = (
+        itemName: string,
+        category: string | null = null
+      ): boolean => {
         const itemKey = getItemKey(itemName, category);
         const isApplicable = applicableItems[sectionKey]?.[itemKey] || false;
-        const hasNote =
+        const hasNote = !!(
           notes[sectionKey]?.[itemKey] &&
-          typeof notes[sectionKey][itemKey] === "string" &&
-          notes[sectionKey][itemKey].trim() !== "";
+          typeof notes[sectionKey]?.[itemKey] === "string" &&
+          (notes[sectionKey]?.[itemKey] as string).trim() !== ""
+        );
         return isApplicable || hasNote;
       };
 
@@ -1031,12 +1210,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
         customAreaItems.forEach((customItem) => {
           // Always include custom items if they have a name, regardless of applicable status or notes
           const itemKey = getItemKey(customItem.name, null);
-          const isApplicable =
-            applicableItems[sectionKey]?.[itemKey] || false;
+          const isApplicable = applicableItems[sectionKey]?.[itemKey] || false;
           const itemNote =
             notes[sectionKey]?.[itemKey] &&
-              typeof notes[sectionKey][itemKey] === "string" &&
-              notes[sectionKey][itemKey].trim() !== ""
+            typeof notes[sectionKey][itemKey] === "string" &&
+            notes[sectionKey][itemKey].trim() !== ""
               ? notes[sectionKey][itemKey].trim()
               : null;
 
@@ -1050,65 +1228,69 @@ export default function MaterialSelection({ lot_id, project_id }) {
       } else if (
         isBedTab &&
         Array.isArray(sectionItems) &&
-        sectionItems[0]?.category
+        sectionItems.length > 0 &&
+        typeof sectionItems[0] === "object" &&
+        "category" in sectionItems[0]
       ) {
         // Bed tabs with grouped items by category
-        sectionItems.forEach((group) => {
-          // Process predefined items in this category - only include if item has data
-          group.items.forEach((itemName) => {
-            // Only include item if it has data (is applicable or has notes)
-            if (!itemHasData(itemName, group.category)) {
-              return;
-            }
+        (sectionItems as Array<{ category: string; items: string[] }>).forEach(
+          (group) => {
+            // Process predefined items in this category - only include if item has data
+            group.items.forEach((itemName: string) => {
+              // Only include item if it has data (is applicable or has notes)
+              if (!itemHasData(itemName, group.category)) {
+                return;
+              }
 
-            const itemKey = getItemKey(itemName, group.category);
-            const isApplicable =
-              applicableItems[sectionKey]?.[itemKey] || false;
-            const itemNote =
-              notes[sectionKey]?.[itemKey] &&
+              const itemKey = getItemKey(itemName, group.category);
+              const isApplicable =
+                applicableItems[sectionKey]?.[itemKey] || false;
+              const itemNote =
+                notes[sectionKey]?.[itemKey] &&
                 typeof notes[sectionKey][itemKey] === "string" &&
                 notes[sectionKey][itemKey].trim() !== ""
-                ? notes[sectionKey][itemKey].trim()
-                : null;
+                  ? notes[sectionKey][itemKey].trim()
+                  : null;
 
-            items.push({
-              name: itemName,
-              category: group.category,
-              is_applicable: isApplicable,
-              item_notes: itemNote,
+              items.push({
+                name: itemName,
+                category: group.category,
+                is_applicable: isApplicable,
+                item_notes: itemNote,
+              });
             });
-          });
 
-          // Process custom items for this category - always include if they have a name
-          const categoryCustomItems = (customItems[sectionKey] || []).filter(
-            (item) =>
-              item.category === group.category && item.name.trim() !== ""
-          );
+            // Process custom items for this category - always include if they have a name
+            const categoryCustomItems = (customItems[sectionKey] || []).filter(
+              (item: CustomItem) =>
+                item.category === group.category && item.name.trim() !== ""
+            );
 
-          categoryCustomItems.forEach((customItem) => {
-            // Always include custom items if they have a name, regardless of applicable status or notes
-            const itemKey = getItemKey(customItem.name, customItem.category);
-            const isApplicable =
-              applicableItems[sectionKey]?.[itemKey] || false;
-            const itemNote =
-              notes[sectionKey]?.[itemKey] &&
+            categoryCustomItems.forEach((customItem: CustomItem) => {
+              // Always include custom items if they have a name, regardless of applicable status or notes
+              const itemKey = getItemKey(customItem.name, customItem.category);
+              const isApplicable =
+                applicableItems[sectionKey]?.[itemKey] || false;
+              const itemNote =
+                notes[sectionKey]?.[itemKey] &&
                 typeof notes[sectionKey][itemKey] === "string" &&
                 notes[sectionKey][itemKey].trim() !== ""
-                ? notes[sectionKey][itemKey].trim()
-                : null;
+                  ? notes[sectionKey][itemKey].trim()
+                  : null;
 
-            items.push({
-              name: customItem.name,
-              category: group.category,
-              is_applicable: isApplicable,
-              item_notes: itemNote,
+              items.push({
+                name: customItem.name,
+                category: group.category,
+                is_applicable: isApplicable,
+                item_notes: itemNote,
+              });
             });
-          });
-        });
+          }
+        );
       } else {
         // Regular tabs with simple array of items - only include if item has data
         if (Array.isArray(sectionItems)) {
-          sectionItems.forEach((itemName) => {
+          (sectionItems as string[]).forEach((itemName: string) => {
             // Only include item if it has data (is applicable or has notes)
             if (!itemHasData(itemName, null)) {
               return;
@@ -1119,8 +1301,8 @@ export default function MaterialSelection({ lot_id, project_id }) {
               applicableItems[sectionKey]?.[itemKey] || false;
             const itemNote =
               notes[sectionKey]?.[itemKey] &&
-                typeof notes[sectionKey][itemKey] === "string" &&
-                notes[sectionKey][itemKey].trim() !== ""
+              typeof notes[sectionKey][itemKey] === "string" &&
+              notes[sectionKey][itemKey].trim() !== ""
                 ? notes[sectionKey][itemKey].trim()
                 : null;
 
@@ -1135,18 +1317,17 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
         // Process custom items for regular tabs (without category) - always include if they have a name
         const regularCustomItems = (customItems[sectionKey] || []).filter(
-          (item) => !item.category && item.name.trim() !== ""
+          (item: CustomItem) => !item.category && item.name.trim() !== ""
         );
 
-        regularCustomItems.forEach((customItem) => {
+        regularCustomItems.forEach((customItem: CustomItem) => {
           // Always include custom items if they have a name, regardless of applicable status or notes
           const itemKey = getItemKey(customItem.name, null);
-          const isApplicable =
-            applicableItems[sectionKey]?.[itemKey] || false;
+          const isApplicable = applicableItems[sectionKey]?.[itemKey] || false;
           const itemNote =
             notes[sectionKey]?.[itemKey] &&
-              typeof notes[sectionKey][itemKey] === "string" &&
-              notes[sectionKey][itemKey].trim() !== ""
+            typeof notes[sectionKey][itemKey] === "string" &&
+            notes[sectionKey][itemKey].trim() !== ""
               ? notes[sectionKey][itemKey].trim()
               : null;
 
@@ -1172,7 +1353,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
     });
 
     // Convert empty strings to null for height fields
-    const formatHeight = (value) => {
+    const formatHeight = (value: string): string | null => {
       return value && value.trim() !== "" ? value.trim() : null;
     };
 
@@ -1204,24 +1385,15 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
     try {
       setIsCreating(true);
-      const sessionToken = getToken();
 
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        return;
-      }
-
-      const formData = collectFormData();
+      const formDataToSend = collectFormData();
 
       const response = await axios.post(
-        `${getBaseUrl()}/api/material_selection/create`,
-        formData,
+        `/api/material_selection/create`,
+        formDataToSend,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -1243,16 +1415,23 @@ export default function MaterialSelection({ lot_id, project_id }) {
           }
         );
       }
-    } catch (error) {
-      console.error("Error creating material selection:", error);
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to create material selection. Please try again.",
-        {
+    } catch (err) {
+      console.error("Error creating material selection:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to create material selection. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to create material selection. Please try again.", {
           position: "top-right",
           autoClose: 3000,
-        }
-      );
+        });
+      }
     } finally {
       setIsCreating(false);
     }
@@ -1279,20 +1458,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
     // For past versions, fetch the version data from API
     try {
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        return null;
-      }
-
       const response = await axios.get(
-        `${getBaseUrl()}/api/material_selection/version/${selectedVersionId}`,
+        `/api/material_selection/version/${selectedVersionId}`,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -1302,12 +1472,23 @@ export default function MaterialSelection({ lot_id, project_id }) {
         return response.data.data;
       }
       return null;
-    } catch (error) {
-      console.error("Error fetching version for export:", error);
-      toast.error("Failed to fetch version data for export", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    } catch (err) {
+      console.error("Error fetching version for export:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to fetch version data for export",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to fetch version data for export", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
       return null;
     }
   };
@@ -1333,11 +1514,10 @@ export default function MaterialSelection({ lot_id, project_id }) {
         await fetchLotData();
       }
 
-      // Create PDF
       const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
+        orientation: "portrait" as const,
+        unit: "mm" as const,
+        format: "a4" as const,
       });
 
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1347,7 +1527,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
       let yPosition = margin;
 
       // Helper function to add a new page if needed
-      const checkPageBreak = (requiredHeight) => {
+      const checkPageBreak = (requiredHeight: number): boolean => {
         if (yPosition + requiredHeight > pageHeight - margin) {
           pdf.addPage();
           yPosition = margin;
@@ -1357,12 +1537,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
       };
 
       // Helper function to split text into multiple lines
-      const splitText = (text, maxWidth) => {
+      const splitText = (text: string, maxWidth: number): string[] => {
         const words = text.split(" ");
-        const lines = [];
+        const lines: string[] = [];
         let currentLine = "";
 
-        words.forEach((word) => {
+        words.forEach((word: string) => {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
           const testWidth = pdf.getTextWidth(testLine);
           if (testWidth > maxWidth && currentLine) {
@@ -1391,7 +1571,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
         const imageUrl = URL.createObjectURL(blob);
 
         // Create image element to get dimensions and convert to canvas
-        const img = new Image();
+        const img = new window.Image();
         img.crossOrigin = "anonymous";
 
         await new Promise((resolve, reject) => {
@@ -1406,6 +1586,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Could not get canvas context");
         ctx.drawImage(img, 0, 0);
         const imageDataUrl = canvas.toDataURL("image/png");
 
@@ -1433,7 +1614,14 @@ export default function MaterialSelection({ lot_id, project_id }) {
         }
 
         // Add logo (left-aligned)
-        pdf.addImage(imageDataUrl, "PNG", margin, yPosition, logoWidth, logoHeight);
+        pdf.addImage(
+          imageDataUrl,
+          "PNG",
+          margin,
+          yPosition,
+          logoWidth,
+          logoHeight
+        );
         yPosition += logoHeight + 10;
       } catch (error) {
         console.log("Could not load logo, continuing without it:", error);
@@ -1538,7 +1726,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
         "7. This document serves as a guide and may be updated as the project progresses.",
         "8. The company reserves the right to make reasonable substitutions for unavailable materials.",
         "9. All selections are subject to final client approval before ordering.",
-        "10. Any discrepancies should be reported immediately for resolution."
+        "10. Any discrepancies should be reported immediately for resolution.",
       ];
 
       termsAndConditions.forEach((term) => {
@@ -1553,7 +1741,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
       });
 
       // Process areas - only areas with data
-      const areasWithData = (versionData.areas || []).filter((area) => {
+      const areasWithData = (versionData.areas || []).filter((area: Area) => {
         const hasItems =
           area.items && Array.isArray(area.items) && area.items.length > 0;
         const hasAreaNotes =
@@ -1564,7 +1752,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
       });
 
       // Add each area on a separate page (from page 2 onwards)
-      areasWithData.forEach((area, areaIndex) => {
+      areasWithData.forEach((area: Area) => {
         // Always add new page for each area (page 1 is overview only)
         pdf.addPage();
         yPosition = margin;
@@ -1627,49 +1815,60 @@ export default function MaterialSelection({ lot_id, project_id }) {
           pdf.setFont("helvetica", "normal");
           pdf.setFontSize(10);
 
-          area.items.forEach((item, itemIndex) => {
-            const itemName = item.name || "";
-            const isApplicable = item.is_applicable ? "Yes" : "No";
-            const itemNotes = item.item_notes || "";
+          area.items.forEach(
+            (item: {
+              name?: string;
+              is_applicable?: boolean;
+              item_notes?: string;
+            }) => {
+              const itemName = item.name || "";
+              const isApplicable = item.is_applicable ? "Yes" : "No";
+              const itemNotes = item.item_notes || "";
 
-            // Calculate row height based on content
-            const nameLines = splitText(itemName, 70);
-            const noteLines = itemNotes ? splitText(itemNotes, 70) : [];
-            const maxLines = Math.max(nameLines.length, noteLines.length, 1);
-            const rowHeight = maxLines * 5 + 5; // 5mm per line + 5mm padding
+              // Calculate row height based on content
+              const nameLines = splitText(itemName, 70);
+              const noteLines = itemNotes ? splitText(itemNotes, 70) : [];
+              const maxLines = Math.max(nameLines.length, noteLines.length, 1);
+              const rowHeight = maxLines * 5 + 5; // 5mm per line + 5mm padding
 
-            // Check if we need a new page
-            checkPageBreak(rowHeight + 3);
+              // Check if we need a new page
+              checkPageBreak(rowHeight + 3);
 
-            // Store starting Y position for this row
-            const rowStartY = yPosition;
+              // Store starting Y position for this row
+              const rowStartY = yPosition;
 
-            // Item name
-            nameLines.forEach((line, idx) => {
-              pdf.text(line, margin + 2, rowStartY + idx * 5);
-            });
-
-            // Applicable
-            pdf.text(isApplicable, margin + 80, rowStartY);
-
-            // Notes
-            if (itemNotes) {
-              noteLines.forEach((line, idx) => {
-                pdf.text(line, margin + 110, rowStartY + idx * 5);
+              // Item name
+              nameLines.forEach((line, idx) => {
+                pdf.text(line, margin + 2, rowStartY + idx * 5);
               });
+
+              // Applicable
+              pdf.text(isApplicable, margin + 80, rowStartY);
+
+              // Notes
+              if (itemNotes) {
+                noteLines.forEach((line, idx) => {
+                  pdf.text(line, margin + 110, rowStartY + idx * 5);
+                });
+              }
+
+              // Update yPosition to the bottom of the row
+              yPosition = rowStartY + maxLines * 5;
+
+              // Draw line separator at the bottom of the row (spanning full width)
+              pdf.setDrawColor(200, 200, 200);
+              pdf.setLineWidth(0.1);
+              pdf.line(
+                margin,
+                yPosition + 2,
+                margin + contentWidth,
+                yPosition + 2
+              );
+
+              // Move to next row position
+              yPosition += 5;
             }
-
-            // Update yPosition to the bottom of the row
-            yPosition = rowStartY + maxLines * 5;
-
-            // Draw line separator at the bottom of the row (spanning full width)
-            pdf.setDrawColor(200, 200, 200);
-            pdf.setLineWidth(0.1);
-            pdf.line(margin, yPosition + 2, margin + contentWidth, yPosition + 2);
-
-            // Move to next row position
-            yPosition += 5;
-          });
+          );
         }
       });
 
@@ -1684,7 +1883,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "normal");
-      pdf.text("By signing below, I acknowledge that I have reviewed and approved the material selections", margin, yPosition);
+      pdf.text(
+        "By signing below, I acknowledge that I have reviewed and approved the material selections",
+        margin,
+        yPosition
+      );
       yPosition += 8;
       pdf.text("as detailed in this document.", margin, yPosition);
       yPosition += 15;
@@ -1692,7 +1895,6 @@ export default function MaterialSelection({ lot_id, project_id }) {
       // Signature section
       const signatureY = pageHeight - 80;
       const signatureLineY = signatureY + 20;
-      const dateY = signatureY + 30;
 
       // Name field
       pdf.setFont("helvetica", "bold");
@@ -1707,15 +1909,30 @@ export default function MaterialSelection({ lot_id, project_id }) {
       pdf.setFont("helvetica", "bold");
       pdf.text("Signature:", margin, signatureLineY);
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(margin + 30, signatureLineY - 3, margin + 120, signatureLineY - 3);
-      pdf.line(margin + 30, signatureLineY - 2, margin + 120, signatureLineY - 2);
+      pdf.line(
+        margin + 30,
+        signatureLineY - 3,
+        margin + 120,
+        signatureLineY - 3
+      );
+      pdf.line(
+        margin + 30,
+        signatureLineY - 2,
+        margin + 120,
+        signatureLineY - 2
+      );
 
       // Date field
       pdf.setFont("helvetica", "bold");
       pdf.text("Date:", margin + 130, signatureLineY);
       pdf.setFont("helvetica", "normal");
       pdf.setDrawColor(0, 0, 0);
-      pdf.line(margin + 150, signatureLineY - 3, margin + 180, signatureLineY - 3);
+      pdf.line(
+        margin + 150,
+        signatureLineY - 3,
+        margin + 180,
+        signatureLineY - 3
+      );
 
       // Get version number for filename
       const versionNumber =
@@ -1723,9 +1940,9 @@ export default function MaterialSelection({ lot_id, project_id }) {
         "1";
 
       // Generate filename
-      const filename = `Material_Selection_V${versionNumber}_${new Date()
-        .toISOString()
-        .split("T")[0]}.pdf`;
+      const filename = `Material_Selection_V${versionNumber}_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
 
       // Save PDF
       pdf.save(filename);
@@ -1734,12 +1951,23 @@ export default function MaterialSelection({ lot_id, project_id }) {
         position: "top-right",
         autoClose: 3000,
       });
-    } catch (error) {
-      console.error("Error exporting to PDF:", error);
-      toast.error("Failed to export to PDF. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    } catch (err) {
+      console.error("Error exporting to PDF:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to export to PDF. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to export to PDF. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     }
   };
 
@@ -1775,10 +2003,14 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
       // Process areas - only include areas with values
       if (versionData.areas && Array.isArray(versionData.areas)) {
-        versionData.areas.forEach((area) => {
+        versionData.areas.forEach((area: Area) => {
           // Check if area has any items or notes
-          const hasItems = area.items && Array.isArray(area.items) && area.items.length > 0;
-          const hasAreaNotes = area.notes && typeof area.notes === "string" && area.notes.trim() !== "";
+          const hasItems =
+            area.items && Array.isArray(area.items) && area.items.length > 0;
+          const hasAreaNotes =
+            area.notes &&
+            typeof area.notes === "string" &&
+            area.notes.trim() !== "";
 
           if (hasItems || hasAreaNotes) {
             const areaName = area.area_name || "";
@@ -1786,29 +2018,28 @@ export default function MaterialSelection({ lot_id, project_id }) {
             const areaNote = area.notes || "";
 
             // If area has items, add each item as a row
-            if (hasItems && area.items.length > 0) {
-              area.items.forEach((item) => {
-                excelData.push([
-                  areaName,
-                  bedOption,
-                  areaNote,
-                  item.name || "",
-                  item.category || "",
-                  item.is_applicable ? "Yes" : "No",
-                  item.item_notes || "",
-                ]);
-              });
+            if (hasItems && area.items && area.items.length > 0) {
+              area.items.forEach(
+                (item: {
+                  name?: string;
+                  category?: string | null;
+                  is_applicable?: boolean;
+                  item_notes?: string;
+                }) => {
+                  excelData.push([
+                    areaName,
+                    bedOption,
+                    areaNote,
+                    item.name || "",
+                    item.category || "",
+                    item.is_applicable ? "Yes" : "No",
+                    item.item_notes || "",
+                  ]);
+                }
+              );
             } else {
               // If area only has notes but no items, add one row with area info
-              excelData.push([
-                areaName,
-                bedOption,
-                areaNote,
-                "",
-                "",
-                "",
-                "",
-              ]);
+              excelData.push([areaName, bedOption, areaNote, "", "", "", ""]);
             }
           }
         });
@@ -1824,7 +2055,10 @@ export default function MaterialSelection({ lot_id, project_id }) {
       if (hasHeights) {
         excelData.push([]); // Empty row
         excelData.push(["Heights"]); // Header
-        excelData.push(["Ceiling Height (mm)", versionData.ceiling_height || ""]);
+        excelData.push([
+          "Ceiling Height (mm)",
+          versionData.ceiling_height || "",
+        ]);
         excelData.push([
           "Bulkhead Height (mm)",
           versionData.bulkhead_height || "",
@@ -1859,9 +2093,9 @@ export default function MaterialSelection({ lot_id, project_id }) {
         "1";
 
       // Generate filename
-      const filename = `Material_Selection_V${versionNumber}_${new Date()
-        .toISOString()
-        .split("T")[0]}.xlsx`;
+      const filename = `Material_Selection_V${versionNumber}_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
 
       // Export file
       XLSX.writeFile(wb, filename);
@@ -1870,17 +2104,29 @@ export default function MaterialSelection({ lot_id, project_id }) {
         position: "top-right",
         autoClose: 3000,
       });
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      toast.error("Failed to export to Excel. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    } catch (err) {
+      console.error("Error exporting to Excel:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to export to Excel. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to export to Excel. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     }
   };
 
   // Handle file selection - upload immediately
-  const handleFileChange = async (e) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -1894,7 +2140,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // Upload media files
-  const handleUploadMedia = async (filesToUpload = null) => {
+  const handleUploadMedia = async (filesToUpload: File[] | null = null) => {
     const files = filesToUpload || [];
 
     if (!files || files.length === 0) {
@@ -1903,29 +2149,25 @@ export default function MaterialSelection({ lot_id, project_id }) {
     }
 
     if (!materialSelectionData?.id) {
-      toast.error("Please create or save material selection first before uploading files.");
+      toast.error(
+        "Please create or save material selection first before uploading files."
+      );
       return;
     }
 
     setUploadingMedia(true);
     try {
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.");
-        return;
-      }
-
-      const formData = new FormData();
+      const uploadFormData = new FormData();
       files.forEach((file) => {
-        formData.append("files", file);
+        uploadFormData.append("files", file);
       });
 
       const response = await axios.post(
         `/api/uploads/material-selection/${materialSelectionData.id}`,
-        formData,
+        uploadFormData,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -1938,20 +2180,24 @@ export default function MaterialSelection({ lot_id, project_id }) {
       } else {
         toast.error(response.data.message || "Failed to upload files.");
       }
-    } catch (error) {
-      console.error("Error uploading media:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to upload files. Please try again.";
-      toast.error(errorMessage);
+    } catch (err) {
+      console.error("Error uploading media:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to upload files. Please try again.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to upload files. Please try again.");
+      }
     } finally {
       setUploadingMedia(false);
     }
   };
 
   // Delete media file
-  const handleDeleteMedia = async (mediaId) => {
+  const handleDeleteMedia = async (mediaId: string) => {
     if (!materialSelectionData?.id) {
       toast.error("Cannot delete media. Material selection ID is missing.");
       return;
@@ -1959,13 +2205,10 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
     setDeletingMediaId(mediaId);
     try {
-      const sessionToken = getToken();
       const response = await axios.delete(
         `/api/uploads/material-selection/${materialSelectionData.id}?mediaId=${mediaId}`,
         {
-          headers: {
-            Authorization: `Bearer ${sessionToken}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -1978,20 +2221,24 @@ export default function MaterialSelection({ lot_id, project_id }) {
       } else {
         toast.error(response.data.message || "Failed to delete file.");
       }
-    } catch (error) {
-      console.error("Error deleting media:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to delete file. Please try again.";
-      toast.error(errorMessage);
+    } catch (err) {
+      console.error("Error deleting media:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to delete file. Please try again.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to delete file. Please try again.");
+      }
     } finally {
       setDeletingMediaId(null);
     }
   };
 
   // Format file size
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -2000,11 +2247,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
   };
 
   // View existing file from server
-  const handleViewExistingFile = (file) => {
+  const handleViewExistingFile = (file: MediaFile) => {
     const fileUrl = `/${file.url}`;
     setSelectedFile({
       name: file.filename,
-      type: file.mime_type,
+      type: file.mime_type || "application/octet-stream",
       size: file.size || 0,
       url: fileUrl,
       isExisting: true,
@@ -2090,7 +2337,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
               disabled={
                 isCreating ||
                 !lot_id ||
-                (!isCurrentVersion && materialSelectionData)
+                (!isCurrentVersion && !!materialSelectionData)
               }
               className="cursor-pointer hover:bg-primary/90 flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
             >
@@ -2129,7 +2376,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
             onChange={(e) =>
               handleHeightChange("ceilingHeight", e.target.value)
             }
-            disabled={!isCurrentVersion && materialSelectionData}
+            disabled={!isCurrentVersion || !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2148,7 +2395,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
             onChange={(e) =>
               handleHeightChange("bulkheadHeight", e.target.value)
             }
-            disabled={!isCurrentVersion && materialSelectionData}
+            disabled={!isCurrentVersion || !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2165,7 +2412,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
             id="kickerHeight"
             value={heights.kickerHeight}
             onChange={(e) => handleHeightChange("kickerHeight", e.target.value)}
-            disabled={!isCurrentVersion && materialSelectionData}
+            disabled={!isCurrentVersion || !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2184,7 +2431,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
             onChange={(e) =>
               handleHeightChange("cabinetryHeight", e.target.value)
             }
-            disabled={!isCurrentVersion && materialSelectionData}
+            disabled={!isCurrentVersion || !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2202,7 +2449,6 @@ export default function MaterialSelection({ lot_id, project_id }) {
             {allTabs.map((sectionKey, index, array) => {
               const isBedTab = sectionKey.startsWith("Bed");
               const isCustomArea = customAreas[sectionKey] !== undefined;
-              const bedConfig = isBedTab ? bedTabs[sectionKey] : null;
               // Show plus button only on the last bed tab
               const isLastBedTab =
                 isBedTab &&
@@ -2227,10 +2473,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
                 <div key={sectionKey} className="flex items-center gap-1">
                   <button
                     onClick={() => setActiveTab(sectionKey)}
-                    className={`cursor-pointer px-4 py-2 text-sm font-medium transition-colors border-b-2 ${activeTab === sectionKey
-                      ? "border-secondary text-secondary"
-                      : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
-                      }`}
+                    className={`cursor-pointer px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                      activeTab === sectionKey
+                        ? "border-secondary text-secondary"
+                        : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                    }`}
                   >
                     {displayName}
                     {applicableCount > 0 && (
@@ -2242,7 +2489,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                   {canRemoveBedTab && (
                     <button
                       onClick={() => handleRemoveBedTab(sectionKey)}
-                      disabled={!isCurrentVersion && materialSelectionData}
+                      disabled={!isCurrentVersion || !!materialSelectionData}
                       className="cursor-pointer p-1 hover:bg-red-100 rounded transition-colors text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Remove this bed tab"
                     >
@@ -2252,7 +2499,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                   {canRemoveCustomArea && (
                     <button
                       onClick={() => handleRemoveCustomArea(sectionKey)}
-                      disabled={!isCurrentVersion && materialSelectionData}
+                      disabled={!isCurrentVersion || !!materialSelectionData}
                       className="cursor-pointer p-1 hover:bg-red-100 rounded transition-colors text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Remove this custom area"
                     >
@@ -2263,7 +2510,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                     (isCurrentVersion || !materialSelectionData) && (
                       <button
                         onClick={handleAddBedTab}
-                        disabled={!isCurrentVersion && materialSelectionData}
+                        disabled={!isCurrentVersion || !!materialSelectionData}
                         className="cursor-pointer p-1 hover:bg-slate-100 rounded transition-colors text-slate-600 hover:text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Add another bed tab"
                       >
@@ -2277,7 +2524,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
             {(isCurrentVersion || !materialSelectionData) && (
               <button
                 onClick={handleAddCustomArea}
-                disabled={!isCurrentVersion && materialSelectionData}
+                disabled={!isCurrentVersion || !!materialSelectionData}
                 className="cursor-pointer p-1 hover:bg-slate-100 rounded transition-colors text-slate-600 hover:text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Add custom area"
               >
@@ -2303,70 +2550,72 @@ export default function MaterialSelection({ lot_id, project_id }) {
             >
               <div className="p-4">
                 {/* Custom Area Name Input - Show for custom areas */}
-                {isCustomArea && (isCurrentVersion || !materialSelectionData) && (
-                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Custom Area Name
-                    </label>
-                    <input
-                      type="text"
-                      value={customAreas[sectionKey]?.name ?? ""}
-                      onChange={(e) => {
-                        // Allow empty string during typing
-                        const newName = e.target.value;
-                        setCustomAreas((prev) => {
-                          if (prev[sectionKey]) {
-                            return {
-                              ...prev,
-                              [sectionKey]: {
-                                ...prev[sectionKey],
-                                name: newName,
-                              },
-                            };
-                          }
-                          return prev;
-                        });
-                      }}
-                      onBlur={(e) => {
-                        const newName = e.target.value.trim();
+                {isCustomArea &&
+                  (isCurrentVersion || !materialSelectionData) && (
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Custom Area Name
+                      </label>
+                      <input
+                        type="text"
+                        value={customAreas[sectionKey]?.name ?? ""}
+                        onChange={(e) => {
+                          // Allow empty string during typing
+                          const newName = e.target.value;
+                          setCustomAreas((prev) => {
+                            if (prev[sectionKey]) {
+                              return {
+                                ...prev,
+                                [sectionKey]: {
+                                  ...prev[sectionKey],
+                                  name: newName,
+                                },
+                              };
+                            }
+                            return prev;
+                          });
+                        }}
+                        onBlur={(e) => {
+                          const newName = e.target.value.trim();
 
-                        if (newName && newName !== sectionKey) {
-                          handleRenameCustomArea(sectionKey, newName);
-                        } else if (!newName) {
-                          // Use originalNumber from customAreas for default value
-                          const originalNumber = customAreas[sectionKey]?.originalNumber || "1";
-                          const defaultValue = `Custom Area ${originalNumber}`;
+                          if (newName && newName !== sectionKey) {
+                            handleRenameCustomArea(sectionKey, newName);
+                          } else if (!newName) {
+                            // Use originalNumber from customAreas for default value
+                            const originalNumber =
+                              customAreas[sectionKey]?.originalNumber || "1";
+                            const defaultValue = `Custom Area ${originalNumber}`;
 
-                          // Set to default value if empty
-                          if (defaultValue !== sectionKey) {
-                            handleRenameCustomArea(sectionKey, defaultValue);
-                          } else {
-                            // Just update the display name if it's already the default
-                            setCustomAreas((prev) => {
-                              if (prev[sectionKey]) {
-                                return {
-                                  ...prev,
-                                  [sectionKey]: {
-                                    ...prev[sectionKey],
-                                    name: defaultValue,
-                                  },
-                                };
-                              }
-                              return prev;
-                            });
+                            // Set to default value if empty
+                            if (defaultValue !== sectionKey) {
+                              handleRenameCustomArea(sectionKey, defaultValue);
+                            } else {
+                              // Just update the display name if it's already the default
+                              setCustomAreas((prev) => {
+                                if (prev[sectionKey]) {
+                                  return {
+                                    ...prev,
+                                    [sectionKey]: {
+                                      ...prev[sectionKey],
+                                      name: defaultValue,
+                                    },
+                                  };
+                                }
+                                return prev;
+                              });
+                            }
                           }
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.target.blur();
-                        }
-                      }}
-                      className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                      placeholder="Enter custom area name..."
-                    />
-                  </div>
-                )}
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                        className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                        placeholder="Enter custom area name..."
+                      />
+                    </div>
+                  )}
 
                 {/* Bed Option Selection - Always show for bed tabs */}
                 {isBedTab && (
@@ -2379,11 +2628,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
                         onClick={() =>
                           handleSelectBedOptionForTab(sectionKey, "WIR")
                         }
-                        disabled={!isCurrentVersion && materialSelectionData}
-                        className={`cursor-pointer px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 hover:border-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${bedConfig?.option === "WIR"
-                          ? "bg-secondary text-white border-secondary"
-                          : "bg-white"
-                          }`}
+                        disabled={!isCurrentVersion || !!materialSelectionData}
+                        className={`cursor-pointer px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 hover:border-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          bedConfig?.option === "WIR"
+                            ? "bg-secondary text-white border-secondary"
+                            : "bg-white"
+                        }`}
                       >
                         WIR
                       </button>
@@ -2391,11 +2641,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
                         onClick={() =>
                           handleSelectBedOptionForTab(sectionKey, "BIR")
                         }
-                        disabled={!isCurrentVersion && materialSelectionData}
-                        className={`cursor-pointer px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 hover:border-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${bedConfig?.option === "BIR"
-                          ? "bg-secondary text-white border-secondary"
-                          : "bg-white"
-                          }`}
+                        disabled={!isCurrentVersion || !!materialSelectionData}
+                        className={`cursor-pointer px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 hover:border-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          bedConfig?.option === "BIR"
+                            ? "bg-secondary text-white border-secondary"
+                            : "bg-white"
+                        }`}
                       >
                         BIR
                       </button>
@@ -2403,11 +2654,12 @@ export default function MaterialSelection({ lot_id, project_id }) {
                         onClick={() =>
                           handleSelectBedOptionForTab(sectionKey, "Both")
                         }
-                        disabled={!isCurrentVersion && materialSelectionData}
-                        className={`cursor-pointer px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 hover:text-secondary hover:border-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${bedConfig?.option === "Both"
-                          ? "bg-secondary text-white border-secondary"
-                          : "bg-white"
-                          }`}
+                        disabled={!isCurrentVersion || !!materialSelectionData}
+                        className={`cursor-pointer px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-slate-50 hover:text-secondary hover:border-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          bedConfig?.option === "Both"
+                            ? "bg-secondary text-white border-secondary"
+                            : "bg-white"
+                        }`}
                       >
                         Both
                       </button>
@@ -2440,311 +2692,330 @@ export default function MaterialSelection({ lot_id, project_id }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {isCustomArea ? (
-                        // Custom areas - show only custom items (no predefined items)
-                        (customItems[sectionKey] || [])
-                          .filter((item) => !item.category)
-                          .map((customItem) => {
-                            const itemKey = getItemKey(customItem.name, null);
-                            const isApplicable =
-                              applicableItems[sectionKey]?.[itemKey] || false;
-                            const noteValue =
-                              notes[sectionKey]?.[itemKey] || "";
+                      {isCustomArea
+                        ? // Custom areas - show only custom items (no predefined items)
+                          (customItems[sectionKey] || [])
+                            .filter((item) => !item.category)
+                            .map((customItem) => {
+                              const itemKey = getItemKey(customItem.name, null);
+                              const isApplicable =
+                                applicableItems[sectionKey]?.[itemKey] || false;
+                              const noteValue =
+                                notes[sectionKey]?.[itemKey] || "";
 
-                            return (
-                              <tr
-                                key={customItem.id}
-                                className="border-b border-slate-100 hover:bg-slate-50 transition-colors bg-blue-50/30"
-                              >
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="text"
-                                      placeholder="Enter custom name..."
-                                      value={customItem.name}
-                                      onChange={(e) =>
-                                        handleCustomItemNameChange(
-                                          sectionKey,
-                                          customItem.id,
-                                          e.target.value
-                                        )
-                                      }
-                                      disabled={
+                              return (
+                                <tr
+                                  key={customItem.id}
+                                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors bg-blue-50/30"
+                                >
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="text"
+                                        placeholder="Enter custom name..."
+                                        value={customItem.name}
+                                        onChange={(e) =>
+                                          handleCustomItemNameChange(
+                                            sectionKey,
+                                            customItem.id,
+                                            e.target.value
+                                          )
+                                        }
+                                        disabled={
+                                          !isCurrentVersion &&
+                                          !!materialSelectionData
+                                        }
+                                        className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          handleRemoveCustomItem(
+                                            sectionKey,
+                                            customItem.id
+                                          )
+                                        }
+                                        disabled={
+                                          !isCurrentVersion &&
+                                          !!materialSelectionData
+                                        }
+                                        className="cursor-pointer p-2 hover:bg-red-100 text-red-600 rounded-md transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="Remove this item"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <label
+                                      className={`flex items-center gap-2 ${
                                         !isCurrentVersion &&
                                         materialSelectionData
-                                      }
-                                      className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                                    />
-                                    <button
-                                      onClick={() =>
-                                        handleRemoveCustomItem(
-                                          sectionKey,
-                                          customItem.id
-                                        )
-                                      }
-                                      disabled={
-                                        !isCurrentVersion &&
-                                        materialSelectionData
-                                      }
-                                      className="cursor-pointer p-2 hover:bg-red-100 text-red-600 rounded-md transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                                      title="Remove this item"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4">
-                                  <label
-                                    className={`flex items-center gap-2 ${!isCurrentVersion &&
-                                      materialSelectionData
-                                      ? "cursor-not-allowed"
-                                      : "cursor-pointer"
+                                          ? "cursor-not-allowed"
+                                          : "cursor-pointer"
                                       }`}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isApplicable}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isApplicable}
+                                        onChange={(e) =>
+                                          handleApplicableChange(
+                                            sectionKey,
+                                            customItem.name,
+                                            e.target.checked,
+                                            null
+                                          )
+                                        }
+                                        disabled={
+                                          !isCurrentVersion &&
+                                          !!materialSelectionData
+                                        }
+                                        className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                      />
+                                      <span className="text-sm text-slate-600">
+                                        {isApplicable ? "Yes" : "No"}
+                                      </span>
+                                    </label>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <textarea
+                                      placeholder="Add notes..."
+                                      value={noteValue}
                                       onChange={(e) =>
-                                        handleApplicableChange(
+                                        handleNotesChange(
                                           sectionKey,
                                           customItem.name,
-                                          e.target.checked,
+                                          e.target.value,
                                           null
                                         )
                                       }
                                       disabled={
                                         !isCurrentVersion &&
-                                        materialSelectionData
+                                        !!materialSelectionData
                                       }
-                                      className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                      rows={2}
+                                      className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
                                     />
-                                    <span className="text-sm text-slate-600">
-                                      {isApplicable ? "Yes" : "No"}
-                                    </span>
-                                  </label>
-                                </td>
-                                <td className="py-3 px-4">
-                                  <textarea
-                                    placeholder="Add notes..."
-                                    value={noteValue}
-                                    onChange={(e) =>
-                                      handleNotesChange(
-                                        sectionKey,
-                                        customItem.name,
-                                        e.target.value,
-                                        null
-                                      )
-                                    }
-                                    disabled={
-                                      !isCurrentVersion &&
-                                      materialSelectionData
-                                    }
-                                    rows={2}
-                                    className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                                  />
-                                </td>
-                              </tr>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                        : sectionKey.startsWith("Bed") &&
+                          Array.isArray(sectionItems) &&
+                          sectionItems.length > 0 &&
+                          typeof sectionItems[0] === "object" &&
+                          "category" in sectionItems[0]
+                        ? // Bed tabs with grouped items by category
+                          (
+                            sectionItems as Array<{
+                              category: string;
+                              items: string[];
+                            }>
+                          ).map((group, groupIndex) => {
+                            // Get custom items for this category
+                            const categoryCustomItems = (
+                              customItems[sectionKey] || []
+                            ).filter(
+                              (item) => item.category === group.category
                             );
-                          })
-                      ) : sectionKey.startsWith("Bed") &&
-                        Array.isArray(sectionItems) &&
-                        sectionItems[0]?.category ? (
-                        // Bed tabs with grouped items by category
-                        sectionItems.map((group, groupIndex) => {
-                          // Get custom items for this category
-                          const categoryCustomItems = (
-                            customItems[sectionKey] || []
-                          ).filter(
-                            (item) => item.category === group.category
-                          );
 
-                          return (
-                            <React.Fragment key={groupIndex}>
-                              {/* Category Header Row */}
-                              <tr className="bg-slate-100 border-b-2 border-slate-300">
-                                <td
-                                  colSpan={3}
-                                  className="py-3 px-4 font-semibold text-slate-800 uppercase text-sm"
-                                >
-                                  {group.category}
-                                </td>
-                              </tr>
-                              {/* Items in this category */}
-                              {group.items.map((itemName, itemIndex) => {
-                                const itemKey = getItemKey(itemName, group.category);
-                                const isApplicable =
-                                  applicableItems[sectionKey]?.[itemKey] ||
-                                  false;
-                                const noteValue =
-                                  notes[sectionKey]?.[itemKey] || "";
-
-                                return (
-                                  <tr
-                                    key={`${groupIndex}-${itemIndex}`}
-                                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                            return (
+                              <React.Fragment key={groupIndex}>
+                                {/* Category Header Row */}
+                                <tr className="bg-slate-100 border-b-2 border-slate-300">
+                                  <td
+                                    colSpan={3}
+                                    className="py-3 px-4 font-semibold text-slate-800 uppercase text-sm"
                                   >
-                                    <td className="py-3 px-4 text-slate-700">
-                                      {itemName}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <label
-                                        className={`flex items-center gap-2 ${!isCurrentVersion &&
-                                          materialSelectionData
-                                          ? "cursor-not-allowed"
-                                          : "cursor-pointer"
-                                          }`}
+                                    {group.category}
+                                  </td>
+                                </tr>
+                                {/* Items in this category */}
+                                {group.items.map(
+                                  (itemName: string, itemIndex: number) => {
+                                    const itemKey = getItemKey(
+                                      itemName,
+                                      group.category
+                                    );
+                                    const isApplicable =
+                                      applicableItems[sectionKey]?.[itemKey] ||
+                                      false;
+                                    const noteValue =
+                                      notes[sectionKey]?.[itemKey] || "";
+
+                                    return (
+                                      <tr
+                                        key={`${groupIndex}-${itemIndex}`}
+                                        className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                                       >
-                                        <input
-                                          type="checkbox"
-                                          checked={isApplicable}
-                                          onChange={(e) =>
-                                            handleApplicableChange(
-                                              sectionKey,
-                                              itemName,
-                                              e.target.checked,
-                                              group.category
-                                            )
-                                          }
-                                          disabled={
-                                            !isCurrentVersion &&
-                                            materialSelectionData
-                                          }
-                                          className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                                        />
-                                        <span className="text-sm text-slate-600">
-                                          {isApplicable ? "Yes" : "No"}
-                                        </span>
-                                      </label>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <textarea
-                                        placeholder="Add notes..."
-                                        value={noteValue}
-                                        onChange={(e) =>
-                                          handleNotesChange(
-                                            sectionKey,
-                                            itemName,
-                                            e.target.value,
-                                            group.category
-                                          )
-                                        }
-                                        disabled={
-                                          !isCurrentVersion &&
-                                          materialSelectionData
-                                        }
-                                        rows={2}
-                                        className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                                      />
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                              {/* Custom Items for this category */}
-                              {categoryCustomItems.map((customItem) => {
-                                const itemKey = getItemKey(customItem.name, customItem.category);
-                                const isApplicable =
-                                  applicableItems[sectionKey]?.[itemKey] || false;
-                                const noteValue =
-                                  notes[sectionKey]?.[itemKey] || "";
+                                        <td className="py-3 px-4 text-slate-700">
+                                          {itemName}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                          <label
+                                            className={`flex items-center gap-2 ${
+                                              !isCurrentVersion &&
+                                              materialSelectionData
+                                                ? "cursor-not-allowed"
+                                                : "cursor-pointer"
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isApplicable}
+                                              onChange={(e) =>
+                                                handleApplicableChange(
+                                                  sectionKey,
+                                                  itemName,
+                                                  e.target.checked,
+                                                  group.category
+                                                )
+                                              }
+                                              disabled={
+                                                !isCurrentVersion &&
+                                                !!materialSelectionData
+                                              }
+                                              className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                            />
+                                            <span className="text-sm text-slate-600">
+                                              {isApplicable ? "Yes" : "No"}
+                                            </span>
+                                          </label>
+                                        </td>
+                                        <td className="py-3 px-4">
+                                          <textarea
+                                            placeholder="Add notes..."
+                                            value={noteValue}
+                                            onChange={(e) =>
+                                              handleNotesChange(
+                                                sectionKey,
+                                                itemName,
+                                                e.target.value,
+                                                group.category
+                                              )
+                                            }
+                                            disabled={
+                                              !isCurrentVersion &&
+                                              !!materialSelectionData
+                                            }
+                                            rows={2}
+                                            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                                          />
+                                        </td>
+                                      </tr>
+                                    );
+                                  }
+                                )}
+                                {/* Custom Items for this category */}
+                                {categoryCustomItems.map((customItem) => {
+                                  const itemKey = getItemKey(
+                                    customItem.name,
+                                    customItem.category
+                                  );
+                                  const isApplicable =
+                                    applicableItems[sectionKey]?.[itemKey] ||
+                                    false;
+                                  const noteValue =
+                                    notes[sectionKey]?.[itemKey] || "";
 
-                                return (
-                                  <tr
-                                    key={customItem.id}
-                                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors bg-blue-50/30"
-                                  >
-                                    <td className="py-3 px-4">
-                                      <div className="flex items-center gap-2">
-                                        <input
-                                          type="text"
-                                          placeholder="Enter custom name..."
-                                          value={customItem.name}
-                                          onChange={(e) =>
-                                            handleCustomItemNameChange(
-                                              sectionKey,
-                                              customItem.id,
-                                              e.target.value
-                                            )
-                                          }
-                                          disabled={
+                                  return (
+                                    <tr
+                                      key={customItem.id}
+                                      className="border-b border-slate-100 hover:bg-slate-50 transition-colors bg-blue-50/30"
+                                    >
+                                      <td className="py-3 px-4">
+                                        <div className="flex items-center gap-2">
+                                          <input
+                                            type="text"
+                                            placeholder="Enter custom name..."
+                                            value={customItem.name}
+                                            onChange={(e) =>
+                                              handleCustomItemNameChange(
+                                                sectionKey,
+                                                customItem.id,
+                                                e.target.value
+                                              )
+                                            }
+                                            disabled={
+                                              !isCurrentVersion &&
+                                              !!materialSelectionData
+                                            }
+                                            className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                                          />
+                                          <button
+                                            onClick={() =>
+                                              handleRemoveCustomItem(
+                                                sectionKey,
+                                                customItem.id
+                                              )
+                                            }
+                                            disabled={
+                                              !isCurrentVersion &&
+                                              !!materialSelectionData
+                                            }
+                                            className="cursor-pointer p-2 hover:bg-red-100 text-red-600 rounded-md transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title="Remove this item"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <label
+                                          className={`flex items-center gap-2 ${
                                             !isCurrentVersion &&
                                             materialSelectionData
-                                          }
-                                          className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                                        />
-                                        <button
-                                          onClick={() =>
-                                            handleRemoveCustomItem(
-                                              sectionKey,
-                                              customItem.id
-                                            )
-                                          }
-                                          disabled={
-                                            !isCurrentVersion &&
-                                            materialSelectionData
-                                          }
-                                          className="cursor-pointer p-2 hover:bg-red-100 text-red-600 rounded-md transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                                          title="Remove this item"
+                                              ? "cursor-not-allowed"
+                                              : "cursor-pointer"
+                                          }`}
                                         >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <label
-                                        className={`flex items-center gap-2 ${!isCurrentVersion &&
-                                          materialSelectionData
-                                          ? "cursor-not-allowed"
-                                          : "cursor-pointer"
-                                          }`}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={isApplicable}
+                                          <input
+                                            type="checkbox"
+                                            checked={isApplicable}
+                                            onChange={(e) =>
+                                              handleApplicableChange(
+                                                sectionKey,
+                                                customItem.name,
+                                                e.target.checked,
+                                                customItem.category
+                                              )
+                                            }
+                                            disabled={
+                                              !isCurrentVersion &&
+                                              !!materialSelectionData
+                                            }
+                                            className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                          />
+                                          <span className="text-sm text-slate-600">
+                                            {isApplicable ? "Yes" : "No"}
+                                          </span>
+                                        </label>
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <textarea
+                                          placeholder="Add notes..."
+                                          value={noteValue}
                                           onChange={(e) =>
-                                            handleApplicableChange(
+                                            handleNotesChange(
                                               sectionKey,
                                               customItem.name,
-                                              e.target.checked,
+                                              e.target.value,
                                               customItem.category
                                             )
                                           }
                                           disabled={
                                             !isCurrentVersion &&
-                                            materialSelectionData
+                                            !!materialSelectionData
                                           }
-                                          className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                          rows={2}
+                                          className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
                                         />
-                                        <span className="text-sm text-slate-600">
-                                          {isApplicable ? "Yes" : "No"}
-                                        </span>
-                                      </label>
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <textarea
-                                        placeholder="Add notes..."
-                                        value={noteValue}
-                                        onChange={(e) =>
-                                          handleNotesChange(
-                                            sectionKey,
-                                            customItem.name,
-                                            e.target.value,
-                                            customItem.category
-                                          )
-                                        }
-                                        disabled={
-                                          !isCurrentVersion &&
-                                          materialSelectionData
-                                        }
-                                        rows={2}
-                                        className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                                      />
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                              {/* Add Custom Button for this category */}
-                              {(isCurrentVersion ||
-                                !materialSelectionData) && (
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                                {/* Add Custom Button for this category */}
+                                {(isCurrentVersion ||
+                                  !materialSelectionData) && (
                                   <tr>
                                     <td colSpan={3} className="py-2 px-4">
                                       <button
@@ -2756,7 +3027,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                         }
                                         disabled={
                                           !isCurrentVersion &&
-                                          materialSelectionData
+                                          !!materialSelectionData
                                         }
                                         className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm font-medium text-secondary hover:text-secondary/80 hover:bg-secondary/10 rounded-md transition-colors border border-secondary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
@@ -2766,81 +3037,84 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                     </td>
                                   </tr>
                                 )}
-                            </React.Fragment>
-                          );
-                        })
-                      ) : (
-                        // Regular tabs with simple array of items
-                        Array.isArray(sectionItems) &&
-                        sectionItems.map((itemName, index) => {
-                          const itemKey = getItemKey(itemName, null);
-                          const isApplicable =
-                            applicableItems[sectionKey]?.[itemKey] || false;
-                          const noteValue =
-                            notes[sectionKey]?.[itemKey] || "";
+                              </React.Fragment>
+                            );
+                          })
+                        : // Regular tabs with simple array of items
+                          Array.isArray(sectionItems) &&
+                          (sectionItems as string[]).map(
+                            (itemName: string, index: number) => {
+                              const itemKey = getItemKey(itemName, null);
+                              const isApplicable =
+                                applicableItems[sectionKey]?.[itemKey] || false;
+                              const noteValue =
+                                notes[sectionKey]?.[itemKey] || "";
 
-                          return (
-                            <tr
-                              key={index}
-                              className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                            >
-                              <td className="py-3 px-4 text-slate-700">
-                                {itemName}
-                              </td>
-                              <td className="py-3 px-4">
-                                <label
-                                  className={`flex items-center gap-2 ${!isCurrentVersion && materialSelectionData
-                                    ? "cursor-not-allowed"
-                                    : "cursor-pointer"
-                                    }`}
+                              return (
+                                <tr
+                                  key={index}
+                                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                                 >
-                                  <input
-                                    type="checkbox"
-                                    checked={isApplicable}
-                                    onChange={(e) =>
-                                      handleApplicableChange(
-                                        sectionKey,
-                                        itemName,
-                                        e.target.checked,
-                                        null
-                                      )
-                                    }
-                                    disabled={
-                                      !isCurrentVersion &&
-                                      materialSelectionData
-                                    }
-                                    className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                                  />
-                                  <span className="text-sm text-slate-600">
-                                    {isApplicable ? "Yes" : "No"}
-                                  </span>
-                                </label>
-                              </td>
-                              <td className="py-3 px-4">
-                                <textarea
-                                  placeholder="Add notes..."
-                                  value={noteValue}
-                                  onChange={(e) =>
-                                    handleNotesChange(
-                                      sectionKey,
-                                      itemName,
-                                      e.target.value,
-                                      null
-                                    )
-                                  }
-                                  disabled={
-                                    !isCurrentVersion && materialSelectionData
-                                  }
-                                  rows={2}
-                                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                                />
-                              </td>
-                            </tr>
-                          );
-                        })
-
-                      )}
-                      {!sectionKey.startsWith("Bed") && !isCustomArea &&
+                                  <td className="py-3 px-4 text-slate-700">
+                                    {itemName}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <label
+                                      className={`flex items-center gap-2 ${
+                                        !isCurrentVersion &&
+                                        materialSelectionData
+                                          ? "cursor-not-allowed"
+                                          : "cursor-pointer"
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isApplicable}
+                                        onChange={(e) =>
+                                          handleApplicableChange(
+                                            sectionKey,
+                                            itemName,
+                                            e.target.checked,
+                                            null
+                                          )
+                                        }
+                                        disabled={
+                                          !isCurrentVersion &&
+                                          !!materialSelectionData
+                                        }
+                                        className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                      />
+                                      <span className="text-sm text-slate-600">
+                                        {isApplicable ? "Yes" : "No"}
+                                      </span>
+                                    </label>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <textarea
+                                      placeholder="Add notes..."
+                                      value={noteValue}
+                                      onChange={(e) =>
+                                        handleNotesChange(
+                                          sectionKey,
+                                          itemName,
+                                          e.target.value,
+                                          null
+                                        )
+                                      }
+                                      disabled={
+                                        !isCurrentVersion &&
+                                        !!materialSelectionData
+                                      }
+                                      rows={2}
+                                      className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                                    />
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          )}
+                      {!sectionKey.startsWith("Bed") &&
+                        !isCustomArea &&
                         customItems[sectionKey]
                           ?.filter((item) => !item.category)
                           .map((customItem) => {
@@ -2870,7 +3144,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                       }
                                       disabled={
                                         !isCurrentVersion &&
-                                        materialSelectionData
+                                        !!materialSelectionData
                                       }
                                       className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
                                     />
@@ -2883,7 +3157,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                       }
                                       disabled={
                                         !isCurrentVersion &&
-                                        materialSelectionData
+                                        !!materialSelectionData
                                       }
                                       className="cursor-pointer p-2 hover:bg-red-100 text-red-600 rounded-md transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                                       title="Remove this item"
@@ -2894,10 +3168,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                 </td>
                                 <td className="py-3 px-4">
                                   <label
-                                    className={`flex items-center gap-2 ${!isCurrentVersion && materialSelectionData
-                                      ? "cursor-not-allowed"
-                                      : "cursor-pointer"
-                                      }`}
+                                    className={`flex items-center gap-2 ${
+                                      !isCurrentVersion && materialSelectionData
+                                        ? "cursor-not-allowed"
+                                        : "cursor-pointer"
+                                    }`}
                                   >
                                     <input
                                       type="checkbox"
@@ -2912,7 +3187,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                       }
                                       disabled={
                                         !isCurrentVersion &&
-                                        materialSelectionData
+                                        !!materialSelectionData
                                       }
                                       className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                                     />
@@ -2934,7 +3209,8 @@ export default function MaterialSelection({ lot_id, project_id }) {
                                       )
                                     }
                                     disabled={
-                                      !isCurrentVersion && materialSelectionData
+                                      !isCurrentVersion &&
+                                      !!materialSelectionData
                                     }
                                     rows={2}
                                     className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
@@ -2952,7 +3228,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                     <div className="mt-3">
                       <button
                         onClick={() => handleAddCustomItem(sectionKey)}
-                        disabled={!isCurrentVersion && materialSelectionData}
+                        disabled={!isCurrentVersion || !!materialSelectionData}
                         className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm font-medium text-secondary hover:text-secondary/80 hover:bg-secondary/10 rounded-md transition-colors border border-secondary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Plus className="w-4 h-4" />
@@ -2975,7 +3251,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
                     onChange={(e) =>
                       handleAreaNotesChange(sectionKey, e.target.value)
                     }
-                    disabled={!isCurrentVersion && materialSelectionData}
+                    disabled={!isCurrentVersion || !!materialSelectionData}
                     placeholder="Add notes for this area..."
                     rows={3}
                     className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
@@ -2993,13 +3269,18 @@ export default function MaterialSelection({ lot_id, project_id }) {
           {/* Display Existing Files First */}
           {(() => {
             // Categorize files by type
-            const categorizeFiles = () => {
-              const images = [];
-              const videos = [];
-              const pdfs = [];
-              const others = [];
+            const categorizeFiles = (): {
+              images: MediaFile[];
+              videos: MediaFile[];
+              pdfs: MediaFile[];
+              others: MediaFile[];
+            } => {
+              const images: MediaFile[] = [];
+              const videos: MediaFile[] = [];
+              const pdfs: MediaFile[] = [];
+              const others: MediaFile[] = [];
 
-              mediaFiles.forEach((file) => {
+              mediaFiles.forEach((file: MediaFile) => {
                 if (
                   file.mime_type?.includes("image") ||
                   file.file_type === "image"
@@ -3026,7 +3307,7 @@ export default function MaterialSelection({ lot_id, project_id }) {
 
             const { images, videos, pdfs, others } = categorizeFiles();
 
-            const toggleSection = (section) => {
+            const toggleSection = (section: keyof ExpandedSections) => {
               setExpandedSections((prev) => ({
                 ...prev,
                 [section]: !prev[section],
@@ -3039,6 +3320,11 @@ export default function MaterialSelection({ lot_id, project_id }) {
               files,
               isSmall = false,
               sectionKey,
+            }: {
+              title: string;
+              files: MediaFile[];
+              isSmall?: boolean;
+              sectionKey: keyof ExpandedSections;
             }) => {
               if (files.length === 0) return null;
 
@@ -3055,8 +3341,9 @@ export default function MaterialSelection({ lot_id, project_id }) {
                       {title} ({files.length})
                     </span>
                     <div
-                      className={`transform transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
-                        }`}
+                      className={`transform transition-transform duration-200 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
                     >
                       <ChevronDown className="w-4 h-4" />
                     </div>
@@ -3070,16 +3357,18 @@ export default function MaterialSelection({ lot_id, project_id }) {
                           key={file.id}
                           onClick={() => handleViewExistingFile(file)}
                           title="Click to view file"
-                          className={`cursor-pointer relative bg-white border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all group ${isSmall ? "w-32" : "w-40"
-                            }`}
+                          className={`cursor-pointer relative bg-white border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all group ${
+                            isSmall ? "w-32" : "w-40"
+                          }`}
                         >
                           {/* File Preview */}
                           <div
-                            className={`w-full ${isSmall ? "aspect-4/3" : "aspect-square"
-                              } rounded-lg flex items-center justify-center mb-2 overflow-hidden bg-slate-50`}
+                            className={`w-full ${
+                              isSmall ? "aspect-4/3" : "aspect-square"
+                            } rounded-lg flex items-center justify-center mb-2 overflow-hidden bg-slate-50`}
                           >
                             {file.mime_type?.includes("image") ||
-                              file.file_type === "image" ? (
+                            file.file_type === "image" ? (
                               <Image
                                 height={100}
                                 width={100}
@@ -3203,8 +3492,9 @@ export default function MaterialSelection({ lot_id, project_id }) {
                 Select Files {uploadingMedia && "(Uploading...)"}
               </label>
               <div
-                className={`border-2 border-dashed border-slate-300 hover:border-secondary rounded-lg transition-all duration-200 bg-slate-50 hover:bg-slate-100 ${uploadingMedia ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                className={`border-2 border-dashed border-slate-300 hover:border-secondary rounded-lg transition-all duration-200 bg-slate-50 hover:bg-slate-100 ${
+                  uploadingMedia ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <input
                   ref={fileInputRef}

@@ -7,17 +7,96 @@ import { TbCalendarDue } from "react-icons/tb";
 import { CiWarning } from "react-icons/ci";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 
+// Type definitions
+interface Employee {
+  id: string;
+  employee_id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+interface Stage {
+  stage_id: string;
+  name: string;
+  status: string;
+  notes?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  assigned_to?: Array<string | { employee_id: string; employee?: Employee }>;
+  [key: string]: unknown;
+}
+
+interface MaintenanceChecklist {
+  prepared_by_office: boolean;
+  prepared_by_production: boolean;
+  delivered_to_site: boolean;
+  installed: boolean;
+}
+
+interface FileData {
+  id: string;
+  filename: string;
+  url: string;
+  mime_type: string;
+  type?: string;
+  size: number;
+  maintenance_checklist?: MaintenanceChecklist;
+  [key: string]: unknown;
+}
+
+interface LotData {
+  id: string;
+  lot_id: string;
+  name?: string;
+  startDate?: string;
+  installationDueDate?: string;
+  status?: string;
+  notes?: string;
+  installer?: Employee;
+  stages?: Stage[];
+  tabs?: Array<{
+    id?: string;
+    tab: string;
+    notes?: string;
+    files?: FileData[];
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
+interface NewStage {
+  name: string;
+  status: string;
+  notes: string;
+  startDate: string;
+  endDate: string;
+  assigned_to: string[];
+}
+
+interface StageTableProps {
+  selectedLotData: LotData | null;
+  validateDateInput: (
+    startDate: string,
+    endDate: string,
+    fieldChanged: string
+  ) => boolean;
+  updateLotData: React.Dispatch<React.SetStateAction<LotData | null>>;
+}
+
 export default function StageTable({
   selectedLotData,
-  getToken,
   validateDateInput,
   updateLotData,
-}) {
+}: StageTableProps) {
   const [isAddingStage, setIsAddingStage] = useState(false);
   const [showDeleteStageModal, setShowDeleteStageModal] = useState(false);
-  const [stageToDelete, setStageToDelete] = useState(null);
+  const [stageToDelete, setStageToDelete] = useState<string | null>(null);
   const [isDeletingStage, setIsDeletingStage] = useState(false);
-  const [newStage, setNewStage] = useState({
+  const [newStage, setNewStage] = useState<NewStage>({
     name: "",
     status: "NOT_STARTED",
     notes: "",
@@ -27,14 +106,19 @@ export default function StageTable({
   });
 
   // Add these state variables after your existing useState declarations
-  const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
-  const [currentStageForAssignment, setCurrentStageForAssignment] =
-    useState(null);
+  const [currentStageForAssignment, setCurrentStageForAssignment] = useState<
+    string | null
+  >(null);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
-  const [notesSavedIndicators, setNotesSavedIndicators] = useState({});
-  const notesDebounceTimers = useRef({});
-  const [localStages, setLocalStages] = useState([]);
+  const [notesSavedIndicators, setNotesSavedIndicators] = useState<
+    Record<string, boolean>
+  >({});
+  const notesDebounceTimers = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+  const [localStages, setLocalStages] = useState<Stage[]>([]);
 
   // Sync local stages with selectedLotData when it changes
   useEffect(() => {
@@ -44,21 +128,10 @@ export default function StageTable({
   }, [selectedLotData?.stages]);
 
   // Fetch employees on component mount
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  const fetchEmployees = async () => {
+  const fetchEmployees = React.useCallback(async () => {
     try {
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        return;
-      }
-
       const response = await axios.get("/api/employee/all", {
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
+        withCredentials: true,
       });
 
       if (response.data.status) {
@@ -66,53 +139,72 @@ export default function StageTable({
       }
     } catch (error) {
       console.error("Error fetching employees:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message || "Failed to fetch employees"
+        );
+      } else {
+        toast.error("Failed to fetch employees");
+      }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   // Filter employees based on search term
-  const filteredEmployees = employees.filter((employee) => {
+  const filteredEmployees = employees.filter((employee: Employee) => {
     const searchLower = employeeSearchTerm.toLowerCase();
-    const fullName =
-      `${employee.first_name} ${employee.last_name}`.toLowerCase();
+    const fullName = `${employee.first_name || ""} ${
+      employee.last_name || ""
+    }`.toLowerCase();
     return (
       fullName.includes(searchLower) ||
-      employee.employee_id.toLowerCase().includes(searchLower) ||
-      employee.email?.toLowerCase().includes(searchLower)
+      (employee.employee_id || "").toLowerCase().includes(searchLower) ||
+      (employee.email || "").toLowerCase().includes(searchLower)
     );
   });
 
   // Helper function to check if identifier is a predefined stage name
-  const isPredefinedStageName = (stageIdentifier) => {
+  const isPredefinedStageName = (stageIdentifier: string): boolean => {
     if (typeof stageIdentifier !== "string") return false;
     // Check if it's in the predefined stages array
     return stages.some(
-      (stageName) => stageName.toLowerCase() === stageIdentifier.toLowerCase()
+      (stageName: string) =>
+        stageName.toLowerCase() === stageIdentifier.toLowerCase()
     );
   };
 
   // Helper function to find stage by identifier
-  const findStageByIdentifier = (stageIdentifier) => {
+  const findStageByIdentifier = (
+    stageIdentifier: string
+  ): Stage | undefined => {
     // Check if it's a predefined stage name
     if (isPredefinedStageName(stageIdentifier)) {
       // Check both regular stages and temporary stages
       return localStages.find(
-        (stage) =>
+        (stage: Stage) =>
           stage.name.toLowerCase() === stageIdentifier.toLowerCase() ||
           stage.stage_id === `temp_${stageIdentifier}`
       );
     } else {
       // It's a stage_id (UUID format)
-      return localStages.find((stage) => stage.stage_id === stageIdentifier);
+      return localStages.find(
+        (stage: Stage) => stage.stage_id === stageIdentifier
+      );
     }
   };
 
   // Helper function to ensure temporary stage exists in local state
-  const ensureTempStageExists = (stageIdentifier) => {
+  const ensureTempStageExists = (
+    stageIdentifier: string
+  ): Stage | undefined => {
     const existingStage = findStageByIdentifier(stageIdentifier);
 
     // If stage doesn't exist and it's a predefined stage name, create temporary entry
     if (!existingStage && isPredefinedStageName(stageIdentifier)) {
-      const tempStage = {
+      const tempStage: Stage = {
         stage_id: `temp_${stageIdentifier}`,
         name: stageIdentifier,
         status: "NOT_STARTED",
@@ -121,10 +213,10 @@ export default function StageTable({
         endDate: null,
         assigned_to: [],
       };
-      setLocalStages((prev) => {
+      setLocalStages((prev: Stage[]) => {
         // Check if temp stage already exists
         const existing = prev.find(
-          (s) => s.stage_id === `temp_${stageIdentifier}`
+          (s: Stage) => s.stage_id === `temp_${stageIdentifier}`
         );
         if (existing) {
           return prev; // Already exists
@@ -137,9 +229,12 @@ export default function StageTable({
   };
 
   // Helper function to update stage in local state
-  const updateStageInLocalState = (stageIdentifier, updatedData) => {
-    setLocalStages((prev) => {
-      return prev.map((stage) => {
+  const updateStageInLocalState = (
+    stageIdentifier: string,
+    updatedData: Partial<Stage>
+  ) => {
+    setLocalStages((prev: Stage[]) => {
+      return prev.map((stage: Stage) => {
         // Check if it's a predefined stage name
         if (isPredefinedStageName(stageIdentifier)) {
           // Check both regular stages and temporary stages
@@ -161,12 +256,12 @@ export default function StageTable({
   };
 
   // Helper function to update parent lot data
-  const updateParentLotData = (updatedStage) => {
+  const updateParentLotData = (updatedStage: Stage) => {
     if (updateLotData) {
-      updateLotData((prev) => {
+      updateLotData((prev: LotData | null) => {
         if (!prev) return prev;
         const updatedStages =
-          prev.stages?.map((stage) => {
+          prev.stages?.map((stage: Stage) => {
             if (stage.stage_id === updatedStage.stage_id) {
               return updatedStage;
             }
@@ -178,7 +273,11 @@ export default function StageTable({
   };
 
   // Helper function to normalize assigned_to array to employee IDs
-  const normalizeAssignedTo = (assignedTo) => {
+  const normalizeAssignedTo = (
+    assignedTo:
+      | Array<string | { employee_id: string; employee?: Employee }>
+      | undefined
+  ): string[] => {
     if (!assignedTo || assignedTo.length === 0) return [];
     return assignedTo.map((assignment) =>
       typeof assignment === "string" ? assignment : assignment.employee_id
@@ -186,7 +285,10 @@ export default function StageTable({
   };
 
   // Helper function to prepare stage data for API
-  const prepareStageData = (stage, additionalData = {}) => {
+  const prepareStageData = (
+    stage: Stage,
+    additionalData: Partial<Stage> = {}
+  ): Partial<Stage> => {
     return {
       name: stage.name || "",
       status: stage.status || "NOT_STARTED",
@@ -199,66 +301,70 @@ export default function StageTable({
   };
 
   // Centralized function to create a stage
-  const createStage = async (stageData, stageIdentifier) => {
+  const createStage = async (
+    stageData: Partial<Stage> & { lot_id: string },
+    stageIdentifier: string
+  ): Promise<Stage | null> => {
     try {
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.");
-        return null;
-      }
-
       const response = await axios.post("/api/stage/create", stageData, {
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
+        withCredentials: true,
       });
 
       if (response.data.status && response.data.data) {
-        const newStage = response.data.data;
+        const newStage = response.data.data as Stage;
 
         // Preserve assigned_to from the stageData we sent (API creates relationships but doesn't return them)
         // The API creates the stage_employee relationships but the response doesn't include them
         const preservedAssignedTo = stageData.assigned_to || [];
 
         // Format assigned_to to match the expected structure (array of objects with employee_id and employee)
-        const formattedAssignedTo = preservedAssignedTo.length > 0
-          ? preservedAssignedTo.map((empId) => {
-            const employee = employees.find((e) => e.employee_id === empId);
-            return employee
-              ? {
-                employee_id: empId,
-                employee: {
-                  first_name: employee.first_name,
-                  last_name: employee.last_name,
-                },
-              }
-              : { employee_id: empId };
-          })
-          : (newStage.assigned_to || []);
+        // Handle both string IDs and object formats
+        const formattedAssignedTo: Array<
+          string | { employee_id: string; employee?: Employee }
+        > =
+          Array.isArray(preservedAssignedTo) && preservedAssignedTo.length > 0
+            ? preservedAssignedTo.map(
+                (
+                  item: string | { employee_id: string; employee?: Employee }
+                ) => {
+                  const empId =
+                    typeof item === "string" ? item : item.employee_id;
+                  const employee = employees.find(
+                    (e: Employee) => e.employee_id === empId
+                  );
+                  return employee
+                    ? {
+                        employee_id: empId,
+                        employee: employee,
+                      }
+                    : { employee_id: empId };
+                }
+              )
+            : newStage.assigned_to || [];
 
         // Merge assigned_to into the new stage
-        const stageWithAssignments = {
+        const stageWithAssignments: Stage = {
           ...newStage,
           assigned_to: formattedAssignedTo,
         };
 
         // Replace temporary stage with real one if it exists
-        setLocalStages((prev) => {
+        setLocalStages((prev: Stage[]) => {
           const filtered = prev.filter(
-            (s) => s.stage_id !== `temp_${stageIdentifier}`
+            (s: Stage) => s.stage_id !== `temp_${stageIdentifier}`
           );
           return [...filtered, stageWithAssignments];
         });
 
         // Update parent lot data
         if (updateLotData) {
-          updateLotData((prev) => {
+          updateLotData((prev: LotData | null) => {
             if (!prev) return prev;
             return {
               ...prev,
               stages: [
                 ...(prev.stages?.filter(
-                  (s) => s.stage_id !== `temp_${stageIdentifier}`
+                  (s: Stage) => s.stage_id !== `temp_${stageIdentifier}`
                 ) || []),
                 stageWithAssignments,
               ],
@@ -273,13 +379,23 @@ export default function StageTable({
       }
     } catch (error) {
       console.error("Error creating stage:", error);
-      toast.error("Failed to create stage. Please try again.");
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to create stage. Please try again."
+        );
+      } else {
+        toast.error("Failed to create stage. Please try again.");
+      }
       return null;
     }
   };
 
   // Centralized function to update a stage
-  const updateStage = async (stageIdentifier, stageData) => {
+  const updateStage = async (
+    stageIdentifier: string,
+    stageData: Partial<Stage>
+  ): Promise<Stage | null> => {
     const existingStage = findStageByIdentifier(stageIdentifier);
     if (!existingStage || existingStage.stage_id?.startsWith("temp_")) {
       return null;
@@ -288,25 +404,19 @@ export default function StageTable({
     const previousStageState = { ...existingStage };
 
     try {
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.");
-        return null;
-      }
-
       const response = await axios.patch(
         `/api/stage/${existingStage.stage_id}`,
         stageData,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "application/json",
           },
         }
       );
 
       if (response.data.status && response.data.data) {
-        const updatedStage = response.data.data;
+        const updatedStage = response.data.data as Stage;
         updateStageInLocalState(stageIdentifier, updatedStage);
         updateParentLotData(updatedStage);
         return updatedStage;
@@ -318,7 +428,14 @@ export default function StageTable({
       }
     } catch (error) {
       console.error("Error updating stage:", error);
-      toast.error("Failed to update stage. Please try again.");
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to update stage. Please try again."
+        );
+      } else {
+        toast.error("Failed to update stage. Please try again.");
+      }
       // Revert local state
       updateStageInLocalState(stageIdentifier, previousStageState);
       return null;
@@ -326,13 +443,13 @@ export default function StageTable({
   };
 
   // Helper function to check if stage exists (not temporary)
-  const stageExists = (stageIdentifier) => {
+  const stageExists = (stageIdentifier: string): boolean => {
     const existingStage = findStageByIdentifier(stageIdentifier);
-    return existingStage && !existingStage.stage_id?.startsWith("temp_");
+    return existingStage ? !existingStage.stage_id?.startsWith("temp_") : false;
   };
 
   // Open employee dropdown for a specific stage
-  const handleOpenEmployeeDropdown = (stageIdentifier) => {
+  const handleOpenEmployeeDropdown = (stageIdentifier: string) => {
     // Ensure temporary stage exists if it doesn't exist yet
     ensureTempStageExists(stageIdentifier);
     setCurrentStageForAssignment(stageIdentifier);
@@ -341,12 +458,12 @@ export default function StageTable({
   };
 
   // Handle employee selection and auto-save
-  const handleToggleEmployeeAssignment = async (employeeId) => {
+  const handleToggleEmployeeAssignment = async (employeeId: string) => {
     if (!currentStageForAssignment) return;
 
     // Ensure temporary stage exists in local state
     ensureTempStageExists(currentStageForAssignment);
-    let existingStage = findStageByIdentifier(currentStageForAssignment);
+    const existingStage = findStageByIdentifier(currentStageForAssignment);
 
     // Get current assigned employees
     const currentAssignedIds = normalizeAssignedTo(
@@ -354,9 +471,11 @@ export default function StageTable({
     );
 
     // Toggle employee assignment
-    let updatedAssignedIds;
+    let updatedAssignedIds: string[];
     if (currentAssignedIds.includes(employeeId)) {
-      updatedAssignedIds = currentAssignedIds.filter((id) => id !== employeeId);
+      updatedAssignedIds = currentAssignedIds.filter(
+        (id: string) => id !== employeeId
+      );
     } else {
       updatedAssignedIds = [...currentAssignedIds, employeeId];
     }
@@ -370,7 +489,7 @@ export default function StageTable({
     // Use existingStage from before the update to avoid race condition
     if (!stageExists(currentStageForAssignment)) {
       // Stage needs to be created
-      if (isPredefinedStageName(currentStageForAssignment)) {
+      if (isPredefinedStageName(currentStageForAssignment) && selectedLotData) {
         const stageData = {
           lot_id: selectedLotData.lot_id,
           name: currentStageForAssignment,
@@ -393,6 +512,7 @@ export default function StageTable({
 
     // Existing stage - update via API
     // Use existingStage from before update and updatedAssignedIds directly to avoid race condition
+    if (!existingStage) return;
     const stageData = prepareStageData(existingStage, {
       assigned_to: updatedAssignedIds, // Use updatedAssignedIds directly instead of re-reading from state
     });
@@ -406,7 +526,7 @@ export default function StageTable({
   };
 
   // Check if employee is assigned
-  const isEmployeeAssigned = (employeeId) => {
+  const isEmployeeAssigned = (employeeId: string): boolean => {
     if (!currentStageForAssignment) return false;
     const existingStage = findStageByIdentifier(currentStageForAssignment);
     if (!existingStage) return false;
@@ -416,12 +536,16 @@ export default function StageTable({
   };
 
   // Get employee details by ID
-  const getEmployeeById = (employeeId) => {
-    return employees.find((emp) => emp.employee_id === employeeId);
+  const getEmployeeById = (employeeId: string): Employee | undefined => {
+    return employees.find((emp: Employee) => emp.employee_id === employeeId);
   };
 
   // Get assigned team members display with proper names
-  const getAssignedTeamMembers = (assignedTo) => {
+  const getAssignedTeamMembers = (
+    assignedTo:
+      | Array<string | { employee_id: string; employee?: Employee }>
+      | undefined
+  ): string => {
     if (!assignedTo || assignedTo.length === 0) return "Unassigned";
 
     return assignedTo
@@ -430,16 +554,18 @@ export default function StageTable({
         if (typeof assignment === "string") {
           const employee = getEmployeeById(assignment);
           return employee
-            ? `${employee.first_name} ${employee.last_name}`
+            ? `${employee.first_name || ""} ${employee.last_name || ""}`.trim()
             : assignment;
         }
-        return `${assignment.employee.first_name} ${assignment.employee.last_name}`;
+        return `${assignment.employee?.first_name || ""} ${
+          assignment.employee?.last_name || ""
+        }`.trim();
       })
       .join(", ");
   };
 
   // Get assigned team members for display
-  const getAssignedTeamMembersDisplay = (stageIdentifier) => {
+  const getAssignedTeamMembersDisplay = (stageIdentifier: string): string => {
     const existingStage = findStageByIdentifier(stageIdentifier);
     return existingStage
       ? getAssignedTeamMembers(existingStage.assigned_to)
@@ -447,21 +573,15 @@ export default function StageTable({
   };
 
   const handleAddStage = async () => {
-    if (newStage.name.trim()) {
+    if (newStage.name.trim() && selectedLotData) {
       const startDate = newStage.startDate || null;
       const endDate = newStage.endDate || null;
 
       // Validate dates against lot dates before creating
-      if (
-        startDate &&
-        !validateStageDateAgainstLot(startDate, "startDate")
-      ) {
+      if (startDate && !validateStageDateAgainstLot(startDate, "startDate")) {
         return;
       }
-      if (
-        endDate &&
-        !validateStageDateAgainstLot(endDate, "endDate")
-      ) {
+      if (endDate && !validateStageDateAgainstLot(endDate, "endDate")) {
         return;
       }
       // Validate start date is not after end date
@@ -504,33 +624,26 @@ export default function StageTable({
 
     try {
       setIsDeletingStage(true);
-      const sessionToken = getToken();
-      if (!sessionToken) {
-        toast.error("No valid session found. Please login again.");
-        return;
-      }
 
       const response = await axios.delete(`/api/stage/${stageToDelete}`, {
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
+        withCredentials: true,
       });
 
       if (response.data.status) {
         toast.success("Stage deleted successfully");
         // Remove from local state
-        setLocalStages((prev) =>
-          prev.filter((stage) => stage.stage_id !== stageToDelete)
+        setLocalStages((prev: Stage[]) =>
+          prev.filter((stage: Stage) => stage.stage_id !== stageToDelete)
         );
         // Update parent lot data
         if (updateLotData) {
-          updateLotData((prev) => {
+          updateLotData((prev: LotData | null) => {
             if (!prev) return prev;
             return {
               ...prev,
               stages:
                 prev.stages?.filter(
-                  (stage) => stage.stage_id !== stageToDelete
+                  (stage: Stage) => stage.stage_id !== stageToDelete
                 ) || [],
             };
           });
@@ -542,14 +655,24 @@ export default function StageTable({
       }
     } catch (error) {
       console.error("Error deleting stage:", error);
-      toast.error("Failed to delete stage. Please try again.");
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to delete stage. Please try again."
+        );
+      } else {
+        toast.error("Failed to delete stage. Please try again.");
+      }
     } finally {
       setIsDeletingStage(false);
     }
   };
 
   // Auto-save status change
-  const handleStatusChange = async (stageIdentifier, newStatus) => {
+  const handleStatusChange = async (
+    stageIdentifier: string,
+    newStatus: string
+  ) => {
     const existingStage = findStageByIdentifier(stageIdentifier);
 
     // Update local state immediately
@@ -560,7 +683,7 @@ export default function StageTable({
     // Check if stage exists (not temporary)
     if (!stageExists(stageIdentifier)) {
       // Stage needs to be created (only for predefined stages)
-      if (isPredefinedStageName(stageIdentifier)) {
+      if (isPredefinedStageName(stageIdentifier) && selectedLotData) {
         const stageData = {
           lot_id: selectedLotData.lot_id,
           name: stageIdentifier,
@@ -593,13 +716,13 @@ export default function StageTable({
   };
 
   // Debounced notes save function
-  const saveNotes = async (stageIdentifier, notes) => {
-    let existingStage = findStageByIdentifier(stageIdentifier);
+  const saveNotes = async (stageIdentifier: string, notes: string) => {
+    const existingStage = findStageByIdentifier(stageIdentifier);
 
     // Check if stage exists (not temporary)
     if (!stageExists(stageIdentifier)) {
       // Stage needs to be created (only for predefined stages)
-      if (isPredefinedStageName(stageIdentifier)) {
+      if (isPredefinedStageName(stageIdentifier) && selectedLotData) {
         const stageData = {
           lot_id: selectedLotData.lot_id,
           name: stageIdentifier,
@@ -617,10 +740,11 @@ export default function StageTable({
             [stageIdentifier]: true,
           }));
           setTimeout(() => {
-            setNotesSavedIndicators((prev) => ({
-              ...prev,
-              [stageIdentifier]: false,
-            }));
+            setNotesSavedIndicators((prev) => {
+              const newIndicators = { ...prev };
+              delete newIndicators[stageIdentifier];
+              return newIndicators;
+            });
           }, 2000);
         }
       }
@@ -640,22 +764,23 @@ export default function StageTable({
       }));
       // Hide indicator after 2 seconds
       setTimeout(() => {
-        setNotesSavedIndicators((prev) => ({
-          ...prev,
-          [stageIdentifier]: false,
-        }));
+        setNotesSavedIndicators((prev) => {
+          const newIndicators = { ...prev };
+          delete newIndicators[stageIdentifier];
+          return newIndicators;
+        });
       }, 2000);
     }
   };
 
   // Debounced notes handler
-  const handleNotesChange = (stageIdentifier, value) => {
+  const handleNotesChange = (stageIdentifier: string, value: string) => {
     const existingStage = findStageByIdentifier(stageIdentifier);
 
     // If stage doesn't exist, create a temporary entry in local state for immediate UI feedback
     if (!existingStage && isPredefinedStageName(stageIdentifier)) {
       // It's a predefined stage name, add temporary entry to local state
-      const tempStage = {
+      const tempStage: Stage = {
         stage_id: `temp_${stageIdentifier}`, // Temporary ID
         name: stageIdentifier,
         status: "NOT_STARTED",
@@ -664,13 +789,13 @@ export default function StageTable({
         endDate: null,
         assigned_to: [],
       };
-      setLocalStages((prev) => {
+      setLocalStages((prev: Stage[]) => {
         // Check if temp stage already exists
         const existing = prev.find(
-          (s) => s.stage_id === `temp_${stageIdentifier}`
+          (s: Stage) => s.stage_id === `temp_${stageIdentifier}`
         );
         if (existing) {
-          return prev.map((s) =>
+          return prev.map((s: Stage) =>
             s.stage_id === `temp_${stageIdentifier}`
               ? { ...s, notes: value }
               : s
@@ -697,9 +822,11 @@ export default function StageTable({
     }, 1000);
   };
 
-
   // Helper function to validate stage dates against lot dates
-  const validateStageDateAgainstLot = (dateValue, field) => {
+  const validateStageDateAgainstLot = (
+    dateValue: string,
+    field: "startDate" | "endDate"
+  ): boolean => {
     if (!dateValue) return true; // Empty dates are allowed
 
     const stageDate = new Date(dateValue);
@@ -712,50 +839,38 @@ export default function StageTable({
 
     if (field === "startDate") {
       if (lotStartDate && stageDate < lotStartDate) {
-        toast.error(
-          "Stage start date cannot be before the lot start date",
-          {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-          }
-        );
+        toast.error("Stage start date cannot be before the lot start date", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+        });
         return false;
       }
       if (lotEndDate && stageDate > lotEndDate) {
-        toast.error(
-          "Stage start date cannot be after the lot end date",
-          {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-          }
-        );
+        toast.error("Stage start date cannot be after the lot end date", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+        });
         return false;
       }
     }
 
     if (field === "endDate") {
       if (lotStartDate && stageDate < lotStartDate) {
-        toast.error(
-          "Stage end date cannot be before the lot start date",
-          {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-          }
-        );
+        toast.error("Stage end date cannot be before the lot start date", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+        });
         return false;
       }
       if (lotEndDate && stageDate > lotEndDate) {
-        toast.error(
-          "Stage end date cannot be after the lot end date",
-          {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-          }
-        );
+        toast.error("Stage end date cannot be after the lot end date", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+        });
         return false;
       }
     }
@@ -764,7 +879,11 @@ export default function StageTable({
   };
 
   // Auto-save date change
-  const handleDateChange = async (stageIdentifier, field, value) => {
+  const handleDateChange = async (
+    stageIdentifier: string,
+    field: "startDate" | "endDate",
+    value: string
+  ) => {
     // Ensure temporary stage exists in local state for immediate UI update
     ensureTempStageExists(stageIdentifier);
     let existingStage = findStageByIdentifier(stageIdentifier);
@@ -780,7 +899,13 @@ export default function StageTable({
     const currentEndDate =
       field === "endDate" ? value : existingStage?.endDate || "";
 
-    if (!validateDateInput(currentStartDate, currentEndDate, field)) {
+    if (
+      !validateDateInput(
+        String(currentStartDate),
+        String(currentEndDate),
+        field
+      )
+    ) {
       return; // Don't update if validation fails
     }
 
@@ -796,7 +921,7 @@ export default function StageTable({
     // Check if stage exists (not temporary)
     if (!stageExists(stageIdentifier)) {
       // Stage needs to be created via API
-      if (isPredefinedStageName(stageIdentifier)) {
+      if (isPredefinedStageName(stageIdentifier) && selectedLotData) {
         const stageData = {
           lot_id: selectedLotData.lot_id,
           name: stageIdentifier,
@@ -842,7 +967,7 @@ export default function StageTable({
   };
 
   // Auto-save name change
-  const handleNameChange = async (stageIdentifier, value) => {
+  const handleNameChange = async (stageIdentifier: string, value: string) => {
     const existingStage = findStageByIdentifier(stageIdentifier);
     if (!existingStage) return;
 
@@ -867,7 +992,9 @@ export default function StageTable({
   };
 
   // Function to get due date warning icon for stages
-  const getDueDateWarningIcon = (stage) => {
+  const getDueDateWarningIcon = (
+    stage: Stage | { status: string; endDate?: string | null }
+  ): React.ReactNode => {
     // Only show warning if stage status is not "DONE" or "NA"
     if (stage.status === "DONE" || stage.status === "NA") return null;
 
@@ -902,7 +1029,7 @@ export default function StageTable({
     return null;
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string): string => {
     switch (status) {
       case "DONE":
         return "bg-green-100 text-green-800 border-green-200";
@@ -918,7 +1045,9 @@ export default function StageTable({
   };
 
   // Helper function to convert UTC date to Adelaide timezone for display
-  const formatDateForInput = (dateString) => {
+  const formatDateForInput = (
+    dateString: string | null | undefined
+  ): string => {
     if (!dateString) return "";
 
     // Parse the date string (could be UTC or already local)
@@ -937,7 +1066,7 @@ export default function StageTable({
     return formatter.format(date);
   };
 
-  const handleDeleteStage = (stageId) => {
+  const handleDeleteStage = (stageId: string) => {
     setStageToDelete(stageId);
     setShowDeleteStageModal(true);
   };
@@ -1144,7 +1273,7 @@ export default function StageTable({
                 }
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                 placeholder="Add notes for this stage"
-                rows="2"
+                rows={2}
               />
             </div>
           </div>
@@ -1178,10 +1307,10 @@ export default function StageTable({
             </thead>
             <tbody>
               {/* First, show all predefined stages */}
-              {stages.map((stageName) => {
+              {stages.map((stageName: string) => {
                 // Find existing stage data for this stage name
                 const existingStage = localStages.find(
-                  (stage) =>
+                  (stage: Stage) =>
                     stage.name.toLowerCase() === stageName.toLowerCase()
                 );
 
@@ -1236,7 +1365,7 @@ export default function StageTable({
                           handleNotesChange(stageName, e.target.value)
                         }
                         className="w-full px-2 py-1 border border-transparent rounded hover:border-slate-300 focus:border-secondary focus:outline-none bg-transparent resize-none"
-                        rows="1"
+                        rows={1}
                         placeholder="Add notes"
                       />
                       {notesSavedIndicators[stageName] && (
@@ -1263,7 +1392,9 @@ export default function StageTable({
                         }
                         max={
                           selectedLotData?.installationDueDate
-                            ? formatDateForInput(selectedLotData.installationDueDate)
+                            ? formatDateForInput(
+                                selectedLotData.installationDueDate
+                              )
                             : undefined
                         }
                         className="max-w-[140px] px-2 py-1 border border-transparent rounded hover:border-slate-300 focus:border-secondary focus:outline-none bg-transparent text-xs"
@@ -1283,7 +1414,9 @@ export default function StageTable({
                         }
                         max={
                           selectedLotData?.installationDueDate
-                            ? formatDateForInput(selectedLotData.installationDueDate)
+                            ? formatDateForInput(
+                                selectedLotData.installationDueDate
+                              )
                             : undefined
                         }
                         className="max-w-[140px] px-2 py-1 border border-transparent rounded hover:border-slate-300 focus:border-secondary focus:outline-none bg-transparent text-xs"
@@ -1292,10 +1425,11 @@ export default function StageTable({
                     <td className="py-3 px-2">
                       <button
                         onClick={() => handleOpenEmployeeDropdown(stageName)}
-                        className={`cursor-pointer text-sm hover:text-secondary hover:underline text-left ${existingStage?.assigned_to?.length > 0
-                          ? "text-secondary font-medium"
-                          : "text-slate-600"
-                          }`}
+                        className={`cursor-pointer text-sm hover:text-secondary hover:underline text-left ${
+                          (existingStage?.assigned_to?.length || 0) > 0
+                            ? "text-secondary font-medium"
+                            : "text-slate-600"
+                        }`}
                       >
                         {getAssignedTeamMembersDisplay(stageName)}
                       </button>
@@ -1320,14 +1454,14 @@ export default function StageTable({
               {/* Then, show manually added stages that are not in the predefined list */}
               {localStages
                 ?.filter(
-                  (stage) =>
+                  (stage: Stage) =>
                     !stages.some(
-                      (predefinedStage) =>
+                      (predefinedStage: string) =>
                         predefinedStage.toLowerCase() ===
                         stage.name.toLowerCase()
                     )
                 )
-                ?.map((stage) => (
+                ?.map((stage: Stage) => (
                   <tr
                     key={stage.stage_id}
                     className="border-b border-slate-100 "
@@ -1373,7 +1507,7 @@ export default function StageTable({
                           handleNotesChange(stage.stage_id, e.target.value)
                         }
                         className="w-full px-2 py-1 border border-transparent rounded hover:border-slate-300 focus:border-secondary focus:outline-none bg-transparent resize-none"
-                        rows="2"
+                        rows={2}
                         placeholder="Add notes"
                       />
                       {notesSavedIndicators[stage.stage_id] && (
@@ -1400,7 +1534,9 @@ export default function StageTable({
                         }
                         max={
                           selectedLotData?.installationDueDate
-                            ? formatDateForInput(selectedLotData.installationDueDate)
+                            ? formatDateForInput(
+                                selectedLotData.installationDueDate
+                              )
                             : undefined
                         }
                         className="max-w-[140px] px-2 py-1 border border-transparent rounded hover:border-slate-300 focus:border-secondary focus:outline-none bg-transparent text-xs"
@@ -1424,7 +1560,9 @@ export default function StageTable({
                         }
                         max={
                           selectedLotData?.installationDueDate
-                            ? formatDateForInput(selectedLotData.installationDueDate)
+                            ? formatDateForInput(
+                                selectedLotData.installationDueDate
+                              )
                             : undefined
                         }
                         className="max-w-[140px] px-2 py-1 border border-transparent rounded hover:border-slate-300 focus:border-secondary focus:outline-none bg-transparent text-xs"
@@ -1435,10 +1573,11 @@ export default function StageTable({
                         onClick={() =>
                           handleOpenEmployeeDropdown(stage.stage_id)
                         }
-                        className={`cursor-pointer text-sm hover:text-secondary hover:underline text-left ${stage.assigned_to?.length > 0
-                          ? "text-secondary font-medium"
-                          : "text-slate-600"
-                          }`}
+                        className={`cursor-pointer text-sm hover:text-secondary hover:underline text-left ${
+                          (stage.assigned_to?.length || 0) > 0
+                            ? "text-secondary font-medium"
+                            : "text-slate-600"
+                        }`}
                       >
                         {getAssignedTeamMembersDisplay(stage.stage_id)}
                       </button>
@@ -1495,7 +1634,7 @@ export default function StageTable({
             <div className="max-h-96 overflow-y-auto">
               {filteredEmployees.length > 0 ? (
                 <div className="space-y-2">
-                  {filteredEmployees.map((employee) => {
+                  {filteredEmployees.map((employee: Employee) => {
                     const isAssigned = isEmployeeAssigned(employee.employee_id);
                     return (
                       <button
@@ -1503,16 +1642,18 @@ export default function StageTable({
                         onClick={() =>
                           handleToggleEmployeeAssignment(employee.employee_id)
                         }
-                        className={`cursor-pointer w-full text-left p-3 border rounded-lg transition-colors ${isAssigned
-                          ? "border-secondary bg-secondary/5 hover:bg-secondary/10"
-                          : "border-slate-200 hover:bg-slate-50 hover:border-secondary"
-                          }`}
+                        className={`cursor-pointer w-full text-left p-3 border rounded-lg transition-colors ${
+                          isAssigned
+                            ? "border-secondary bg-secondary/5 hover:bg-secondary/10"
+                            : "border-slate-200 hover:bg-slate-50 hover:border-secondary"
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <div className="font-medium text-slate-900">
-                                {employee.first_name} {employee.last_name}
+                                {employee.first_name || ""}{" "}
+                                {employee.last_name || ""}
                               </div>
                               {isAssigned && (
                                 <Check className="w-4 h-4 text-secondary" />

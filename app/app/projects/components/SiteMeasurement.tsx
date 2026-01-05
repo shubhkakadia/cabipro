@@ -4,11 +4,9 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { ChevronDown, FileText, FileUp, Trash, File } from "lucide-react";
 import Image from "next/image";
-// import TextEditor from "@/components/TextEditor/TextEditor";
 import { useParams } from "next/navigation";
 import TextEditor from "@/components/TextEditor/TextEditor";
-// import { useAuth } from "@/contexts/AuthContext";
-// import { useUploadProgress } from "@/hooks/useUploadProgress";
+import { useUploadProgress } from "@/hooks/useUploadProgress";
 
 // Type definitions
 interface Tab {
@@ -90,15 +88,26 @@ export default function SiteMeasurementsSection({
 }: SiteMeasurementsSectionProps) {
   const { id } = useParams<{ id: string }>();
   // const { getToken } = useAuth();
-  // Upload progress placeholder functions
-  const showProgressToast = () => {};
-  const completeUpload = () => {};
-  const dismissProgressToast = () => {};
-  const getUploadProgressHandler = () => () => {};
-  
+  // Upload progress hook
+  const {
+    showProgressToast,
+    completeUpload,
+    dismissProgressToast,
+    getUploadProgressHandler,
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number
+    ) => (progressEvent: { loaded: number; total?: number }) => void;
+  };
+
   // State for site measurements specific uploads
   const [sitePhotosFiles, setSitePhotosFiles] = useState<File[]>([]);
-  const [measurementPhotosFiles, setMeasurementPhotosFiles] = useState<File[]>([]);
+  const [measurementPhotosFiles, setMeasurementPhotosFiles] = useState<File[]>(
+    []
+  );
   const [isUploadingSitePhotos, setIsUploadingSitePhotos] = useState(false);
   const [isUploadingMeasurementPhotos, setIsUploadingMeasurementPhotos] =
     useState(false);
@@ -113,7 +122,9 @@ export default function SiteMeasurementsSection({
   const measurementPhotos = getSiteMeasurementFiles("MEASUREMENT_PHOTOS");
 
   // Handle file selection for site photos - upload immediately
-  const handleSitePhotosFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSitePhotosFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
 
@@ -125,7 +136,9 @@ export default function SiteMeasurementsSection({
   };
 
   // Handle file selection for measurement photos - upload immediately
-  const handleMeasurementPhotosFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMeasurementPhotosFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
 
@@ -168,23 +181,24 @@ export default function SiteMeasurementsSection({
 
       formData.append("site_group", siteGroup);
 
-      const projectId = typeof id === "string" ? id.toUpperCase() : String(id).toUpperCase();
+      const projectId =
+        typeof id === "string" ? id.toUpperCase() : String(id).toUpperCase();
       const apiUrl = `/api/uploads/lots/${projectId}/${selectedLotData.lot_id}/site_measurements`;
 
       // Show progress toast
-      showProgressToast();
+      showProgressToast(files.length);
 
       const response = await axios.post(apiUrl, formData, {
         withCredentials: true,
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        onUploadProgress: getUploadProgressHandler(),
+        onUploadProgress: getUploadProgressHandler(files.length),
       });
 
       if (response.data.status) {
         // Complete upload and auto-dismiss after 5 seconds
-        completeUpload();
+        completeUpload(files.length);
         setFiles([]);
         fetchLotData(true);
       } else {
@@ -198,10 +212,13 @@ export default function SiteMeasurementsSection({
       dismissProgressToast();
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.message || `Failed to upload ${groupName.toLowerCase()}. Please try again.`
+          err.response?.data?.message ||
+            `Failed to upload ${groupName.toLowerCase()}. Please try again.`
         );
       } else {
-        toast.error(`Failed to upload ${groupName.toLowerCase()}. Please try again.`);
+        toast.error(
+          `Failed to upload ${groupName.toLowerCase()}. Please try again.`
+        );
       }
     } finally {
       setIsUploading(false);
@@ -209,7 +226,9 @@ export default function SiteMeasurementsSection({
   };
 
   // Upload site photos
-  const handleUploadSitePhotos = async (filesToUpload: File[] | null = null) => {
+  const handleUploadSitePhotos = async (
+    filesToUpload: File[] | null = null
+  ) => {
     await uploadFiles({
       filesToUpload,
       siteGroup: "SITE_PHOTOS",
@@ -221,7 +240,9 @@ export default function SiteMeasurementsSection({
   };
 
   // Upload measurement photos
-  const handleUploadMeasurementPhotos = async (filesToUpload: File[] | null = null) => {
+  const handleUploadMeasurementPhotos = async (
+    filesToUpload: File[] | null = null
+  ) => {
     await uploadFiles({
       filesToUpload,
       siteGroup: "MEASUREMENT_PHOTOS",
@@ -233,7 +254,9 @@ export default function SiteMeasurementsSection({
   };
 
   // File Category Section Component for Site Measurements (matching existingFiles UI)
-  const SiteMeasurementFileSection = ({ files }: SiteMeasurementFileSectionProps) => {
+  const SiteMeasurementFileSection = ({
+    files,
+  }: SiteMeasurementFileSectionProps) => {
     // State for collapsed/expanded sections
     const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
       images: false,
@@ -295,8 +318,9 @@ export default function SiteMeasurementsSection({
               {title} ({files.length})
             </span>
             <div
-              className={`transform transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
-                }`}
+              className={`transform transition-transform duration-200 ${
+                isExpanded ? "rotate-180" : ""
+              }`}
             >
               <ChevronDown className="w-4 h-4" />
             </div>
@@ -310,13 +334,15 @@ export default function SiteMeasurementsSection({
                   key={file.id}
                   onClick={() => handleViewExistingFile(file)}
                   title="Click to view file"
-                  className={`cursor-pointer relative bg-white border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all group ${isSmall ? "w-32" : "w-40"
-                    }`}
+                  className={`cursor-pointer relative bg-white border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all group ${
+                    isSmall ? "w-32" : "w-40"
+                  }`}
                 >
                   {/* File Preview */}
                   <div
-                    className={`w-full ${isSmall ? "aspect-4/3" : "aspect-square"
-                      } rounded-lg flex items-center justify-center mb-2 overflow-hidden bg-slate-50`}
+                    className={`w-full ${
+                      isSmall ? "aspect-4/3" : "aspect-square"
+                    } rounded-lg flex items-center justify-center mb-2 overflow-hidden bg-slate-50`}
                   >
                     {file.mime_type.includes("image") ? (
                       <Image
@@ -335,20 +361,23 @@ export default function SiteMeasurementsSection({
                       />
                     ) : (
                       <div
-                        className={`w-full h-full flex items-center justify-center rounded-lg ${file.mime_type.includes("pdf")
-                          ? "bg-red-50"
-                          : "bg-green-50"
-                          }`}
+                        className={`w-full h-full flex items-center justify-center rounded-lg ${
+                          file.mime_type.includes("pdf")
+                            ? "bg-red-50"
+                            : "bg-green-50"
+                        }`}
                       >
                         {file.mime_type.includes("pdf") ? (
                           <FileText
-                            className={`${isSmall ? "w-6 h-6" : "w-8 h-8"
-                              } text-red-600`}
+                            className={`${
+                              isSmall ? "w-6 h-6" : "w-8 h-8"
+                            } text-red-600`}
                           />
                         ) : (
                           <File
-                            className={`${isSmall ? "w-6 h-6" : "w-8 h-8"
-                              } text-green-600`}
+                            className={`${
+                              isSmall ? "w-6 h-6" : "w-8 h-8"
+                            } text-green-600`}
                           />
                         )}
                       </div>
@@ -448,8 +477,9 @@ export default function SiteMeasurementsSection({
           Select Files {isUploading && "(Uploading...)"}
         </label>
         <div
-          className={`border-2 border-dashed border-slate-300 hover:border-secondary rounded-lg transition-all duration-200 bg-slate-50 hover:bg-slate-100 ${isUploading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+          className={`border-2 border-dashed border-slate-300 hover:border-secondary rounded-lg transition-all duration-200 bg-slate-50 hover:bg-slate-100 ${
+            isUploading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <input
             type="file"
@@ -560,19 +590,6 @@ export default function SiteMeasurementsSection({
         <h3 className="text-lg font-semibold text-slate-700 mb-3">
           Common Notes
         </h3>
-        {/* TextEditor component - commented out until available */}
-        {/* <textarea
-          value={
-            selectedLotData?.tabs?.find(
-              (tab: Tab) => tab.tab.toLowerCase() === activeTab.toLowerCase()
-            )?.notes || ""
-          }
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            handleNotesSave(e.target.value);
-          }}
-          className="w-full min-h-[200px] p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none resize-none"
-          placeholder="Enter notes here..."
-        /> */}
         <TextEditor
           initialContent={
             selectedLotData?.tabs?.find(

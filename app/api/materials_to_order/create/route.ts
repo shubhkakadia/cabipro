@@ -11,12 +11,14 @@ export async function POST(request: NextRequest) {
     const { project_id, notes, items, lot_ids } = data;
 
     // Verify project exists and belongs to this organization if provided
+    let projectUuid: string | undefined;
     if (project_id) {
       const project = await prisma.project.findFirst({
         where: {
-          id: project_id,
+          project_id: project_id,
           organization_id: user.organizationId,
         },
+        select: { id: true },
       });
 
       if (!project) {
@@ -25,15 +27,18 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+      projectUuid = project.id;
     }
 
     // Verify lots exist and belong to this organization if provided
+    let lotUuids: string[] = [];
     if (lot_ids && lot_ids.length > 0) {
       const lots = await prisma.lot.findMany({
         where: {
-          id: { in: lot_ids },
+          lot_id: { in: lot_ids },
           organization_id: user.organizationId,
         },
+        select: { id: true },
       });
 
       if (lots.length !== lot_ids.length) {
@@ -42,6 +47,7 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+      lotUuids = lots.map((lot) => lot.id);
     }
 
     // Use transaction to atomically create MTO and update lots
@@ -50,7 +56,7 @@ export async function POST(request: NextRequest) {
       const newMto = await tx.materials_to_order.create({
         data: {
           organization_id: user.organizationId,
-          ...(project_id && { project_id }),
+          ...(projectUuid && { project_id: projectUuid }),
           notes,
           createdBy_id: user.userId,
           items:
@@ -73,10 +79,10 @@ export async function POST(request: NextRequest) {
       });
 
       // Assign lots to this MTO atomically
-      if (lot_ids && lot_ids.length > 0) {
+      if (lotUuids.length > 0) {
         await tx.lot.updateMany({
           where: {
-            id: { in: lot_ids },
+            id: { in: lotUuids },
             organization_id: user.organizationId,
           },
           data: { materials_to_orders_id: newMto.id },

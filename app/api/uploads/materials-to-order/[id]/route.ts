@@ -7,6 +7,7 @@ import {
   getFileFromFormData,
 } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 // Upload media files to MTO
 export async function POST(
@@ -45,11 +46,17 @@ export async function POST(
 
     const filesArray = Array.isArray(files) ? files : [files];
 
+    // Get organization slug for file path
+    const organizationSlug = getOrganizationSlugFromRequest(request);
+    if (!organizationSlug) {
+      throw new Error("Organization slug not found");
+    }
+
     // Upload multiple files
     const uploadResults = await uploadMultipleFiles(filesArray, {
-      uploadDir: "mediauploads",
       subDir: `materials_to_order/${mto.project_id || "general"}`,
       filenameStrategy: "original",
+      organizationSlug,
     });
 
     if (uploadResults.successful.length === 0) {
@@ -191,7 +198,9 @@ export async function DELETE(
       "media",
       updatedMedia.id,
       "DELETE",
-      `Media deleted successfully: ${updatedMedia.filename} for MTO: ${mto.id} (Project: ${mto.project?.name || "N/A"})`
+      `Media deleted successfully: ${updatedMedia.filename} for MTO: ${
+        mto.id
+      } (Project: ${mto.project?.name || "N/A"})`
     );
 
     if (!logged) {

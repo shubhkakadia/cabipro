@@ -7,6 +7,7 @@ import {
   getFileFromFormData,
 } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 import type { Category } from "@/generated/prisma/enums";
 
 const CATEGORIES = ["sheet", "handle", "hardware", "accessory", "edging_tape"];
@@ -161,12 +162,18 @@ export async function POST(request: NextRequest) {
     // This happens after the transaction to avoid file system operations in the transaction
     if (imageFile) {
       try {
+        // Get organization slug for file path
+        const organizationSlug = getOrganizationSlugFromRequest(request);
+        if (!organizationSlug) {
+          throw new Error("Organization slug not found");
+        }
+
         // Upload file with ID-based naming
         const uploadResult = await uploadFile(imageFile, {
-          uploadDir: "mediauploads",
           subDir: `items/${category}`,
           filenameStrategy: "id-based",
           idPrefix: createdItem.id,
+          organizationSlug,
         });
 
         // Create media record and update item with image_id in a transaction

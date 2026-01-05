@@ -1,17 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { validateAdminAuth } from "@/lib/validators/authFromToken";
+import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 import { withLogging } from "@/lib/withLogging";
 import { formatPhoneToNational } from "@/components/validators";
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
-    const authError = await validateAdminAuth(request);
-    if (authError) return authError;
+    const user = await requireAuth(request);
     const { name, email, phone, address, notes, website, abn_number, contacts } =
       await request.json();
-    const existingSupplier = await prisma.supplier.findUnique({
-      where: { name },
+    
+    // Check if supplier already exists in this organization (unique constraint: name + organization_id)
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: {
+        name: name,
+        organization_id: user.organizationId,
+        is_deleted: false,
+      },
     });
     if (existingSupplier) {
       return NextResponse.json(
@@ -39,15 +44,24 @@ export async function POST(request) {
       }
     }
 
-    const formatPhone = (phone) => {
-      return phone ? formatPhoneToNational(phone) : phone;
-    }
+    const formatPhone = (phone: string | null | undefined): string | null => {
+      return phone ? formatPhoneToNational(phone) : null;
+    };
 
     // Use transaction to create supplier and contacts atomically
     const result = await prisma.$transaction(async (tx) => {
       // Create the supplier
       const supplier = await tx.supplier.create({
-        data: { name, email, phone: formatPhone(phone), address, notes, website, abn_number },
+        data: {
+          organization_id: user.organizationId,
+          name,
+          email: email || null,
+          phone: formatPhone(phone),
+          address: address || null,
+          notes: notes || null,
+          website: website || null,
+          abn_number: abn_number || null,
+        },
       });
 
       // Create contacts if provided
@@ -56,14 +70,15 @@ export async function POST(request) {
         for (const contact of contacts) {
           const createdContact = await tx.contact.create({
             data: {
+              organization_id: user.organizationId,
               first_name: contact.first_name,
               last_name: contact.last_name,
               email: contact.email || null,
-              phone: contact.phone || null,
+              phone: formatPhone(contact.phone),
               role: contact.role || null,
               preferred_contact_method: contact.preferred_contact_method || null,
               notes: contact.notes || null,
-              supplier_id: supplier.supplier_id,
+              supplier_id: supplier.id,
             },
           });
           createdContacts.push(createdContact);
@@ -79,7 +94,7 @@ export async function POST(request) {
     const logged = await withLogging(
       request,
       "supplier",
-      supplier.supplier_id,
+      supplier.id,
       "CREATE",
       `Supplier created successfully: ${supplier.name}`
     );
@@ -107,13 +122,19 @@ export async function POST(request) {
 
     if (!logged) {
       console.error(
-        `Failed to log supplier creation: ${supplier.supplier_id} - ${supplier.name}`
+        `Failed to log supplier creation: ${supplier.id} - ${supplier.name}`
       );
       responseData.warning = "Note: Creation succeeded but logging failed";
     }
 
     return NextResponse.json(responseData, { status: 201 });
   } catch (error) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json(
+        { status: false, message: error.message },
+        { status: error.statusCode }
+      );
+    }
     console.error("Error in POST /api/supplier/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },

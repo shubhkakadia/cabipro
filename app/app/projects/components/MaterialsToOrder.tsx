@@ -11,8 +11,6 @@ import {
   Package,
   Trash,
   Download,
-  Check,
-  X,
   File,
   FileUp,
   FileText,
@@ -22,79 +20,237 @@ import {
   Plus,
 } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/contexts/AuthContext";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
-import ViewMedia from "./ViewMedia";
-import AddItemModal from "@/app/admin/suppliers/purchaseorder/components/AddItemModal";
-import { useUploadProgress } from "@/hooks/useUploadProgress";
+import ViewMedia, { ViewFile } from "@/components/ViewMedia";
+import AddItemModal from "../../suppliers/purchaseorder/components/AddItemModal";
+import { useUploadProgress } from "../../../../hooks/useUploadProgress";
 
-export default function MaterialsToOrder({ project, selectedLot }) {
-  const { getToken, userData } = useAuth();
+// Type definitions
+interface MaterialsToOrderProps {
+  project: Project | null;
+  selectedLot: Lot | null;
+}
+
+interface Project {
+  project_id: string;
+  lots?: Lot[];
+  materials_to_order?: MTO[];
+  [key: string]: unknown;
+}
+
+interface Lot {
+  id: string;
+  lot_id: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+interface MTO {
+  id: string;
+  lots?: Lot[];
+  items?: MTOItem[];
+  notes?: string;
+  media?: MediaFile[];
+  [key: string]: unknown;
+}
+
+interface MTOItem {
+  id: string;
+  item_id: string;
+  quantity: number;
+  notes?: string | null;
+  item?: Item;
+  [key: string]: unknown;
+}
+
+interface Item {
+  id: string;
+  category?: string;
+  description?: string;
+  measurement_unit?: string;
+  image?: {
+    url: string;
+    filename?: string;
+  };
+  sheet?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    dimensions?: string;
+  };
+  handle?: {
+    brand?: string;
+    color?: string;
+    type?: string;
+    material?: string;
+    dimensions?: string;
+  };
+  hardware?: {
+    brand?: string;
+    name?: string;
+    type?: string;
+    sub_category?: string;
+    dimensions?: string;
+  };
+  accessory?: {
+    name?: string;
+  };
+  edging_tape?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    dimensions?: string;
+  };
+  [key: string]: unknown;
+}
+
+interface CategoryRow {
+  item?: Item;
+  quantity?: string | number;
+  notes?: string;
+  mtoItemId?: string;
+}
+
+interface CategoryItems {
+  sheet: CategoryRow[];
+  handle: CategoryRow[];
+  hardware: CategoryRow[];
+  accessory: CategoryRow[];
+  edging_tape: CategoryRow[];
+}
+
+interface SearchResults {
+  sheet: Item[];
+  handle: Item[];
+  hardware: Item[];
+  accessory: Item[];
+  edging_tape: Item[];
+}
+
+interface ShowSearchDropdown {
+  sheet: Record<number, boolean>;
+  handle: Record<number, boolean>;
+  hardware: Record<number, boolean>;
+  accessory: Record<number, boolean>;
+  edging_tape: Record<number, boolean>;
+}
+
+interface MediaFile {
+  id: string;
+  filename: string;
+  url: string;
+  mime_type?: string;
+  file_type?: string;
+  extension?: string;
+  size?: number;
+}
+
+interface ExpandedSections {
+  images: boolean;
+  videos: boolean;
+  pdfs: boolean;
+  others: boolean;
+}
+
+interface PendingDeleteRow {
+  category: string;
+  rowIndex: number;
+}
+
+interface DataSnapshot {
+  categoryItems: Record<
+    string,
+    { item_id?: string; quantity?: number; notes?: string | null }[]
+  >;
+  notes: string;
+  selectedLots: string[];
+}
+
+interface LoadingState {
+  isUpdatingFromApi: boolean;
+  isInitialized: boolean;
+}
+
+export default function MaterialsToOrder({
+  project,
+  selectedLot,
+}: MaterialsToOrderProps) {
   const {
     showProgressToast,
     completeUpload,
     dismissProgressToast,
     getUploadProgressHandler,
-  } = useUploadProgress();
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number
+    ) => (progressEvent: { loaded: number; total?: number }) => void;
+  };
 
-  const [categoryItems, setCategoryItems] = useState({
+  const [categoryItems, setCategoryItems] = useState<CategoryItems>({
     sheet: [{}],
     handle: [{}],
     hardware: [{}],
     accessory: [{}],
     edging_tape: [{}],
   });
-  const [searchResults, setSearchResults] = useState({
+  const [searchResults, setSearchResults] = useState<SearchResults>({
     sheet: [],
     handle: [],
     hardware: [],
     accessory: [],
     edging_tape: [],
   });
-  // Use object with keys like "category-rowIndex" instead of arrays
-  const [searchTerms, setSearchTerms] = useState({});
-  const [showSearchDropdown, setShowSearchDropdown] = useState({
-    sheet: {},
-    handle: {},
-    hardware: {},
-    accessory: {},
-    edging_tape: {},
-  });
-  const [itemCache, setItemCache] = useState({});
-  const [selectedLots, setSelectedLots] = useState([]);
-  const [materialsToOrderData, setMaterialsToOrderData] = useState(null);
+  const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
+  const [showSearchDropdown, setShowSearchDropdown] =
+    useState<ShowSearchDropdown>({
+      sheet: {},
+      handle: {},
+      hardware: {},
+      accessory: {},
+      edging_tape: {},
+    });
+  const [itemCache, setItemCache] = useState<Record<string, Item[]>>({});
+  const [selectedLots, setSelectedLots] = useState<Lot[]>([]);
+  const [materialsToOrderData, setMaterialsToOrderData] = useState<MTO | null>(
+    null
+  );
   const [notes, setNotes] = useState("");
-  const [currentMtoId, setCurrentMtoId] = useState(null); // Track current MTO ID for editing
+  const [currentMtoId, setCurrentMtoId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [pendingDeleteRow, setPendingDeleteRow] = useState(null); // {category, rowIndex}
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [pendingDeleteRow, setPendingDeleteRow] =
+    useState<PendingDeleteRow | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState([]);
-  const [deletingMediaId, setDeletingMediaId] = useState(null);
-  const fileInputRef = useRef(null);
-  const [expandedSections, setExpandedSections] = useState({
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+  const [deletingMediaId, setDeletingMediaId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     images: false,
     videos: false,
     pdfs: false,
     others: false,
   });
   const [viewFileModal, setViewFileModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [saveStatus, setSaveStatus] = useState("idle"); // 'idle', 'saving', 'saved', 'error'
+  const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
+  const [_pageNumber, setPageNumber] = useState(1);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const [showAddItemModal, setShowAddItemModal] = useState(false);
-  const [addItemModalCategory, setAddItemModalCategory] = useState(null);
-  // Local UI override: after deleting an MTO, the parent `project` prop may still contain
-  // stale materials_to_order data until it is re-fetched. Track "freed" lots so the UI
-  // immediately allows creating a new MTO for those lots.
-  const [locallyFreedLotIds, setLocallyFreedLotIds] = useState([]);
+  const [addItemModalCategory, setAddItemModalCategory] = useState<
+    string | null
+  >(null);
+  const [locallyFreedLotIds, setLocallyFreedLotIds] = useState<string[]>([]);
   const locallyFreedLotIdsSet = useMemo(
     () => new Set(locallyFreedLotIds),
     [locallyFreedLotIds]
   );
   // Snapshot of the last saved/loaded state to compare against for changes
-  const dataSnapshotRef = useRef({
+  const dataSnapshotRef = useRef<DataSnapshot>({
     categoryItems: {
       sheet: [{}],
       handle: [{}],
@@ -106,26 +262,35 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     selectedLots: [],
   });
   // State to track loading and initialization status
-  const [loadingState, setLoadingState] = useState({
+  const [_loadingState, setLoadingState] = useState<LoadingState>({
     isUpdatingFromApi: false,
     isInitialized: false,
   });
   // Track previous materialsToOrderData ID to detect when it changes from API
-  const prevMaterialsToOrderDataIdRef = useRef(null);
+  const prevMaterialsToOrderDataIdRef = useRef<string | null>(null);
 
   // Helper function to create a normalized snapshot from current state
-  const createSnapshot = (categoryItemsData, notesData, selectedLotsData) => {
+  const createSnapshot = (
+    categoryItemsData: CategoryItems,
+    notesData: string,
+    selectedLotsData: Lot[]
+  ): DataSnapshot => {
     // Normalize categoryItems - only include items with data, sorted by item_id for comparison
-    const normalizedCategoryItems = {};
+    const normalizedCategoryItems: Record<
+      string,
+      { id?: string; quantity?: number; notes?: string | null }[]
+    > = {};
     Object.keys(categoryItemsData).forEach((category) => {
-      normalizedCategoryItems[category] = categoryItemsData[category]
-        .filter((row) => row.item && row.quantity)
+      normalizedCategoryItems[category] = categoryItemsData[
+        category as keyof CategoryItems
+      ]
+        .filter((row: CategoryRow) => row.item && row.quantity)
         .map((row) => ({
-          item_id: row.item.item_id || row.item.id,
-          quantity: parseInt(row.quantity) || 1,
+          id: row.item?.id,
+          quantity: parseInt(row.quantity as string),
           notes: row.notes || null,
         }))
-        .sort((a, b) => a.item_id - b.item_id);
+        .sort((a, b) => (a.id || "").localeCompare(b.id || ""));
     });
 
     // Normalize selectedLots - sort by lot_id for comparison
@@ -140,8 +305,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     };
   };
 
-  // Helper function to compare two snapshots
-  const hasDataChanged = (snapshot1, snapshot2) => {
+  // Helper function to compare two snapshots (currently unused but kept for potential future use)
+  const _hasDataChanged = (
+    snapshot1: DataSnapshot,
+    snapshot2: DataSnapshot
+  ): boolean => {
     // Compare notes
     if (snapshot1.notes !== snapshot2.notes) {
       return true;
@@ -225,10 +393,14 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       if (aIsNum) return -1;
       if (bIsNum) return 1;
 
-      return String(a?.lot_id ?? "").localeCompare(String(b?.lot_id ?? ""), undefined, {
-        numeric: true,
-        sensitivity: "base",
-      });
+      return String(a?.lot_id ?? "").localeCompare(
+        String(b?.lot_id ?? ""),
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base",
+        }
+      );
     });
   }, [project?.lots, lotsWithExistingMto]);
 
@@ -266,10 +438,14 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       if (aIsNum) return -1;
       if (bIsNum) return 1;
 
-      return String(a?.lot_id ?? "").localeCompare(String(b?.lot_id ?? ""), undefined, {
-        numeric: true,
-        sensitivity: "base",
-      });
+      return String(a?.lot_id ?? "").localeCompare(
+        String(b?.lot_id ?? ""),
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base",
+        }
+      );
     });
   }, [lotsWithSameMtoId]);
 
@@ -308,7 +484,10 @@ export default function MaterialsToOrder({ project, selectedLot }) {
   }, [materialsToOrderData, selectedLots]);
 
   // Helper to build category items based on MTO data and selected lots
-  const buildCategoryItemsFromMto = (mtoData, lots) => {
+  const buildCategoryItemsFromMto = (
+    mtoData: MTO,
+    lots: Lot[]
+  ): CategoryItems => {
     const allowedLotIds = new Set((lots || []).map((l) => l.lot_id));
 
     const newCategoryItems = {
@@ -327,7 +506,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         Array.from(allowedLotIds).some((lotId) => mtoLotIds.has(lotId));
 
       if (hasMatchingLots) {
-        mtoData.items.forEach((mtoItem) => {
+        mtoData.items?.forEach((mtoItem: MTOItem) => {
           const category = mtoItem.item?.category?.toLowerCase();
           if (
             category &&
@@ -338,7 +517,9 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               category === "edging_tape")
           ) {
             const currentItems = newCategoryItems[category];
-            const emptyRowIndex = currentItems.findIndex((row) => !row.item);
+            const emptyRowIndex = currentItems.findIndex(
+              (row: CategoryRow) => !row.item
+            );
 
             const itemData = {
               item: mtoItem.item,
@@ -357,8 +538,12 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
         // Always ensure one empty row exists for each category
         Object.keys(newCategoryItems).forEach((category) => {
-          if (!newCategoryItems[category].some((row) => !row.item)) {
-            newCategoryItems[category].push({});
+          if (
+            !newCategoryItems[category as keyof CategoryItems].some(
+              (row: CategoryRow) => !row.item
+            )
+          ) {
+            newCategoryItems[category as keyof CategoryItems].push({});
           }
         });
       }
@@ -430,13 +615,10 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       }
 
       try {
-        const sessionToken = getToken();
         const response = await axios.get(
           `/api/materials_to_order/${relevantMto.id}`,
           {
-            headers: {
-              Authorization: `Bearer ${sessionToken}`,
-            },
+            withCredentials: true,
           }
         );
 
@@ -469,15 +651,29 @@ export default function MaterialsToOrder({ project, selectedLot }) {
             setLoadingState({ isUpdatingFromApi: false, isInitialized: true });
           }, 100);
         }
-      } catch (error) {
-        console.error("Error fetching materials to order:", error);
-        toast.error("Failed to load existing materials to order");
+      } catch (err) {
+        console.error("Error fetching materials to order:", err);
+        if (axios.isAxiosError(err)) {
+          toast.error(
+            err.response?.data?.message ||
+              "Failed to load existing materials to order",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        } else {
+          toast.error("Failed to load existing materials to order", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
         setLoadingState((prev) => ({ ...prev, isInitialized: true }));
       }
     };
 
     fetchMaterialsToOrder();
-  }, [project, selectedLots, getToken, locallyFreedLotIdsSet]);
+  }, [project, selectedLots, locallyFreedLotIdsSet]);
 
   // Re-filter displayed items when selected lots change or when MTO data loads
   useEffect(() => {
@@ -517,7 +713,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
   }, [materialsToOrderData, selectedLots]);
 
   // Materials to Order form functions
-  const handleLotToggle = (lot) => {
+  const handleLotToggle = (lot: Lot) => {
     setSelectedLots((prev) => {
       const isSelected = prev.some((l) => l.lot_id === lot.lot_id);
       if (isSelected) {
@@ -528,7 +724,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     });
   };
 
-  const searchItems = async (category, searchTerm, rowIndex) => {
+  const searchItems = async (
+    category: string,
+    searchTerm: string,
+    rowIndex: number
+  ) => {
     if (!searchTerm || searchTerm.trim() === "") {
       setSearchResults((prev) => ({
         ...prev,
@@ -536,7 +736,10 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       }));
       setShowSearchDropdown((prev) => ({
         ...prev,
-        [category]: { ...prev[category], [rowIndex]: false },
+        [category as keyof CategoryItems]: {
+          ...prev[category as keyof CategoryItems],
+          [rowIndex]: false,
+        },
       }));
       return;
     }
@@ -552,23 +755,23 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         }));
         setShowSearchDropdown((prev) => ({
           ...prev,
-          [category]: { ...prev[category], [rowIndex]: true },
+          [category as keyof CategoryItems]: {
+            ...prev[category as keyof CategoryItems],
+            [rowIndex]: true,
+          },
         }));
         return;
       }
 
-      const sessionToken = getToken();
       const response = await axios.get(`/api/item/all/${category}`, {
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
+        withCredentials: true,
       });
 
       if (response.data.status) {
-        let items = response.data.data || [];
+        const items = response.data.data || [];
 
         // Filter items based on search term
-        const filteredItems = items.filter((item) => {
+        const filteredItems = items.filter((item: Item) => {
           const term = searchTerm.toLowerCase();
           return (
             item.description?.toLowerCase().includes(term) ||
@@ -600,11 +803,24 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
         setShowSearchDropdown((prev) => ({
           ...prev,
-          [category]: { ...prev[category], [rowIndex]: true },
+          [category as keyof CategoryItems]: {
+            ...prev[category as keyof CategoryItems],
+            [rowIndex]: true,
+          },
         }));
       }
-    } catch (error) {
-      console.error("Error searching items:", error);
+    } catch (err) {
+      console.error("Error searching items:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to search items. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      }
       setSearchResults((prev) => ({
         ...prev,
         [category]: [],
@@ -613,9 +829,14 @@ export default function MaterialsToOrder({ project, selectedLot }) {
   };
 
   // Helper function to generate search term key
-  const getSearchTermKey = (category, rowIndex) => `${category}-${rowIndex}`;
+  const getSearchTermKey = (category: string, rowIndex: number): string =>
+    `${category}-${rowIndex}`;
 
-  const handleSearchChange = (category, rowIndex, value) => {
+  const handleSearchChange = (
+    category: string,
+    rowIndex: number,
+    value: string
+  ) => {
     const key = getSearchTermKey(category, rowIndex);
     setSearchTerms((prev) => ({
       ...prev,
@@ -624,7 +845,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     searchItems(category, value, rowIndex);
   };
 
-  const handleItemSelect = (category, rowIndex, item) => {
+  const handleItemSelect = (
+    category: keyof CategoryItems,
+    rowIndex: number,
+    item: Item
+  ) => {
     setCategoryItems((prev) => {
       const updatedItems = [...prev[category]];
       updatedItems[rowIndex] = { item, quantity: 1 };
@@ -651,25 +876,32 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     }));
   };
 
-  const handleQuantityChange = (category, rowIndex, quantity) => {
+  const handleQuantityChange = (
+    category: keyof CategoryItems,
+    rowIndex: number,
+    quantity: string
+  ) => {
     setCategoryItems((prev) => ({
       ...prev,
       [category]: prev[category].map((row, idx) =>
         idx === rowIndex
           ? {
-            ...row,
-            quantity: quantity === "" ? "" : parseInt(quantity) || "",
-          }
+              ...row,
+              quantity: quantity === "" ? "" : parseInt(quantity) || "",
+            }
           : row
       ),
     }));
   };
 
-  const removeItemRow = (category, rowIndex) => {
+  const removeItemRow = (category: keyof CategoryItems, rowIndex: number) => {
     // Check if this is the last item across all categories
     const totalItemsWithData = Object.values(categoryItems).reduce(
       (total, rows) => {
-        return total + rows.filter((row) => row.item && row.quantity).length;
+        return (
+          total +
+          rows.filter((row: CategoryRow) => row.item && row.quantity).length
+        );
       },
       0
     );
@@ -685,7 +917,10 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     performItemDeletion(category, rowIndex);
   };
 
-  const performItemDeletion = (category, rowIndex) => {
+  const performItemDeletion = (
+    category: keyof CategoryItems,
+    rowIndex: number
+  ) => {
     setCategoryItems((prev) => {
       const updatedItems = prev[category].filter((_, idx) => idx !== rowIndex);
 
@@ -725,19 +960,22 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
     setShowSearchDropdown((prev) => ({
       ...prev,
-      [category]: Object.keys(prev[category]).reduce((acc, key) => {
-        if (parseInt(key) !== rowIndex) {
-          acc[key] = prev[category][key];
+      [category]: Object.keys(
+        prev[category as keyof ShowSearchDropdown]
+      ).reduce((acc: Record<number, boolean>, key: string) => {
+        const numKey = parseInt(key);
+        if (numKey !== rowIndex && !isNaN(numKey)) {
+          acc[numKey] = prev[category as keyof ShowSearchDropdown][numKey];
         }
         return acc;
-      }, {}),
+      }, {} as Record<number, boolean>),
     }));
   };
 
   const hasItems = useMemo(
     () =>
       Object.values(categoryItems).some((rows) =>
-        rows.some((row) => row.item && row.quantity)
+        rows.some((row: CategoryRow) => row.item && row.quantity)
       ),
     [categoryItems]
   );
@@ -747,32 +985,43 @@ export default function MaterialsToOrder({ project, selectedLot }) {
   const hasMedia = useMemo(() => (mediaFiles || []).length > 0, [mediaFiles]);
   const canSave = useMemo(() => {
     if (!project?.project_id) return false;
-    if (!currentMtoId && (!selectedLots || selectedLots.length === 0)) return false;
+    if (!currentMtoId && (!selectedLots || selectedLots.length === 0))
+      return false;
     return hasItems || hasNotes || hasMedia;
-  }, [project?.project_id, currentMtoId, selectedLots, hasItems, hasNotes, hasMedia]);
+  }, [
+    project?.project_id,
+    currentMtoId,
+    selectedLots,
+    hasItems,
+    hasNotes,
+    hasMedia,
+  ]);
 
-  const isItemAlreadySelected = (category, item) => {
-    return categoryItems[category].some((row) => {
-      if (!row.item) return false;
-      const storedItem = row.item;
-      const itemId = storedItem.id || storedItem.item_id;
-      const searchItemId = item.id || item.item_id;
-      return itemId === searchItemId;
-    });
-  };
+  const isItemAlreadySelected = useCallback(
+    (category: keyof CategoryItems, item: Item): boolean => {
+      return categoryItems[category].some((row) => {
+        if (!row.item) return false;
+        const storedItem = row.item;
+        const itemId = storedItem.id || storedItem.item_id;
+        const searchItemId = item.id || item.item_id;
+        return itemId === searchItemId;
+      });
+    },
+    [categoryItems]
+  );
 
   const getFilteredSearchResults = useCallback(
-    (category) => {
+    (category: keyof CategoryItems): Item[] => {
       return searchResults[category].filter(
-        (item) => !isItemAlreadySelected(category, item)
+        (item: Item) => !isItemAlreadySelected(category, item)
       );
     },
-    [searchResults, categoryItems]
-  ); // Add proper dependencies
+    [searchResults, isItemAlreadySelected]
+  );
 
   const handleExportToExcel = () => {
     // Helper function to escape CSV values
-    const escapeCSV = (value) => {
+    const escapeCSV = (value: unknown): string => {
       if (value === null || value === undefined || value === "") return "";
       const stringValue = String(value);
       // If value contains comma, quote, or newline, wrap in quotes and escape quotes
@@ -824,14 +1073,16 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
     let csvContent = csvHeaderColumns.join(",") + "\n";
 
-    categories.forEach((category) => {
-      const items = categoryItems[category];
-      items.forEach((row) => {
+    categories.forEach((category: string) => {
+      const items = categoryItems[category as keyof CategoryItems];
+      items.forEach((row: CategoryRow) => {
         if (row.item && row.quantity) {
           const item = row.item;
           const fields = [];
 
-          fields.push(escapeCSV(categoryNames[category]));
+          fields.push(
+            escapeCSV(categoryNames[category as keyof typeof categoryNames])
+          );
 
           // Category-specific fields
           if (category === "sheet" && item.sheet) {
@@ -907,9 +1158,23 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       link.click();
       document.body.removeChild(link);
       toast.success("Materials exported successfully!");
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      toast.error("Failed to export materials. Please try again.");
+    } catch (err) {
+      console.error("Error exporting to Excel:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to export materials. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+      } else {
+        toast.error("Failed to export materials. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     }
   };
 
@@ -926,18 +1191,15 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       // If we have a pending delete row, delete the item first
       if (pendingDeleteRow) {
         performItemDeletion(
-          pendingDeleteRow.category,
+          pendingDeleteRow.category as keyof CategoryItems,
           pendingDeleteRow.rowIndex
         );
       }
 
-      const sessionToken = getToken();
       const response = await axios.delete(
         `/api/materials_to_order/${currentMtoId}`,
         {
-          headers: {
-            Authorization: `Bearer ${sessionToken}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -945,7 +1207,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         toast.success("Materials to order deleted successfully!");
         // Mark lots as "freed" locally so UI doesn't keep showing stale "already created"
         // until the parent `project` prop refreshes.
-        const lotsToFree = (materialsToOrderData?.lots || lotsWithSameMtoId || [])
+        const lotsToFree = (
+          materialsToOrderData?.lots ||
+          lotsWithSameMtoId ||
+          []
+        )
           .map((lot) => lot.lot_id)
           .filter(Boolean);
         if (lotsToFree.length > 0) {
@@ -991,13 +1257,17 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           response.data.message || "Failed to delete materials to order."
         );
       }
-    } catch (error) {
-      console.error("Error deleting materials:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to delete materials to order. Please try again.";
-      toast.error(errorMessage);
+    } catch (err) {
+      console.error("Error deleting materials:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to delete materials to order. Please try again.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to delete materials to order. Please try again.");
+      }
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -1024,24 +1294,38 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       }
 
       // Validate quantities before saving
-      const validationErrors = [];
+      const validationErrors: string[] = [];
       Object.keys(categoryItems).forEach((category) => {
-        categoryItems[category].forEach((row, rowIndex) => {
-          if (row.item) {
-            // Check for empty quantity
-            if (row.quantity === "" || row.quantity === null || row.quantity === undefined) {
-              validationErrors.push(
-                `Item "${row.item.name || row.item.item_id}" in ${category} (row ${rowIndex + 1}) has an empty quantity. Please enter a quantity.`
-              );
-            }
-            // Check for zero or negative quantity
-            else if (parseInt(row.quantity) <= 0) {
-              validationErrors.push(
-                `Item "${row.item.name || row.item.item_id}" in ${category} (row ${rowIndex + 1}) has a quantity of ${row.quantity}. Quantity must be greater than 0.`
-              );
+        categoryItems[category as keyof CategoryItems].forEach(
+          (row: CategoryRow, rowIndex: number) => {
+            if (row.item) {
+              // Check for empty quantity
+              if (
+                row.quantity === "" ||
+                row.quantity === null ||
+                row.quantity === undefined
+              ) {
+                validationErrors.push(
+                  `Item "${
+                    row.item.name || row.item.item_id
+                  }" in ${category} (row ${
+                    rowIndex + 1
+                  }) has an empty quantity. Please enter a quantity.`
+                );
+              }
+              // Check for zero or negative quantity
+              else if (parseInt(row.quantity as string) <= 0) {
+                validationErrors.push(
+                  `Item "${
+                    row.item.name || row.item.item_id
+                  }" in ${category} (row ${rowIndex + 1}) has a quantity of ${
+                    row.quantity
+                  }. Quantity must be greater than 0.`
+                );
+              }
             }
           }
-        });
+        );
       });
 
       // If there are validation errors, show them and stop saving
@@ -1059,23 +1343,27 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       setSaveStatus("saving");
 
       // Collect all items from all categories
-      const items = [];
+      const items: {
+        item_id: string;
+        quantity: number;
+        notes: string | null;
+      }[] = [];
       Object.keys(categoryItems).forEach((category) => {
-        categoryItems[category].forEach((row) => {
-          if (row.item && row.quantity) {
-            const quantity = parseInt(row.quantity);
-            if (quantity > 0) {
-              items.push({
-                item_id: row.item.item_id,
-                quantity: quantity,
-                notes: row.notes || null,
-              });
+        categoryItems[category as keyof CategoryItems].forEach(
+          (row: CategoryRow) => {
+            if (row.item && row.quantity) {
+              const quantity = parseInt(row.quantity as string);
+              if (quantity > 0) {
+                items.push({
+                  item_id: row.item.id,
+                  quantity: quantity,
+                  notes: row.notes || null,
+                });
+              }
             }
           }
-        });
+        );
       });
-
-      const sessionToken = getToken();
 
       // Check if we're editing an existing MTO or creating a new one
       if (currentMtoId) {
@@ -1089,8 +1377,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           `/api/materials_to_order/${currentMtoId}`,
           requestData,
           {
+            withCredentials: true,
             headers: {
-              Authorization: `Bearer ${sessionToken}`,
               "Content-Type": "application/json",
             },
           }
@@ -1134,11 +1422,9 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         }
       } else {
         // Creating new MTO - use POST
-        const createdBy_id = userData?.user?.id || null;
         const requestData = {
           project_id: project.project_id,
           notes: notes || null,
-          createdBy_id: createdBy_id,
           lot_ids: selectedLots.map((lot) => lot.lot_id),
           items: items,
         };
@@ -1147,8 +1433,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           "/api/materials_to_order/create",
           requestData,
           {
+            withCredentials: true,
             headers: {
-              Authorization: `Bearer ${sessionToken}`,
               "Content-Type": "application/json",
             },
           }
@@ -1191,15 +1477,21 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           }, 3000);
         }
       }
-    } catch (error) {
-      console.error("Error saving materials:", error);
+    } catch (err) {
+      console.error("Error saving materials:", err);
       setSaveStatus("error");
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to save materials to order. Please try again.";
-      if (!silent) {
-        toast.error(errorMessage);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to save materials to order. Please try again.";
+        if (!silent) {
+          toast.error(errorMessage);
+        }
+      } else {
+        if (!silent) {
+          toast.error("Failed to save materials to order. Please try again.");
+        }
       }
       setTimeout(() => {
         setSaveStatus("idle");
@@ -1212,7 +1504,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
   };
 
   // Handle file selection - upload immediately
-  const handleFileChange = async (e) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -1225,13 +1518,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
     }
   };
 
-  // Remove file from selection
-  const handleRemoveFile = (index) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   // Upload media files
-  const handleUploadMedia = async (filesToUpload = null) => {
+  const handleUploadMedia = async (filesToUpload: File[] | null = null) => {
     const files = filesToUpload || selectedFiles;
 
     if (!files || files.length === 0) {
@@ -1241,7 +1529,6 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
     setUploadingMedia(true);
     try {
-      const sessionToken = getToken();
       // If this is a brand new MTO (no ID yet), create a minimal draft MTO first
       // so uploads can be attached without forcing the user to save line items/notes.
       let mtoId = currentMtoId;
@@ -1251,7 +1538,9 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           return;
         }
         if (!selectedLots || selectedLots.length === 0) {
-          toast.warning("Please select at least one lot before uploading files.");
+          toast.warning(
+            "Please select at least one lot before uploading files."
+          );
           return;
         }
 
@@ -1266,8 +1555,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
             items: [],
           },
           {
+            withCredentials: true,
             headers: {
-              Authorization: `Bearer ${sessionToken}`,
               "Content-Type": "application/json",
             },
           }
@@ -1275,7 +1564,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
         if (!draftResponse.data.status) {
           toast.error(
-            draftResponse.data.message || "Failed to create draft materials to order."
+            draftResponse.data.message ||
+              "Failed to create draft materials to order."
           );
           return;
         }
@@ -1299,8 +1589,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         `/api/uploads/materials-to-order/${mtoId}`,
         formData,
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${sessionToken}`,
             "Content-Type": "multipart/form-data",
           },
           onUploadProgress: getUploadProgressHandler(files.length),
@@ -1313,9 +1603,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         const mtoResponse = await axios.get(
           `/api/materials_to_order/${mtoId}`,
           {
-            headers: {
-              Authorization: `Bearer ${sessionToken}`,
-            },
+            withCredentials: true,
           }
         );
         if (mtoResponse.data.status) {
@@ -1327,21 +1615,25 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         dismissProgressToast();
         toast.error(response.data.message || "Failed to upload files.");
       }
-    } catch (error) {
-      console.error("Error uploading media:", error);
+    } catch (err) {
+      console.error("Error uploading media:", err);
       dismissProgressToast();
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to upload files. Please try again.";
-      toast.error(errorMessage);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to upload files. Please try again.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to upload files. Please try again.");
+      }
     } finally {
       setUploadingMedia(false);
     }
   };
 
   // Delete media file
-  const handleDeleteMedia = async (mediaId) => {
+  const handleDeleteMedia = async (mediaId: string) => {
     if (!currentMtoId) {
       toast.error("Cannot delete media. MTO ID is missing.");
       return;
@@ -1349,13 +1641,10 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
     setDeletingMediaId(mediaId);
     try {
-      const sessionToken = getToken();
       const response = await axios.delete(
         `/api/uploads/materials-to-order/${currentMtoId}?mediaId=${mediaId}`,
         {
-          headers: {
-            Authorization: `Bearer ${sessionToken}`,
-          },
+          withCredentials: true,
         }
       );
 
@@ -1367,9 +1656,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         const mtoResponse = await axios.get(
           `/api/materials_to_order/${currentMtoId}`,
           {
-            headers: {
-              Authorization: `Bearer ${sessionToken}`,
-            },
+            withCredentials: true,
           }
         );
         if (mtoResponse.data.status) {
@@ -1378,20 +1665,24 @@ export default function MaterialsToOrder({ project, selectedLot }) {
       } else {
         toast.error(response.data.message || "Failed to delete file.");
       }
-    } catch (error) {
-      console.error("Error deleting media:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to delete file. Please try again.";
-      toast.error(errorMessage);
+    } catch (err) {
+      console.error("Error deleting media:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to delete file. Please try again.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to delete file. Please try again.");
+      }
     } finally {
       setDeletingMediaId(null);
     }
   };
 
   // Format file size
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -1400,11 +1691,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
   };
 
   // View existing file from server
-  const handleViewExistingFile = (file) => {
+  const handleViewExistingFile = (file: MediaFile) => {
     const fileUrl = `/${file.url}`;
     setSelectedFile({
       name: file.filename,
-      type: file.mime_type,
+      type: file.mime_type || "application/octet-stream",
       size: file.size || 0,
       url: fileUrl,
       isExisting: true,
@@ -1414,7 +1705,6 @@ export default function MaterialsToOrder({ project, selectedLot }) {
 
   return (
     <div>
-
       {/* Title and Action Buttons */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-slate-800">
@@ -1458,8 +1748,6 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               </>
             )}
           </button>
-
-
         </div>
       </div>
 
@@ -1549,118 +1837,118 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               </span>
               {categoryItems.sheet.filter((row) => row.item && row.quantity)
                 .length > 0 && (
-                  <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
-                    {
-                      categoryItems.sheet.filter(
-                        (row) => row.item && row.quantity
-                      ).length
-                    }
-                  </span>
-                )}
+                <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
+                  {
+                    categoryItems.sheet.filter(
+                      (row) => row.item && row.quantity
+                    ).length
+                  }
+                </span>
+              )}
             </div>
           </div>
           <div className="p-4">
             {categoryItems.sheet.filter((row) => row.item && row.quantity)
               .length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Image
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Brand
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Color
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Finish
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Dimensions
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Unit
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Quantity
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryItems.sheet.map(
-                        (row, rowIndex) =>
-                          row.item && (
-                            <tr
-                              key={rowIndex}
-                              className="border-b border-slate-100 hover:bg-slate-50"
-                            >
-                              <td className="py-2 px-3">
-                                {row.item.image?.url ? (
-                                  <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
-                                    <Image
-                                      src={`/${row.item.image.url}`}
-                                      alt={row.item.item_id}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
-                                    <Package className="w-6 h-6 text-slate-400" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.sheet?.brand || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.sheet?.color || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.sheet?.finish || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.sheet?.dimensions || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.measurement_unit || "-"}
-                              </td>
-                              <td className="py-2 px-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={row.quantity ?? ""}
-                                  onChange={(e) =>
-                                    handleQuantityChange(
-                                      "sheet",
-                                      rowIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
-                                />
-                              </td>
-                              <td className="py-2 px-3">
-                                <button
-                                  onClick={() => removeItemRow("sheet", rowIndex)}
-                                  className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Image
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Brand
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Color
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Finish
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Dimensions
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Unit
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Quantity
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryItems.sheet.map(
+                      (row, rowIndex) =>
+                        row.item && (
+                          <tr
+                            key={rowIndex}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-2 px-3">
+                              {row.item.image?.url ? (
+                                <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
+                                  <Image
+                                    src={`/${row.item.image.url}`}
+                                    alt={row.item.id}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
+                                  <Package className="w-6 h-6 text-slate-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.sheet?.brand || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.sheet?.color || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.sheet?.finish || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.sheet?.dimensions || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.measurement_unit || "-"}
+                            </td>
+                            <td className="py-2 px-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.quantity ?? ""}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    "sheet",
+                                    rowIndex,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
+                              />
+                            </td>
+                            <td className="py-2 px-3">
+                              <button
+                                onClick={() => removeItemRow("sheet", rowIndex)}
+                                className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Search - Always Visible */}
             <div className="mt-4">
@@ -1680,7 +1968,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           searchItems(
                             "sheet",
                             searchTerms[getSearchTermKey("sheet", rowIndex)] ||
-                            "",
+                              "",
                             rowIndex
                           )
                         }
@@ -1692,7 +1980,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           {getFilteredSearchResults("sheet").length > 0 ? (
                             getFilteredSearchResults("sheet").map((item) => (
                               <button
-                                key={item.item_id}
+                                key={item.id}
                                 onClick={() =>
                                   handleItemSelect("sheet", rowIndex, item)
                                 }
@@ -1703,7 +1991,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                                     <div className="relative w-12 h-12 shrink-0 rounded-md overflow-hidden bg-slate-100">
                                       <Image
                                         src={`/${item.image.url}`}
-                                        alt={item.item_id}
+                                        alt={item.id}
                                         fill
                                         className="object-cover"
                                       />
@@ -1764,120 +2052,120 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               {categoryItems.edging_tape.filter(
                 (row) => row.item && row.quantity
               ).length > 0 && (
-                  <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
-                    {
-                      categoryItems.edging_tape.filter(
-                        (row) => row.item && row.quantity
-                      ).length
-                    }
-                  </span>
-                )}
+                <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
+                  {
+                    categoryItems.edging_tape.filter(
+                      (row) => row.item && row.quantity
+                    ).length
+                  }
+                </span>
+              )}
             </div>
           </div>
           <div className="p-4">
             {categoryItems.edging_tape.filter((row) => row.item && row.quantity)
               .length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Image
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Brand
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Color
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Finish
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Dimensions
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Unit
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Quantity
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryItems.edging_tape.map(
-                        (row, rowIndex) =>
-                          row.item && (
-                            <tr
-                              key={rowIndex}
-                              className="border-b border-slate-100 hover:bg-slate-50"
-                            >
-                              <td className="py-2 px-3">
-                                {row.item.image?.url ? (
-                                  <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
-                                    <Image
-                                      src={`/${row.item.image.url}`}
-                                      alt={row.item.item_id}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
-                                    <Package className="w-6 h-6 text-slate-400" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.edging_tape?.brand || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.edging_tape?.color || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.edging_tape?.finish || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.edging_tape?.dimensions || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.measurement_unit || "-"}
-                              </td>
-                              <td className="py-2 px-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={row.quantity ?? ""}
-                                  onChange={(e) =>
-                                    handleQuantityChange(
-                                      "edging_tape",
-                                      rowIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
-                                />
-                              </td>
-                              <td className="py-2 px-3">
-                                <button
-                                  onClick={() =>
-                                    removeItemRow("edging_tape", rowIndex)
-                                  }
-                                  className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Image
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Brand
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Color
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Finish
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Dimensions
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Unit
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Quantity
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryItems.edging_tape.map(
+                      (row, rowIndex) =>
+                        row.item && (
+                          <tr
+                            key={rowIndex}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-2 px-3">
+                              {row.item.image?.url ? (
+                                <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
+                                  <Image
+                                    src={`/${row.item.image.url}`}
+                                    alt={row.item.id}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
+                                  <Package className="w-6 h-6 text-slate-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.edging_tape?.brand || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.edging_tape?.color || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.edging_tape?.finish || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.edging_tape?.dimensions || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.measurement_unit || "-"}
+                            </td>
+                            <td className="py-2 px-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.quantity ?? ""}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    "edging_tape",
+                                    rowIndex,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
+                              />
+                            </td>
+                            <td className="py-2 px-3">
+                              <button
+                                onClick={() =>
+                                  removeItemRow("edging_tape", rowIndex)
+                                }
+                                className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Add New Item Input */}
             <div className="space-y-2">
@@ -1889,7 +2177,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                         type="text"
                         value={
                           searchTerms[
-                          getSearchTermKey("edging_tape", rowIndex)
+                            getSearchTermKey("edging_tape", rowIndex)
                           ] || ""
                         }
                         onChange={(e) =>
@@ -1903,7 +2191,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           searchItems(
                             "edging_tape",
                             searchTerms[
-                            getSearchTermKey("edging_tape", rowIndex)
+                              getSearchTermKey("edging_tape", rowIndex)
                             ] || "",
                             rowIndex
                           )
@@ -1914,11 +2202,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                       {showSearchDropdown.edging_tape?.[rowIndex] && (
                         <div className="absolute mt-1 z-10 bg-white border border-slate-200 rounded-md shadow-lg max-h-80 overflow-y-auto w-full">
                           {getFilteredSearchResults("edging_tape").length >
-                            0 ? (
+                          0 ? (
                             getFilteredSearchResults("edging_tape").map(
                               (item) => (
                                 <button
-                                  key={item.item_id}
+                                  key={item.id}
                                   onClick={() =>
                                     handleItemSelect(
                                       "edging_tape",
@@ -1933,7 +2221,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                                       <div className="relative w-12 h-12 shrink-0 rounded-md overflow-hidden bg-slate-100">
                                         <Image
                                           src={`/${item.image.url}`}
-                                          alt={item.item_id}
+                                          alt={item.id}
                                           fill
                                           className="object-cover"
                                         />
@@ -1994,126 +2282,126 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               </span>
               {categoryItems.handle.filter((row) => row.item && row.quantity)
                 .length > 0 && (
-                  <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
-                    {
-                      categoryItems.handle.filter(
-                        (row) => row.item && row.quantity
-                      ).length
-                    }
-                  </span>
-                )}
+                <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
+                  {
+                    categoryItems.handle.filter(
+                      (row) => row.item && row.quantity
+                    ).length
+                  }
+                </span>
+              )}
             </div>
           </div>
           <div className="p-4">
             {categoryItems.handle.filter((row) => row.item && row.quantity)
               .length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Image
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Brand
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Color
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Type
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Material
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Dimensions
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Unit
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Quantity
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryItems.handle.map(
-                        (row, rowIndex) =>
-                          row.item && (
-                            <tr
-                              key={rowIndex}
-                              className="border-b border-slate-100 hover:bg-slate-50"
-                            >
-                              <td className="py-2 px-3">
-                                {row.item.image?.url ? (
-                                  <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
-                                    <Image
-                                      src={`/${row.item.image.url}`}
-                                      alt={row.item.item_id}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
-                                    <Package className="w-6 h-6 text-slate-400" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.handle?.brand || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.handle?.color || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.handle?.type || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.handle?.material || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.handle?.dimensions || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.measurement_unit || "-"}
-                              </td>
-                              <td className="py-2 px-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={row.quantity ?? ""}
-                                  onChange={(e) =>
-                                    handleQuantityChange(
-                                      "handle",
-                                      rowIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
-                                />
-                              </td>
-                              <td className="py-2 px-3">
-                                <button
-                                  onClick={() =>
-                                    removeItemRow("handle", rowIndex)
-                                  }
-                                  className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Image
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Brand
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Color
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Type
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Material
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Dimensions
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Unit
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Quantity
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryItems.handle.map(
+                      (row, rowIndex) =>
+                        row.item && (
+                          <tr
+                            key={rowIndex}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-2 px-3">
+                              {row.item.image?.url ? (
+                                <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
+                                  <Image
+                                    src={`/${row.item.image.url}`}
+                                    alt={row.item.id}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
+                                  <Package className="w-6 h-6 text-slate-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.handle?.brand || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.handle?.color || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.handle?.type || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.handle?.material || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.handle?.dimensions || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.measurement_unit || "-"}
+                            </td>
+                            <td className="py-2 px-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.quantity ?? ""}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    "handle",
+                                    rowIndex,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
+                              />
+                            </td>
+                            <td className="py-2 px-3">
+                              <button
+                                onClick={() =>
+                                  removeItemRow("handle", rowIndex)
+                                }
+                                className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Add New Item Input */}
             <div className="space-y-2">
@@ -2134,7 +2422,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           searchItems(
                             "handle",
                             searchTerms[getSearchTermKey("handle", rowIndex)] ||
-                            "",
+                              "",
                             rowIndex
                           )
                         }
@@ -2146,7 +2434,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           {getFilteredSearchResults("handle").length > 0 ? (
                             getFilteredSearchResults("handle").map((item) => (
                               <button
-                                key={item.item_id}
+                                key={item.id}
                                 onClick={() =>
                                   handleItemSelect("handle", rowIndex, item)
                                 }
@@ -2157,7 +2445,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                                     <div className="relative w-12 h-12 shrink-0 rounded-md overflow-hidden bg-slate-100">
                                       <Image
                                         src={`/${item.image.url}`}
-                                        alt={item.item_id}
+                                        alt={item.id}
                                         fill
                                         className="object-cover"
                                       />
@@ -2217,120 +2505,120 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               </span>
               {categoryItems.hardware.filter((row) => row.item && row.quantity)
                 .length > 0 && (
-                  <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
-                    {
-                      categoryItems.hardware.filter(
-                        (row) => row.item && row.quantity
-                      ).length
-                    }
-                  </span>
-                )}
+                <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
+                  {
+                    categoryItems.hardware.filter(
+                      (row) => row.item && row.quantity
+                    ).length
+                  }
+                </span>
+              )}
             </div>
           </div>
           <div className="p-4">
             {categoryItems.hardware.filter((row) => row.item && row.quantity)
               .length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Image
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Brand
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Name
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Sub Category
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Dimensions
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Unit
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Quantity
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryItems.hardware.map(
-                        (row, rowIndex) =>
-                          row.item && (
-                            <tr
-                              key={rowIndex}
-                              className="border-b border-slate-100 hover:bg-slate-50"
-                            >
-                              <td className="py-2 px-3">
-                                {row.item.image?.url ? (
-                                  <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
-                                    <Image
-                                      src={`/${row.item.image.url}`}
-                                      alt={row.item.item_id}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
-                                    <Package className="w-6 h-6 text-slate-400" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.hardware?.brand || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.hardware?.name || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.hardware?.sub_category || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.hardware?.dimensions || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.measurement_unit || "-"}
-                              </td>
-                              <td className="py-2 px-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={row.quantity ?? ""}
-                                  onChange={(e) =>
-                                    handleQuantityChange(
-                                      "hardware",
-                                      rowIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
-                                />
-                              </td>
-                              <td className="py-2 px-3">
-                                <button
-                                  onClick={() =>
-                                    removeItemRow("hardware", rowIndex)
-                                  }
-                                  className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Image
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Brand
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Name
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Sub Category
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Dimensions
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Unit
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Quantity
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryItems.hardware.map(
+                      (row, rowIndex) =>
+                        row.item && (
+                          <tr
+                            key={rowIndex}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-2 px-3">
+                              {row.item.image?.url ? (
+                                <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
+                                  <Image
+                                    src={`/${row.item.image.url}`}
+                                    alt={row.item.id}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
+                                  <Package className="w-6 h-6 text-slate-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.hardware?.brand || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.hardware?.name || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.hardware?.sub_category || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.hardware?.dimensions || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.measurement_unit || "-"}
+                            </td>
+                            <td className="py-2 px-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.quantity ?? ""}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    "hardware",
+                                    rowIndex,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
+                              />
+                            </td>
+                            <td className="py-2 px-3">
+                              <button
+                                onClick={() =>
+                                  removeItemRow("hardware", rowIndex)
+                                }
+                                className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Add New Item Input */}
             <div className="space-y-2">
@@ -2355,7 +2643,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           searchItems(
                             "hardware",
                             searchTerms[
-                            getSearchTermKey("hardware", rowIndex)
+                              getSearchTermKey("hardware", rowIndex)
                             ] || "",
                             rowIndex
                           )
@@ -2368,7 +2656,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           {getFilteredSearchResults("hardware").length > 0 ? (
                             getFilteredSearchResults("hardware").map((item) => (
                               <button
-                                key={item.item_id}
+                                key={item.id}
                                 onClick={() =>
                                   handleItemSelect("hardware", rowIndex, item)
                                 }
@@ -2379,7 +2667,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                                     <div className="relative w-12 h-12 shrink-0 rounded-md overflow-hidden bg-slate-100">
                                       <Image
                                         src={`/${item.image.url}`}
-                                        alt={item.item_id}
+                                        alt={item.id}
                                         fill
                                         className="object-cover"
                                       />
@@ -2439,102 +2727,102 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               </span>
               {categoryItems.accessory.filter((row) => row.item && row.quantity)
                 .length > 0 && (
-                  <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
-                    {
-                      categoryItems.accessory.filter(
-                        (row) => row.item && row.quantity
-                      ).length
-                    }
-                  </span>
-                )}
+                <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
+                  {
+                    categoryItems.accessory.filter(
+                      (row) => row.item && row.quantity
+                    ).length
+                  }
+                </span>
+              )}
             </div>
           </div>
           <div className="p-4">
             {categoryItems.accessory.filter((row) => row.item && row.quantity)
               .length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200">
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Image
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Name
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Unit
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Quantity
-                        </th>
-                        <th className="text-left py-2 px-3 text-slate-600 font-medium">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryItems.accessory.map(
-                        (row, rowIndex) =>
-                          row.item && (
-                            <tr
-                              key={rowIndex}
-                              className="border-b border-slate-100 hover:bg-slate-50"
-                            >
-                              <td className="py-2 px-3">
-                                {row.item.image?.url ? (
-                                  <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
-                                    <Image
-                                      src={`/${row.item.image.url}`}
-                                      alt={row.item.item_id}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
-                                    <Package className="w-6 h-6 text-slate-400" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.accessory?.name || "-"}
-                              </td>
-                              <td className="py-2 px-3 text-slate-700">
-                                {row.item.measurement_unit || "-"}
-                              </td>
-                              <td className="py-2 px-3">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={row.quantity ?? ""}
-                                  onChange={(e) =>
-                                    handleQuantityChange(
-                                      "accessory",
-                                      rowIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
-                                />
-                              </td>
-                              <td className="py-2 px-3">
-                                <button
-                                  onClick={() =>
-                                    removeItemRow("accessory", rowIndex)
-                                  }
-                                  className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Image
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Name
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Unit
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Quantity
+                      </th>
+                      <th className="text-left py-2 px-3 text-slate-600 font-medium">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categoryItems.accessory.map(
+                      (row, rowIndex) =>
+                        row.item && (
+                          <tr
+                            key={rowIndex}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="py-2 px-3">
+                              {row.item.image?.url ? (
+                                <div className="relative w-12 h-12 rounded overflow-hidden bg-slate-100">
+                                  <Image
+                                    src={`/${row.item.image.url}`}
+                                    alt={row.item.id}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-slate-100 flex items-center justify-center">
+                                  <Package className="w-6 h-6 text-slate-400" />
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.accessory?.name || "-"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-700">
+                              {row.item.measurement_unit || "-"}
+                            </td>
+                            <td className="py-2 px-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.quantity ?? ""}
+                                onChange={(e) =>
+                                  handleQuantityChange(
+                                    "accessory",
+                                    rowIndex,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
+                              />
+                            </td>
+                            <td className="py-2 px-3">
+                              <button
+                                onClick={() =>
+                                  removeItemRow("accessory", rowIndex)
+                                }
+                                className="cursor-pointer text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Add New Item Input */}
             <div className="space-y-2">
@@ -2546,7 +2834,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                         type="text"
                         value={
                           searchTerms[
-                          getSearchTermKey("accessory", rowIndex)
+                            getSearchTermKey("accessory", rowIndex)
                           ] || ""
                         }
                         onChange={(e) =>
@@ -2560,7 +2848,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                           searchItems(
                             "accessory",
                             searchTerms[
-                            getSearchTermKey("accessory", rowIndex)
+                              getSearchTermKey("accessory", rowIndex)
                             ] || "",
                             rowIndex
                           )
@@ -2574,7 +2862,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                             getFilteredSearchResults("accessory").map(
                               (item) => (
                                 <button
-                                  key={item.item_id}
+                                  key={item.id}
                                   onClick={() =>
                                     handleItemSelect(
                                       "accessory",
@@ -2589,7 +2877,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                                       <div className="relative w-12 h-12 shrink-0 rounded-md overflow-hidden bg-slate-100">
                                         <Image
                                           src={`/${item.image.url}`}
-                                          alt={item.item_id}
+                                          alt={item.id}
                                           fill
                                           className="object-cover"
                                         />
@@ -2646,11 +2934,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           supplierId="" // Materials to Order doesn't require a supplier
           onItemAdded={() => {
             // Clear cache and refresh search for the category after item is added
-            const cacheKeys = Object.keys(itemCache).filter(key =>
+            const cacheKeys = Object.keys(itemCache).filter((key) =>
               key.startsWith(addItemModalCategory)
             );
             const updatedCache = { ...itemCache };
-            cacheKeys.forEach(key => {
+            cacheKeys.forEach((key) => {
               delete updatedCache[key];
             });
             setItemCache(updatedCache);
@@ -2662,14 +2950,14 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                 ...prev,
                 [addItemModalCategory]: [],
               }));
-              
+
               // If there's an active search term, trigger a new search
-              const activeSearchKeys = Object.keys(searchTerms).filter(key =>
+              const activeSearchKeys = Object.keys(searchTerms).filter((key) =>
                 key.startsWith(addItemModalCategory)
               );
               if (activeSearchKeys.length > 0) {
-                activeSearchKeys.forEach(key => {
-                  const [category, rowIndex] = key.split('-');
+                activeSearchKeys.forEach((key) => {
+                  const [category, rowIndex] = key.split("-");
                   const searchTerm = searchTerms[key];
                   if (searchTerm) {
                     searchItems(category, searchTerm, parseInt(rowIndex));
@@ -2687,12 +2975,12 @@ export default function MaterialsToOrder({ project, selectedLot }) {
         {(() => {
           // Categorize files by type
           const categorizeFiles = () => {
-            const images = [];
-            const videos = [];
-            const pdfs = [];
-            const others = [];
+            const images: MediaFile[] = [];
+            const videos: MediaFile[] = [];
+            const pdfs: MediaFile[] = [];
+            const others: MediaFile[] = [];
 
-            mediaFiles.forEach((file) => {
+            mediaFiles.forEach((file: MediaFile) => {
               if (
                 file.mime_type?.includes("image") ||
                 file.file_type === "image"
@@ -2714,12 +3002,17 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               }
             });
 
-            return { images, videos, pdfs, others };
+            return {
+              images: images as MediaFile[],
+              videos: videos as MediaFile[],
+              pdfs: pdfs as MediaFile[],
+              others: others as MediaFile[],
+            };
           };
 
           const { images, videos, pdfs, others } = categorizeFiles();
 
-          const toggleSection = (section) => {
+          const toggleSection = (section: keyof ExpandedSections) => {
             setExpandedSections((prev) => ({
               ...prev,
               [section]: !prev[section],
@@ -2732,6 +3025,11 @@ export default function MaterialsToOrder({ project, selectedLot }) {
             files,
             isSmall = false,
             sectionKey,
+          }: {
+            title: string;
+            files: MediaFile[];
+            isSmall?: boolean;
+            sectionKey: keyof ExpandedSections;
           }) => {
             if (files.length === 0) return null;
 
@@ -2748,8 +3046,9 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                     {title} ({files.length})
                   </span>
                   <div
-                    className={`transform transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
-                      }`}
+                    className={`transform transition-transform duration-200 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
                   >
                     <ChevronDown className="w-4 h-4" />
                   </div>
@@ -2763,16 +3062,18 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                         key={file.id}
                         onClick={() => handleViewExistingFile(file)}
                         title="Click to view file"
-                        className={`cursor-pointer relative bg-white border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all group ${isSmall ? "w-32" : "w-40"
-                          }`}
+                        className={`cursor-pointer relative bg-white border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all group ${
+                          isSmall ? "w-32" : "w-40"
+                        }`}
                       >
                         {/* File Preview */}
                         <div
-                          className={`w-full ${isSmall ? "aspect-4/3" : "aspect-square"
-                            } rounded-lg flex items-center justify-center mb-2 overflow-hidden bg-slate-50`}
+                          className={`w-full ${
+                            isSmall ? "aspect-4/3" : "aspect-square"
+                          } rounded-lg flex items-center justify-center mb-2 overflow-hidden bg-slate-50`}
                         >
                           {file.mime_type?.includes("image") ||
-                            file.file_type === "image" ? (
+                          file.file_type === "image" ? (
                             <Image
                               height={100}
                               width={100}
@@ -2790,24 +3091,27 @@ export default function MaterialsToOrder({ project, selectedLot }) {
                             />
                           ) : (
                             <div
-                              className={`w-full h-full flex items-center justify-center rounded-lg ${file.mime_type?.includes("pdf") ||
+                              className={`w-full h-full flex items-center justify-center rounded-lg ${
+                                file.mime_type?.includes("pdf") ||
                                 file.file_type === "pdf" ||
                                 file.extension === "pdf"
-                                ? "bg-red-50"
-                                : "bg-green-50"
-                                }`}
+                                  ? "bg-red-50"
+                                  : "bg-green-50"
+                              }`}
                             >
                               {file.mime_type?.includes("pdf") ||
-                                file.file_type === "pdf" ||
-                                file.extension === "pdf" ? (
+                              file.file_type === "pdf" ||
+                              file.extension === "pdf" ? (
                                 <FileText
-                                  className={`${isSmall ? "w-6 h-6" : "w-8 h-8"
-                                    } text-red-600`}
+                                  className={`${
+                                    isSmall ? "w-6 h-6" : "w-8 h-8"
+                                  } text-red-600`}
                                 />
                               ) : (
                                 <File
-                                  className={`${isSmall ? "w-6 h-6" : "w-8 h-8"
-                                    } text-green-600`}
+                                  className={`${
+                                    isSmall ? "w-6 h-6" : "w-8 h-8"
+                                  } text-green-600`}
                                 />
                               )}
                             </div>
@@ -2915,8 +3219,9 @@ export default function MaterialsToOrder({ project, selectedLot }) {
               Select Files {uploadingMedia && "(Uploading...)"}
             </label>
             <div
-              className={`border-2 border-dashed border-slate-300 hover:border-secondary rounded-lg transition-all duration-200 bg-slate-50 hover:bg-slate-100 ${uploadingMedia ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+              className={`border-2 border-dashed border-slate-300 hover:border-secondary rounded-lg transition-all duration-200 bg-slate-50 hover:bg-slate-100 ${
+                uploadingMedia ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <input
                 ref={fileInputRef}
@@ -2963,7 +3268,7 @@ export default function MaterialsToOrder({ project, selectedLot }) {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Add any notes related to this materials to order..."
-          rows="4"
+          rows={4}
           className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary bg-white"
         />
       </div>
@@ -3004,8 +3309,8 @@ export default function MaterialsToOrder({ project, selectedLot }) {
             ) : (
               <>
                 <p className="mb-2">
-                  This materials to order list will be deleted and it's linked
-                  with the following lots:
+                  This materials to order list will be deleted and it&apos;s
+                  linked with the following lots:
                 </p>
                 <ul className="list-disc list-inside space-y-1">
                   {materialsToOrderData?.lots?.map((lot) => (

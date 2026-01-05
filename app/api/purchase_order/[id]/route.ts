@@ -3,6 +3,7 @@ import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/db";
 import { uploadFile, getFileFromFormData } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 export async function GET(
   request: NextRequest,
@@ -190,12 +191,19 @@ export async function PATCH(
       const file = fileResult instanceof File ? fileResult : null;
       if (file) {
         const order_no = existing.order_no; // immutable
+        
+        // Get organization slug for file path
+        const organizationSlug = getOrganizationSlugFromRequest(request);
+        if (!organizationSlug) {
+          throw new Error("Organization slug not found");
+        }
+
         // Upload file with order_no as the filename base
         const uploadResult = await uploadFile(file, {
-          uploadDir: "mediauploads",
           subDir: "purchase_order",
           filenameStrategy: "id-based",
           idPrefix: order_no,
+          organizationSlug,
         });
 
         const createdFile = await prisma.supplier_file.create({

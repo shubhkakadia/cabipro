@@ -2,14 +2,21 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 import { prisma } from "@/lib/db";
-import { uploadFile, validateMultipartRequest } from "@/lib/filehandler";
+import {
+  uploadFile,
+  validateMultipartRequest,
+  getRelativePath,
+} from "@/lib/filehandler";
 import fs from "fs";
 import { withLogging } from "@/lib/withLogging";
-import type { TabKind, FileKind, SiteMeasurements } from "@/generated/prisma/enums";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
+import type {
+  TabKind,
+  FileKind,
+  SiteMeasurements,
+} from "@/generated/prisma/enums";
 
-function ensureArray(
-  value: string | string[] | undefined
-): string[] {
+function ensureArray(value: string | string[] | undefined): string[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
 }
@@ -98,6 +105,15 @@ export async function GET(
   { params }: { params: Promise<{ path: string | string[] }> }
 ) {
   try {
+    // Get organization slug from cookie
+    const organizationSlug = getOrganizationSlugFromRequest(request);
+    if (!organizationSlug) {
+      return NextResponse.json(
+        { status: false, message: "Organization slug not found" },
+        { status: 400 }
+      );
+    }
+
     const resolvedParams = await params;
     const segments = ensureArray(resolvedParams?.path);
     if (segments.length === 0) {
@@ -106,10 +122,17 @@ export async function GET(
         { status: 404 }
       );
     }
-    const targetPath = path.join(process.cwd(), "mediauploads", ...segments);
+    // Prepend organization slug to path segments
+    const targetPath = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      organizationSlug,
+      ...segments
+    );
 
     // Prevent path traversal
-    const uploadsRoot = path.join(process.cwd(), "mediauploads");
+    const uploadsRoot = path.join(process.cwd(), "public", "uploads");
     const normalized = path.normalize(targetPath);
     if (!normalized.startsWith(uploadsRoot)) {
       return NextResponse.json(
@@ -135,9 +158,7 @@ export async function GET(
     }
 
     // Check if file is marked as deleted in database
-    const relativePath = path
-      .relative(process.cwd(), normalized)
-      .replaceAll("\\", "/");
+    const relativePath = getRelativePath(normalized);
     const fileRecord = await prisma.lot_file.findFirst({
       where: {
         url: relativePath,
@@ -211,7 +232,9 @@ export async function POST(
       form = await validateMultipartRequest(request);
     } catch (parseError) {
       const errorMessage =
-        parseError instanceof Error ? parseError.message : "Failed to parse form data";
+        parseError instanceof Error
+          ? parseError.message
+          : "Failed to parse form data";
       console.error("FormData parse error:", parseError);
       return NextResponse.json(
         {
@@ -240,7 +263,10 @@ export async function POST(
     let siteMeasurementGroup: SiteMeasurements | null = null;
     if (tabKind === "site_measurements" && siteGroup) {
       // Validate site_group is one of the allowed values
-      const validSiteGroups: SiteMeasurements[] = ["SITE_PHOTOS", "MEASUREMENT_PHOTOS"];
+      const validSiteGroups: SiteMeasurements[] = [
+        "SITE_PHOTOS",
+        "MEASUREMENT_PHOTOS",
+      ];
       const upperSiteGroup =
         typeof siteGroup === "string" ? siteGroup.toUpperCase() : "";
       if (validSiteGroups.includes(upperSiteGroup as SiteMeasurements)) {
@@ -307,12 +333,21 @@ export async function POST(
       path: string;
       fileId: string;
     }> = [];
+    // Get organization slug for file path
+    const organizationSlug = getOrganizationSlugFromRequest(request);
+    if (!organizationSlug) {
+      return NextResponse.json(
+        { status: false, message: "Organization slug not found" },
+        { status: 400 }
+      );
+    }
+
     for (const { field, file } of fileEntries) {
       // Upload file using original filename strategy
       const uploadResult = await uploadFile(file, {
-        uploadDir: "mediauploads",
         subDir: `${projectId}/${lotId}/${tabKind}`,
         filenameStrategy: "original",
+        organizationSlug,
       });
 
       const fileKind = getFileKind(file.type);
@@ -398,6 +433,15 @@ export async function DELETE(
   try {
     const user = await requireAuth(request);
 
+    // Get organization slug from cookie
+    const organizationSlug = getOrganizationSlugFromRequest(request);
+    if (!organizationSlug) {
+      return NextResponse.json(
+        { status: false, message: "Organization slug not found" },
+        { status: 400 }
+      );
+    }
+
     const resolvedParams = await params;
     const segments = ensureArray(resolvedParams?.path);
     if (segments.length === 0) {
@@ -406,52 +450,12 @@ export async function DELETE(
         { status: 404 }
       );
     }
-    const targetPath = path.join(process.cwd(), "mediauploads", ...segments);
 
-    // Prevent path traversal
-    const uploadsRoot = path.join(process.cwd(), "mediauploads");
-    const normalized = path.normalize(targetPath);
-    if (!normalized.startsWith(uploadsRoot)) {
-      return NextResponse.json(
-        { status: false, message: "Not found" },
-        { status: 404 }
-      );
-    }
+    // First, try to find the file record in the database using path segments
+    // This is more reliable than checking the filesystem first
+    let fileRecord = null;
 
-    // Check if file exists
-    let stat;
-    try {
-      stat = await fs.promises.stat(normalized);
-    } catch {
-      return NextResponse.json(
-        { status: false, message: "File not found" },
-        { status: 404 }
-      );
-    }
-    if (!stat.isFile()) {
-      return NextResponse.json(
-        { status: false, message: "Not a file" },
-        { status: 404 }
-      );
-    }
-
-    // Mark file as deleted in database instead of physically deleting it
-    const relativePath = path
-      .relative(process.cwd(), normalized)
-      .replaceAll("\\", "/");
-
-    // Try to find file by URL first (with organization filter)
-    let fileRecord = await prisma.lot_file.findFirst({
-      where: {
-        url: relativePath,
-        organization_id: user.organizationId,
-        is_deleted: false,
-      },
-    });
-
-    // If not found by URL, try to find by filename and path segments
-    // This handles cases where the path might not match exactly
-    if (!fileRecord && segments.length >= 3) {
+    if (segments.length >= 4) {
       const [projectId, lotId, tabKind, filename] = segments;
       const tabKindEnum = TABKIND_TO_ENUM[tabKind] || tabKind.toUpperCase();
 
@@ -488,13 +492,47 @@ export async function DELETE(
       }
     }
 
+    // If not found by segments, try to find by URL path (fallback)
+    if (!fileRecord) {
+      // Prepend organization slug to path segments
+      const targetPath = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        organizationSlug,
+        ...segments
+      );
+
+      // Prevent path traversal
+      const uploadsRoot = path.join(process.cwd(), "public", "uploads");
+      const normalized = path.normalize(targetPath);
+      if (normalized.startsWith(uploadsRoot)) {
+        // Try to check if file exists (optional check)
+        try {
+          const stat = await fs.promises.stat(normalized);
+          if (stat.isFile()) {
+            const relativePath = getRelativePath(normalized);
+            // Try to find file by URL
+            fileRecord = await prisma.lot_file.findFirst({
+              where: {
+                url: relativePath,
+                organization_id: user.organizationId,
+                is_deleted: false,
+              },
+            });
+          }
+        } catch {
+          // File doesn't exist on filesystem, but we'll continue to try database lookup
+        }
+      }
+    }
+
     if (!fileRecord) {
       return NextResponse.json(
         {
           status: false,
           message: "File record not found in database",
           debug: {
-            relativePath,
             segments,
           },
         },

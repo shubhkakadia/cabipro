@@ -1,18 +1,12 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import TabsController from "@/components/tabscontroller";
-// import PaginationFooter from "@/components/PaginationFooter";
+import PaginationFooter from "@/components/PaginationFooter";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-// import { useDispatch } from "react-redux";
-// import { replaceTab } from "@/state/reducer/tabs";
-// import { v4 as uuidv4 } from "uuid";
-// import { useExcelExport } from "@/hooks/useExcelExport";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import {
   Plus,
   Search,
@@ -28,7 +22,7 @@ import {
   AlertTriangle,
   ClipboardList,
 } from "lucide-react";
-// import StockTally from "@/components/StockTally";
+import StockTally from "@/components/StockTally";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
 import AppHeader from "@/components/AppHeader";
 
@@ -72,7 +66,7 @@ interface EdgingTape {
 }
 
 interface Item {
-  item_id: string;
+  id: string;
   category: string;
   quantity: number;
   description?: string;
@@ -122,7 +116,6 @@ interface Filters {
 
 export default function InventoryPage() {
   const router = useRouter();
-  // const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState<string>("sheet");
   const tabs: Tab[] = [
     { id: "sheet", label: "Sheet" },
@@ -898,24 +891,21 @@ export default function InventoryPage() {
   }, [activeTab]);
 
   // Initialize Excel export hook
-  // const { exportToExcel, isExporting } = useExcelExport({
-  //   columnMap,
-  //   filenamePrefix: `${activeTab}_inventory_export`,
-  //   sheetName: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Inventory`,
-  //   selectedColumns,
-  // });
-
-  const isExporting = false; // Placeholder until useExcelExport is available
-
-  const handleExportToExcel = () => {
-    // exportToExcel(filteredAndSortedData);
-    toast.info("Excel export functionality is currently unavailable");
+  const { exportToExcel, isExporting } = useExcelExport({
+    columnMap,
+    filenamePrefix: `${activeTab}_inventory_export`,
+    sheetName: `${
+      activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+    } Inventory`,
+    selectedColumns:
+      selectedColumns.length === availableColumns.length
+        ? undefined
+        : selectedColumns,
+  }) as {
+    exportToExcel: (data: Item[]) => Promise<void>;
+    isExporting: boolean;
   };
 
-  // Stock Tally Functions
-  const handleOpenStockTally = () => {
-    setShowStockTallyModal(true);
-  };
   // Compute dynamic column count for table states
   const columnCount = useMemo(() => {
     // Base: Image, Quantity
@@ -926,35 +916,6 @@ export default function InventoryPage() {
     if (activeTab === "edging_tape") return 1 + 4 + 1; // brand,color,finish,dimensions
     return 6;
   }, [activeTab]);
-
-  const getItemTitle = (item: Item | null): string => {
-    if (!item) return "";
-    const category = item.category?.toLowerCase() || "";
-    if ((category === "sheet" || activeTab === "sunmica") && item.sheet) {
-      return [item.sheet.brand, item.sheet.color, item.sheet.finish]
-        .filter(Boolean)
-        .join(" ");
-    } else if (category === "handle" && item.handle) {
-      return [item.handle.brand, item.handle.color, item.handle.type]
-        .filter(Boolean)
-        .join(" ");
-    } else if (category === "hardware" && item.hardware) {
-      return [item.hardware.brand, item.hardware.name, item.hardware.type]
-        .filter(Boolean)
-        .join(" ");
-    } else if (category === "accessory" && item.accessory) {
-      return item.accessory.name || "";
-    } else if (category === "edging_tape" && item.edging_tape) {
-      return [
-        item.edging_tape.brand,
-        item.edging_tape.color,
-        item.edging_tape.finish,
-      ]
-        .filter(Boolean)
-        .join(" ");
-    }
-    return "";
-  };
 
   return (
     <div className="bg-tertiary">
@@ -1156,7 +1117,7 @@ export default function InventoryPage() {
                         </button>
 
                         <button
-                          onClick={handleOpenStockTally}
+                          onClick={() => setShowStockTallyModal(true)}
                           disabled={filteredAndSortedData.length === 0}
                           className={`flex items-center gap-2 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium relative ${
                             filteredAndSortedData.length === 0
@@ -1170,7 +1131,7 @@ export default function InventoryPage() {
 
                         <div className="relative dropdown-container flex items-center">
                           <button
-                            onClick={handleExportToExcel}
+                            onClick={() => exportToExcel(filteredAndSortedData)}
                             disabled={
                               isExporting ||
                               filteredAndSortedData.length === 0 ||
@@ -1409,9 +1370,9 @@ export default function InventoryPage() {
                           ) : (
                             paginatedData.map((item) => (
                               <tr
-                                key={item.item_id}
+                                key={item.id}
                                 onClick={() => {
-                                  router.push(`/app/inventory/${item.item_id}`);
+                                  router.push(`/app/inventory/${item.id}`);
                                   // dispatch(
                                   //   replaceTab({
                                   //     id: uuidv4(),
@@ -1529,63 +1490,14 @@ export default function InventoryPage() {
                   </div>
 
                   {/* Fixed Pagination Footer */}
-                  {!loading && !error && paginatedData.length > 0 && (
-                    <div className="px-4 py-3 border-t border-slate-200 bg-white flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600">
-                          Showing {startIndex + 1} to{" "}
-                          {Math.min(endIndex, totalItems)} of {totalItems} items
-                        </span>
-                        {itemsPerPage > 0 && (
-                          <select
-                            value={itemsPerPage}
-                            onChange={(e) =>
-                              handleItemsPerPageChange(Number(e.target.value))
-                            }
-                            className="text-sm border border-slate-300 rounded px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
-                          >
-                            <option value={25}>25 per page</option>
-                            <option value={50}>50 per page</option>
-                            <option value={100}>100 per page</option>
-                            <option value={0}>All</option>
-                          </select>
-                        )}
-                      </div>
-                      {itemsPerPage > 0 && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className={`px-3 py-1 text-sm rounded border ${
-                              currentPage === 1
-                                ? "opacity-50 cursor-not-allowed border-slate-300 text-slate-400"
-                                : "border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer"
-                            }`}
-                          >
-                            Previous
-                          </button>
-                          <span className="text-sm text-slate-600">
-                            Page {currentPage} of{" "}
-                            {Math.ceil(totalItems / itemsPerPage)}
-                          </span>
-                          <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={
-                              currentPage >=
-                              Math.ceil(totalItems / itemsPerPage)
-                            }
-                            className={`px-3 py-1 text-sm rounded border ${
-                              currentPage >=
-                              Math.ceil(totalItems / itemsPerPage)
-                                ? "opacity-50 cursor-not-allowed border-slate-300 text-slate-400"
-                                : "border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer"
-                            }`}
-                          >
-                            Next
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                  {!loading && !error && (
+                    <PaginationFooter
+                      totalItems={totalItems}
+                      itemsPerPage={itemsPerPage}
+                      currentPage={currentPage}
+                      onPageChange={handlePageChange}
+                      onItemsPerPageChange={handleItemsPerPageChange}
+                    />
                   )}
                 </div>
               </div>
@@ -1658,7 +1570,9 @@ export default function InventoryPage() {
                         field="sheet_brand"
                         options={getDistinctValues("sheet_brand", data)}
                         selectedValues={filters.sheet_brand}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select brands..."
                       />
 
@@ -1667,7 +1581,9 @@ export default function InventoryPage() {
                         field="sheet_color"
                         options={getDistinctValues("sheet_color", data)}
                         selectedValues={filters.sheet_color}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select colors..."
                       />
 
@@ -1676,7 +1592,9 @@ export default function InventoryPage() {
                         field="sheet_finish"
                         options={getDistinctValues("sheet_finish", data)}
                         selectedValues={filters.sheet_finish}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select finishes..."
                       />
 
@@ -1685,7 +1603,9 @@ export default function InventoryPage() {
                         field="sheet_face"
                         options={getDistinctValues("sheet_face", data)}
                         selectedValues={filters.sheet_face}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select faces..."
                       />
                     </div>
@@ -1705,7 +1625,9 @@ export default function InventoryPage() {
                         field="handle_brand"
                         options={getDistinctValues("handle_brand", data)}
                         selectedValues={filters.handle_brand}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select brands..."
                       />
 
@@ -1714,7 +1636,9 @@ export default function InventoryPage() {
                         field="handle_color"
                         options={getDistinctValues("handle_color", data)}
                         selectedValues={filters.handle_color}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select colors..."
                       />
 
@@ -1723,7 +1647,9 @@ export default function InventoryPage() {
                         field="handle_type"
                         options={getDistinctValues("handle_type", data)}
                         selectedValues={filters.handle_type}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select types..."
                       />
 
@@ -1732,7 +1658,9 @@ export default function InventoryPage() {
                         field="handle_material"
                         options={getDistinctValues("handle_material", data)}
                         selectedValues={filters.handle_material}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select materials..."
                       />
                     </div>
@@ -1752,7 +1680,9 @@ export default function InventoryPage() {
                         field="hardware_brand"
                         options={getDistinctValues("hardware_brand", data)}
                         selectedValues={filters.hardware_brand}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select brands..."
                       />
 
@@ -1761,7 +1691,9 @@ export default function InventoryPage() {
                         field="hardware_name"
                         options={getDistinctValues("hardware_name", data)}
                         selectedValues={filters.hardware_name}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select names..."
                       />
 
@@ -1770,7 +1702,9 @@ export default function InventoryPage() {
                         field="hardware_type"
                         options={getDistinctValues("hardware_type", data)}
                         selectedValues={filters.hardware_type}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select types..."
                       />
 
@@ -1782,7 +1716,9 @@ export default function InventoryPage() {
                           data
                         )}
                         selectedValues={filters.hardware_sub_category}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select sub categories..."
                       />
                     </div>
@@ -1802,7 +1738,9 @@ export default function InventoryPage() {
                         field="accessory_name"
                         options={getDistinctValues("accessory_name", data)}
                         selectedValues={filters.accessory_name}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select names..."
                       />
                     </div>
@@ -1820,7 +1758,9 @@ export default function InventoryPage() {
                         field="edging_tape_brand"
                         options={getDistinctValues("edging_tape_brand", data)}
                         selectedValues={filters.edging_tape_brand}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select brands..."
                       />
                       <MultiSelectDropdown
@@ -1828,7 +1768,9 @@ export default function InventoryPage() {
                         field="edging_tape_color"
                         options={getDistinctValues("edging_tape_color", data)}
                         selectedValues={filters.edging_tape_color}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select colors..."
                       />
                       <MultiSelectDropdown
@@ -1836,7 +1778,9 @@ export default function InventoryPage() {
                         field="edging_tape_finish"
                         options={getDistinctValues("edging_tape_finish", data)}
                         selectedValues={filters.edging_tape_finish}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select finishes..."
                       />
                       <MultiSelectDropdown
@@ -1847,7 +1791,9 @@ export default function InventoryPage() {
                           data
                         )}
                         selectedValues={filters.edging_tape_dimensions}
-                        onSelectionChange={handleFilterChange}
+                        onSelectionChange={(field, values) =>
+                          handleFilterChange(field as keyof Filters, values)
+                        }
                         placeholder="Select dimensions..."
                       />
                     </div>
@@ -1883,22 +1829,15 @@ export default function InventoryPage() {
 
         {/* Stock Tally Modal */}
         {showStockTallyModal && (
-          <div className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">
-                Stock Tally
-              </h2>
-              <p className="text-slate-600 mb-4">
-                Stock Tally functionality is currently unavailable.
-              </p>
-              <button
-                onClick={() => setShowStockTallyModal(false)}
-                className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
+          <StockTally
+            activeTab={activeTab}
+            setShowStockTallyModal={setShowStockTallyModal}
+            filteredAndSortedData={filteredAndSortedData.map((item) => ({
+              ...item,
+              item_id:
+                (item as { item_id?: string; id: string }).item_id || item.id,
+            }))}
+          />
         )}
       </div>
     </div>

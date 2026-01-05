@@ -1,8 +1,18 @@
 "use client";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import CRMLayout from "@/components/tabs";
-// import TabsController from "@/components/tabscontroller";
-import { ChevronLeft, User, ChevronDown, Edit, Trash2, Plus, X, Mail, Phone, IdCardLanyard, NotebookText, PhoneCall } from "lucide-react";
+import {
+  ChevronLeft,
+  User,
+  ChevronDown,
+  Edit,
+  Trash2,
+  Plus,
+  X,
+  Mail,
+  Phone,
+  IdCardLanyard,
+  NotebookText,
+  PhoneCall,
+} from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "@/components/sidebar";
 import axios from "axios";
@@ -81,9 +91,13 @@ export default function AddClientPage() {
     role: "",
   });
   const [isSavingContact, setIsSavingContact] = useState(false);
-  const [editingContactIndex, setEditingContactIndex] = useState<number | null>(null);
+  const [editingContactIndex, setEditingContactIndex] = useState<number | null>(
+    null
+  );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -143,14 +157,17 @@ export default function AddClientPage() {
       const contactsToSend =
         contacts && contacts.length > 0
           ? contacts.map((contact: Contact) => ({
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            email: contact.email || null,
-            phone: contact.phone ? formatPhoneToNational(contact.phone) : null,
-            role: contact.role || null,
-            preferred_contact_method: contact.preferred_contact_method || null,
-            notes: contact.notes || null,
-          }))
+              first_name: contact.first_name,
+              last_name: contact.last_name,
+              email: contact.email || null,
+              phone: contact.phone
+                ? formatPhoneToNational(contact.phone)
+                : null,
+              role: contact.role || null,
+              preferred_contact_method:
+                contact.preferred_contact_method || null,
+              notes: contact.notes || null,
+            }))
           : [];
 
       const formatPhone = (phone: string | undefined): string | undefined => {
@@ -335,7 +352,9 @@ export default function AddClientPage() {
       // Format phone number before saving
       const formattedContact = {
         ...contactDraft,
-        phone: contactDraft.phone ? formatPhoneToNational(contactDraft.phone) : contactDraft.phone,
+        phone: contactDraft.phone
+          ? formatPhoneToNational(contactDraft.phone)
+          : contactDraft.phone,
       };
 
       if (editingContactIndex !== null) {
@@ -368,11 +387,16 @@ export default function AddClientPage() {
       }
     } catch (err) {
       console.error("Save contact failed", err);
-      toast.error(editingContactIndex !== null ? "Failed to update contact" : "Failed to add contact", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-      });
+      toast.error(
+        editingContactIndex !== null
+          ? "Failed to update contact"
+          : "Failed to add contact",
+        {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+        }
+      );
     } finally {
       setIsSavingContact(false);
     }
@@ -394,19 +418,20 @@ export default function AddClientPage() {
       <div className="flex mt-16 h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-full w-full overflow-y-auto">
-          <div className="px-4">
-            <div className="flex items-center gap-2 sticky top-0 bg-tertiary z-10 bg-white py-4 ">
-              <button
-                onClick={() => router.back()}
-                className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
-              >
-                <ChevronLeft className="w-8 h-8 text-slate-600" />
-              </button>
-              <h1 className="text-2xl font-bold text-slate-600">
-                Add New Client
-              </h1>
-            </div>
+          <div className="h-full w-full overflow-y-auto">
+            <div className="px-4 py-2">
+              {/* Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <button
+                  onClick={() => router.back()}
+                  className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-8 h-8 text-slate-600" />
+                </button>
+                <h1 className="text-2xl font-bold text-slate-600">
+                  Add New Client
+                </h1>
+              </div>
 
               {/* form */}
               <div className="bg-white rounded-lg shadow-lg p-6">
@@ -429,12 +454,22 @@ export default function AddClientPage() {
                           name="client_name"
                           value={formData.client_name}
                           onChange={handleInputChange}
-                          className={`w-full text-sm ${errors.client_name ? "border-red-500" : "border-slate-300"}text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${errors.client_name ? "border-red-500" : "border-slate-300"}`}
+                          className={`w-full text-sm ${
+                            errors.client_name
+                              ? "border-red-500"
+                              : "border-slate-300"
+                          }text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${
+                            errors.client_name
+                              ? "border-red-500"
+                              : "border-slate-300"
+                          }`}
                           placeholder="Eg. Bettio Construction"
                           required
                         />
                         {errors.client_name && (
-                          <p className="text-red-500 text-xs mt-1">{errors.client_name}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.client_name}
+                          </p>
                         )}
                       </div>
                       <div className="relative" ref={dropdownRef}>
@@ -447,12 +482,22 @@ export default function AddClientPage() {
                             value={searchTerm}
                             onChange={handleSearchChange}
                             onFocus={() => setIsDropdownOpen(true)}
-                            className={`w-full text-sm ${errors.client_type ? "border-red-500" : "border-slate-300"}text-slate-800 px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${errors.client_type ? "border-red-500" : "border-slate-300"}`}
+                            className={`w-full text-sm ${
+                              errors.client_type
+                                ? "border-red-500"
+                                : "border-slate-300"
+                            }text-slate-800 px-4 py-3 pr-10 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${
+                              errors.client_type
+                                ? "border-red-500"
+                                : "border-slate-300"
+                            }`}
                             placeholder="Search or select client type..."
                             required
                           />
                           {errors.client_type && (
-                            <p className="text-red-500 text-xs mt-1">{errors.client_type}</p>
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.client_type}
+                            </p>
                           )}
                           <button
                             type="button"
@@ -460,8 +505,9 @@ export default function AddClientPage() {
                             className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                           >
                             <ChevronDown
-                              className={`w-5 h-5 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                                }`}
+                              className={`w-5 h-5 transition-transform ${
+                                isDropdownOpen ? "rotate-180" : ""
+                              }`}
                             />
                           </button>
                         </div>
@@ -521,17 +567,21 @@ export default function AddClientPage() {
                           name="client_phone"
                           value={formData.client_phone}
                           onChange={handleInputChange}
-                          className={`w-full text-sm text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${formData.client_phone && !validatePhone(formData.client_phone)
+                          className={`w-full text-sm text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${
+                            formData.client_phone &&
+                            !validatePhone(formData.client_phone)
                               ? "border-red-500"
                               : "border-slate-300"
-                            }`}
+                          }`}
                           placeholder="Eg. 0400 123 456 or +61 400 123 456"
                         />
-                        {formData.client_phone && !validatePhone(formData.client_phone) && (
-                          <p className="mt-1 text-xs text-red-500">
-                            {errors.client_phone || "Please enter a valid Australian phone number"}
-                          </p>
-                        )}
+                        {formData.client_phone &&
+                          !validatePhone(formData.client_phone) && (
+                            <p className="mt-1 text-xs text-red-500">
+                              {errors.client_phone ||
+                                "Please enter a valid Australian phone number"}
+                            </p>
+                          )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -638,19 +688,25 @@ export default function AddClientPage() {
                                   {contact.email && (
                                     <div className="flex items-center gap-2">
                                       <Mail className="w-4 h-4 text-slate-500" />
-                                      <span className="text-slate-700">{contact.email}</span>
+                                      <span className="text-slate-700">
+                                        {contact.email}
+                                      </span>
                                     </div>
                                   )}
                                   {contact.phone && (
                                     <div className="flex items-center gap-2">
                                       <Phone className="w-4 h-4 text-slate-500" />
-                                      <span className="text-slate-700">{contact.phone}</span>
+                                      <span className="text-slate-700">
+                                        {contact.phone}
+                                      </span>
                                     </div>
                                   )}
                                   {contact.role && (
                                     <div className="flex items-center gap-2">
                                       <IdCardLanyard className="w-4 h-4 text-slate-500" />
-                                      <span className="text-slate-700">{contact.role}</span>
+                                      <span className="text-slate-700">
+                                        {contact.role}
+                                      </span>
                                     </div>
                                   )}
                                   {contact.preferred_contact_method && (
@@ -665,7 +721,9 @@ export default function AddClientPage() {
                                 {contact.notes && (
                                   <div className="mt-2 flex items-start gap-2">
                                     <NotebookText className="w-4 h-4 text-slate-500 mt-0.5" />
-                                    <p className="text-sm text-slate-700">{contact.notes}</p>
+                                    <p className="text-sm text-slate-700">
+                                      {contact.notes}
+                                    </p>
                                   </div>
                                 )}
                               </div>
@@ -699,10 +757,11 @@ export default function AddClientPage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className={`cursor-pointer px-8 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${isLoading
-                        ? "bg-emerald-600 text-slate-500 cursor-not-allowed"
-                        : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        }`}
+                      className={`cursor-pointer px-8 py-3 rounded-lg font-medium transition-all duration-200 text-sm ${
+                        isLoading
+                          ? "bg-emerald-600 text-slate-500 cursor-not-allowed"
+                          : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      }`}
                     >
                       {isLoading ? "Creating Client..." : "Create Client"}
                     </button>
@@ -715,188 +774,196 @@ export default function AddClientPage() {
 
         {/* Contact Modal */}
         {isContactModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs bg-black/50">
-          <div
-            className="absolute inset-0 bg-slate-900/40"
-            onClick={handleCloseContactModal}
-          />
-          <div className="relative bg-white w-full max-w-2xl mx-4 rounded-xl shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                  <User className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-lg font-semibold text-slate-700">
-                    {editingContactIndex !== null ? "Edit Contact" : "Add Contact"}
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs bg-black/50">
+            <div
+              className="absolute inset-0 bg-slate-900/40"
+              onClick={handleCloseContactModal}
+            />
+            <div className="relative bg-white w-full max-w-2xl mx-4 rounded-xl shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <User className="w-5 h-5" />
                   </div>
-                  <div className="text-xs text-slate-500">
-                    Client: {formData.client_name || "New Client"}
+                  <div>
+                    <div className="text-lg font-semibold text-slate-700">
+                      {editingContactIndex !== null
+                        ? "Edit Contact"
+                        : "Add Contact"}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Client: {formData.client_name || "New Client"}
+                    </div>
                   </div>
                 </div>
+                <button
+                  onClick={handleCloseContactModal}
+                  className="cursor-pointer p-2 rounded-lg hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5 text-slate-600" />
+                </button>
               </div>
-              <button
-                onClick={handleCloseContactModal}
-                className="cursor-pointer p-2 rounded-lg hover:bg-slate-100"
-              >
-                <X className="w-5 h-5 text-slate-600" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={contactDraft.first_name}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        first_name: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                    placeholder="e.g. Sophia"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={contactDraft.last_name}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        last_name: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                    placeholder="e.g. Evans"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={contactDraft.email}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        email: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                    placeholder="e.g. sophia.evans@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    type="text"
-                    value={contactDraft.phone}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        phone: e.target.value,
-                      })
-                    }
-                    className={`w-full text-sm text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${contactDraft.phone && !validatePhone(contactDraft.phone)
-                        ? "border-red-500"
-                        : "border-slate-300"
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contactDraft.first_name}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          first_name: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                      placeholder="e.g. Sophia"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contactDraft.last_name}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          last_name: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                      placeholder="e.g. Evans"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={contactDraft.email}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          email: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                      placeholder="e.g. sophia.evans@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={contactDraft.phone}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          phone: e.target.value,
+                        })
+                      }
+                      className={`w-full text-sm text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none ${
+                        contactDraft.phone && !validatePhone(contactDraft.phone)
+                          ? "border-red-500"
+                          : "border-slate-300"
                       }`}
-                    placeholder="e.g. +61 434 888 999"
-                  />
-                  {contactDraft.phone && !validatePhone(contactDraft.phone) && (
-                    <p className="mt-1 text-xs text-red-500">
-                      Please enter a valid Australian phone number
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Preferred Contact Method
-                  </label>
-                  <select
-                    value={contactDraft.preferred_contact_method}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        preferred_contact_method: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                  >
-                    <option value="">Select method</option>
-                    <option value="phone">Phone</option>
-                    <option value="email">Email</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Role
-                  </label>
-                  <input
-                    type="text"
-                    value={contactDraft.role}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        role: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                    placeholder="e.g. Manager, Accountant"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Notes
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={contactDraft.notes}
-                    onChange={(e) =>
-                      setContactDraft({
-                        ...contactDraft,
-                        notes: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
-                    placeholder="Add notes"
-                  />
+                      placeholder="e.g. +61 434 888 999"
+                    />
+                    {contactDraft.phone &&
+                      !validatePhone(contactDraft.phone) && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Please enter a valid Australian phone number
+                        </p>
+                      )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Preferred Contact Method
+                    </label>
+                    <select
+                      value={contactDraft.preferred_contact_method}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          preferred_contact_method: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                    >
+                      <option value="">Select method</option>
+                      <option value="phone">Phone</option>
+                      <option value="email">Email</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Role
+                    </label>
+                    <input
+                      type="text"
+                      value={contactDraft.role}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          role: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                      placeholder="e.g. Manager, Accountant"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Notes
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={contactDraft.notes}
+                      onChange={(e) =>
+                        setContactDraft({
+                          ...contactDraft,
+                          notes: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                      placeholder="Add notes"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
-              <button
-                onClick={handleCloseContactModal}
-                disabled={isSavingContact}
-                className="cursor-pointer px-4 py-2 border-2 border-slate-300 text-slate-700 hover:bg-slate-100 rounded-md transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveContact}
-                disabled={isSavingContact}
-                className="cursor-pointer px-4 py-2 bg-primary/80 hover:bg-primary text-white rounded-md transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSavingContact
-                  ? (editingContactIndex !== null ? "Updating..." : "Adding...")
-                  : (editingContactIndex !== null ? "Update Contact" : "Add Contact")}
-              </button>
+              <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
+                <button
+                  onClick={handleCloseContactModal}
+                  disabled={isSavingContact}
+                  className="cursor-pointer px-4 py-2 border-2 border-slate-300 text-slate-700 hover:bg-slate-100 rounded-md transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveContact}
+                  disabled={isSavingContact}
+                  className="cursor-pointer px-4 py-2 bg-primary/80 hover:bg-primary text-white rounded-md transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingContact
+                    ? editingContactIndex !== null
+                      ? "Updating..."
+                      : "Adding..."
+                    : editingContactIndex !== null
+                    ? "Update Contact"
+                    : "Add Contact"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </div>
   );
 }

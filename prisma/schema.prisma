@@ -51,7 +51,7 @@ model organization {
   supplier_files      supplier_file[]
   suppliers           supplier[]
   users               users[]              @relation("OrganizationUsers")
-  image               media?
+  image               media[]
 
   @@index([name])
   @@index([slug])
@@ -919,7 +919,7 @@ enum StockTransactionType {
 
 model media {
   id                    String              @id @default(uuid())
-  organization_id       String              @unique
+  organization_id       String
   employee_id           String?             @unique
   item_id               String?             @unique
   materials_to_orderId  String?
@@ -939,6 +939,9 @@ model media {
   materials_to_order    materials_to_order? @relation(fields: [materials_to_orderId], references: [id], onDelete: Cascade)
   organization          organization        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
+@@unique([organization_id, employee_id])
+@@unique([organization_id, item_id])
+@@unique([organization_id, material_selection_id])
   @@index([materials_to_orderId], map: "media_materials_to_orderId_fkey")
   @@index([material_selection_id], map: "media_material_selection_id_fkey")
   @@index([organization_id])

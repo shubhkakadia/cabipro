@@ -7,6 +7,7 @@ import {
   getFileFromFormData,
 } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 export async function GET(
   request: NextRequest,
@@ -240,15 +241,43 @@ export async function PATCH(
             : null;
         const oldImageId = existingItem.image_id || null;
 
+        // Get organization slug for file path
+        const organizationSlug = getOrganizationSlugFromRequest(request);
+        if (!organizationSlug) {
+          throw new Error("Organization slug not found");
+        }
+
         // Upload new image FIRST (before deleting old one)
         const uploadResult = await uploadFile(imageFile, {
-          uploadDir: "mediauploads",
           subDir: `items/${existingItem.category.toLowerCase()}`,
           filenameStrategy: "id-based",
           idPrefix: id,
+          organizationSlug,
         });
 
-        // Create new media record
+        // If there's an old image, remove the item_id reference first to avoid unique constraint violation
+        if (oldImageId) {
+          // First, remove the foreign key reference from item
+          await prisma.item.update({
+            where: { id: id },
+            data: { image_id: null },
+          });
+
+          // Now safe to delete the old media record (no foreign key constraint)
+          try {
+            await prisma.media.delete({
+              where: { id: oldImageId },
+            });
+          } catch (deleteError) {
+            // Log but continue - old media might already be deleted
+            console.error(
+              "Error deleting old media record (non-critical):",
+              deleteError
+            );
+          }
+        }
+
+        // Create new media record (now safe since old one is deleted)
         const media = await prisma.media.create({
           data: {
             organization_id: user.organizationId,
@@ -262,26 +291,20 @@ export async function PATCH(
           },
         });
 
-        // Update item with new image_id (now we have the new image linked)
+        // Update item with new image_id
         await prisma.item.update({
           where: { id: id },
           data: { image_id: media.id },
         });
 
-        // NOW delete old image file and media record (only after new image is successfully linked)
-        if (oldImageId && oldImageUrl) {
+        // Delete the old file from disk (if it exists)
+        if (oldImageUrl) {
           try {
-            // Delete the old media record (safe now since item points to new image)
-            await prisma.media.delete({
-              where: { id: oldImageId },
-            });
-
-            // Delete the old file from disk
             await deleteFileByRelativePath(oldImageUrl);
           } catch (deleteError) {
-            // Log but don't fail the entire operation if old image deletion fails
+            // Log but don't fail the entire operation if old file deletion fails
             console.error(
-              "Error deleting old image (non-critical):",
+              "Error deleting old image file (non-critical):",
               deleteError
             );
           }

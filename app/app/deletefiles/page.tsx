@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/Page/TextLayer.css";
-import "react-pdf/dist/Page/AnnotationLayer.css";
 import JSZip from "jszip";
 import AppHeader from "@/components/AppHeader";
 import {
@@ -35,9 +30,6 @@ import {
   Database,
 } from "lucide-react";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
-
-// Setup PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // Type definitions
 interface DeletedMediaFile {
@@ -98,6 +90,9 @@ export default function DeleteFilesPage() {
   const [recoveringRecordId, setRecoveringRecordId] = useState<string | null>(
     null
   );
+  
+  // Media types available
+  const mediaTypes = ["Image", "Video", "PDF", "File"];
 
   // Fetch deleted media
   const fetchDeletedMedia = useCallback(async () => {
@@ -570,9 +565,6 @@ export default function DeleteFilesPage() {
       return true;
     });
   }, [deletedMedia, search, selectedMediaTypes]);
-
-  // Media types available
-  const mediaTypes = ["Image", "Video", "PDF", "File"];
 
   // Handle media type toggle
   const handleMediaTypeToggle = (type: string) => {

@@ -1,9 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import PaginationFooter from "@/components/PaginationFooter";
+import PaginationFooter from "@/components/PaginationFooter";
 import {
   ArrowUpDown,
   Funnel,
@@ -17,10 +15,7 @@ import {
   Calendar,
 } from "lucide-react";
 import axios from "axios";
-// import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-// import { useExcelExport } from "@/hooks/useExcelExport";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
 
 // Type definitions
@@ -98,16 +93,6 @@ export default function LogsPage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  // Excel export placeholder
-  const isExporting = false;
-  const handleExportToExcel = () => {
-    toast.info("Excel export feature coming soon", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-    });
-  };
 
   // Get distinct entity types from logs data
   const distinctEntityTypes = useMemo(() => {
@@ -429,6 +414,27 @@ export default function LogsPage() {
     return `${day}/${month}/${year}, ${formattedHours}:${minutes}:${seconds} ${ampm}`;
   };
 
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    return {
+      "Date/Time": (log: Log) => formatDateTime(log.createdAt),
+      "Entity Type": (log: Log) => log.entity_type || "",
+      "Action": (log: Log) => log.action || "",
+      "Description": (log: Log) => log.description || "",
+      "Entity ID": (log: Log) => log.entity_id || "",
+      "Username": (log: Log) => log.user?.username || "",
+      "ID": (log: Log) => log.id || "",
+    };
+  }, []);
+
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport({
+    columnMap,
+    filenamePrefix: "logs",
+    sheetName: "Logs",
+    selectedColumns: selectedColumns.length === availableColumns.length ? undefined : selectedColumns,
+  }) as { exportToExcel: (data: Log[]) => Promise<void>; isExporting: boolean };
+
   const getActionColor = (action: string | undefined): string => {
     switch (action) {
       case "CREATE":
@@ -441,13 +447,7 @@ export default function LogsPage() {
         return "bg-slate-100 text-slate-700 border-slate-200";
     }
   };
-
-  // Pagination calculations
-  const totalPages =
-    itemsPerPage === 0
-      ? 1
-      : Math.ceil(filteredAndSortedLogs.length / itemsPerPage);
-
+  
   return (
     <div className="bg-tertiary">
       <AppHeader />
@@ -739,7 +739,7 @@ export default function LogsPage() {
                           </div>
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() => exportToExcel(filteredAndSortedLogs)}
                               disabled={
                                 isExporting ||
                                 filteredAndSortedLogs.length === 0 ||
@@ -944,47 +944,14 @@ export default function LogsPage() {
                     </div>
 
                     {/* Fixed Pagination Footer */}
-                    {!loading && !error && paginatedLogs.length > 0 && (
-                      <div className="p-4 border-t border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-sm text-slate-600">
-                            Showing {startIndex + 1} to{" "}
-                            {Math.min(endIndex, totalItems)} of {totalItems}{" "}
-                            results
-                          </div>
-                          <select
-                            value={itemsPerPage}
-                            onChange={(e) =>
-                              handleItemsPerPageChange(Number(e.target.value))
-                            }
-                            className="text-sm border border-slate-300 rounded px-2 py-1"
-                          >
-                            <option value={25}>25 per page</option>
-                            <option value={50}>50 per page</option>
-                            <option value={100}>100 per page</option>
-                            <option value={0}>All</option>
-                          </select>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Previous
-                          </button>
-                          <span className="text-sm text-slate-600">
-                            Page {currentPage} of {totalPages}
-                          </span>
-                          <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage >= totalPages}
-                            className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      </div>
+                    {!loading && !error && (
+                      <PaginationFooter
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
+                        onItemsPerPageChange={handleItemsPerPageChange}
+                      />
                     )}
                   </div>
                 </div>

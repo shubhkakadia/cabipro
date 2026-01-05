@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Trash2, X, AlertTriangle } from "lucide-react";
+import { deletionWarning } from "./constants";
+
 
 // Type definitions
 interface DeleteConfirmationProps {
@@ -8,21 +10,12 @@ interface DeleteConfirmationProps {
   onConfirm: () => void;
   deleteWithInput?: boolean;
   heading?: string;
-  message?: string;
+  message?: string | React.ReactNode;
   comparingName?: string;
   isDeleting?: boolean;
   cancelButtonText?: string;
   entityType?: string | null; // e.g., "employees", "client", "project", etc.
 }
-
-// Deletion warnings for different entity types
-const deletionWarning: Record<string, string[]> = {
-  client: ["contacts", "projects", "lots"],
-  project: ["lots", "stages"],
-  supplier: ["contacts", "purchase_orders"],
-  employee: ["assignments", "logs"],
-  // Add more entity types as needed
-};
 
 export default function DeleteConfirmation({
   isOpen,
@@ -47,10 +40,10 @@ export default function DeleteConfirmation({
 
   // Get associated data that will be deleted
   const getAssociatedData = (): string[] => {
-    if (!entityType || !deletionWarning[entityType]) {
+    if (!entityType || !deletionWarning[entityType as keyof typeof deletionWarning]) {
       return [];
     }
-    return deletionWarning[entityType];
+    return deletionWarning[entityType as keyof typeof deletionWarning];
   };
 
   const associatedData = getAssociatedData();

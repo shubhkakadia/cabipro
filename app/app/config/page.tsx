@@ -1,13 +1,12 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Plus, Search, Trash2, X, Loader2 } from "lucide-react";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import AppHeader from "@/components/AppHeader";
+import PaginationFooter from "@/components/PaginationFooter";
 
 // Type definitions
 interface ConfigItem {
@@ -40,7 +39,7 @@ export default function ConfigPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -108,8 +107,6 @@ export default function ConfigPage() {
 
   // Pagination logic
   const totalItems = filteredData.length;
-  const totalPages =
-    itemsPerPage === 0 ? 1 : Math.ceil(totalItems / itemsPerPage);
   const startIndex = itemsPerPage === 0 ? 0 : (currentPage - 1) * itemsPerPage;
   const endIndex = itemsPerPage === 0 ? totalItems : startIndex + itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, endIndex);
@@ -118,6 +115,15 @@ export default function ConfigPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
 
   // Handle create
   const handleCreate = async () => {
@@ -219,18 +225,14 @@ export default function ConfigPage() {
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            <div className="p-6">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-slate-800 mb-2">
-                  Configuration Management
-                </h1>
-                <p className="text-slate-600">
-                  Manage role, hardware, measuring unit, and finish
-                  configurations
-                </p>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-12rem)] overflow-hidden">
+            <div className="px-4 py-2">
+              {/* Header */}
+              <h1 className="text-2xl font-bold text-slate-800">
+                Configuration Management
+              </h1>
+            </div>
+            <div className="px-4 py-2">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-8rem)] overflow-hidden">
                 {/* Tabs Section */}
                 <div className="px-6 shrink-0 border-b border-slate-200">
                   <nav className="-mb-px flex space-x-8 overflow-x-auto">
@@ -372,48 +374,13 @@ export default function ConfigPage() {
                 </div>
 
                 {/* Pagination Footer */}
-                {totalPages > 1 && (
-                  <div className="px-6 py-4 shrink-0 border-t border-slate-200 flex items-center justify-between">
-                    <div className="text-sm text-slate-600">
-                      Showing {startIndex + 1} to{" "}
-                      {Math.min(endIndex, totalItems)} of {totalItems} results
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="cursor-pointer px-3 py-1 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: totalPages },
-                          (_, i) => i + 1
-                        ).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`cursor-pointer px-3 py-1 text-sm font-medium rounded ${
-                              currentPage === page
-                                ? "bg-primary text-white"
-                                : "text-slate-500 bg-white border border-slate-300 hover:bg-slate-50"
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="cursor-pointer px-3 py-1 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <PaginationFooter
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  currentPage={currentPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
               </div>
             </div>
           </div>

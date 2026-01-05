@@ -8,6 +8,7 @@ import {
 } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
 import { formatPhoneToNational } from "@/components/validators";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 // Helper function to process date/time fields
 function processDateTimeField(value: string | null | undefined): Date | null {
@@ -262,12 +263,18 @@ export async function PATCH(
           await deleteFileByRelativePath(oldImageUrl);
         }
 
+        // Get organization slug for file path
+        const organizationSlug = getOrganizationSlugFromRequest(request);
+        if (!organizationSlug) {
+          throw new Error("Organization slug not found");
+        }
+
         // Upload new image
         const uploadResult = await uploadFile(imageFile, {
-          uploadDir: "mediauploads",
           subDir: "employees",
           filenameStrategy: "id-based",
           idPrefix: id,
+          organizationSlug,
         });
 
         // Create media record

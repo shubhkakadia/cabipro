@@ -7,6 +7,7 @@ import {
   getFileFromFormData,
 } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 // Upload media files to Material Selection
 export async function POST(
@@ -53,11 +54,17 @@ export async function POST(
 
     const filesArray = Array.isArray(files) ? files : [files];
 
+    // Get organization slug for file path
+    const organizationSlug = getOrganizationSlugFromRequest(request);
+    if (!organizationSlug) {
+      throw new Error("Organization slug not found");
+    }
+
     // Upload multiple files
     const uploadResults = await uploadMultipleFiles(filesArray, {
-      uploadDir: "mediauploads",
       subDir: `material_selection/${materialSelection.project?.project_id || "general"}`,
       filenameStrategy: "original",
+      organizationSlug,
     });
 
     if (uploadResults.successful.length === 0) {

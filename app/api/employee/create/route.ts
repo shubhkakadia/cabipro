@@ -8,6 +8,7 @@ import {
 } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
 import { formatPhoneToNational } from "@/components/validators";
+import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 // Helper function to process date/time fields
 function processDateTimeField(value: string | null | undefined): Date | null {
@@ -149,12 +150,18 @@ export async function POST(request: NextRequest) {
     let imageId: string | null = null;
     if (imageFile) {
       try {
+        // Get organization slug for file path
+        const organizationSlug = getOrganizationSlugFromRequest(request);
+        if (!organizationSlug) {
+          throw new Error("Organization slug not found");
+        }
+
         // Upload file with ID-based naming
         const uploadResult = await uploadFile(imageFile, {
-          uploadDir: "mediauploads",
           subDir: "employees",
           filenameStrategy: "id-based",
           idPrefix: employee_id as string,
+          organizationSlug,
         });
 
         // Create media record

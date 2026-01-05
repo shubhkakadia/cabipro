@@ -1,9 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -60,7 +57,7 @@ interface EdgingTape {
 }
 
 interface Item {
-  item_id: string;
+  id: string;
   category?: string;
   description?: string;
   quantity: number;
@@ -125,8 +122,6 @@ export default function UsedMaterialPage() {
     {}
   );
   const [saving, setSaving] = useState(false);
-
-  // Used material MTO completion (Active/Completed) UI
   const [mtoTab, setMtoTab] = useState<"active" | "completed">("active");
   const [openMtoStatusDropdownId, setOpenMtoStatusDropdownId] = useState<
     string | null
@@ -145,8 +140,6 @@ export default function UsedMaterialPage() {
   const [manualNotes, setManualNotes] = useState("");
   const [loadingItems, setLoadingItems] = useState(false);
   const [savingManual, setSavingManual] = useState(false);
-
-  // Category options
   const categoryOptions: CategoryOption[] = [
     { label: "Sheet", value: "sheet" },
     { label: "Edging Tape", value: "edging_tape" },
@@ -406,7 +399,7 @@ export default function UsedMaterialPage() {
       }
 
       // Validate that item has item_id
-      const itemId = mtoItem.item?.item_id;
+      const itemId = mtoItem.item?.id;
       if (!itemId) {
         toast.error("Item ID not found. Cannot create stock transaction.", {
           position: "top-right",
@@ -630,7 +623,7 @@ export default function UsedMaterialPage() {
   // Handle add item to table
   const handleAddItem = (item: Item) => {
     // Check if already added
-    if (selectedItems.some((i: SelectedItem) => i.item_id === item.item_id)) {
+    if (selectedItems.some((i: SelectedItem) => i.id === item.id)) {
       toast.info("Item already added");
       return;
     }
@@ -639,7 +632,7 @@ export default function UsedMaterialPage() {
       ...prev,
       {
         ...item,
-        item_id: item.item_id,
+        item_id: item.id,
         stock_quantity: item.quantity, // Preserve original stock quantity
         quantity: 1, // Default quantity
       } as SelectedItem,
@@ -656,7 +649,7 @@ export default function UsedMaterialPage() {
   ) => {
     setSelectedItems((prev: SelectedItem[]) =>
       prev.map((item: SelectedItem) => {
-        if (item.item_id === itemId) {
+        if (item.id === itemId) {
           return { ...item, [field]: value };
         }
         return item;
@@ -667,7 +660,7 @@ export default function UsedMaterialPage() {
   // Handle remove item from table
   const handleRemoveItem = (itemId: string) => {
     setSelectedItems((prev: SelectedItem[]) =>
-      prev.filter((item: SelectedItem) => item.item_id !== itemId)
+      prev.filter((item: SelectedItem) => item.id !== itemId)
     );
   };
 
@@ -739,7 +732,7 @@ export default function UsedMaterialPage() {
         axios.post(
           `/api/stock_transaction/create`,
           {
-            item_id: item.item_id,
+            item_id: item.id,
             quantity: parseFloat(String(item.quantity)),
             type: "USED",
             notes: manualNotes || `Manually recorded used quantity`,
@@ -1678,7 +1671,7 @@ export default function UsedMaterialPage() {
                           ) : (
                             filteredItems.map((item: Item) => (
                               <div
-                                key={item.item_id}
+                                key={item.id}
                                 onClick={() => handleAddItem(item)}
                                 className="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3"
                               >
@@ -1750,7 +1743,7 @@ export default function UsedMaterialPage() {
                         </tr>
                       ) : (
                         selectedItems.map((item: SelectedItem) => (
-                          <tr key={item.item_id} className="hover:bg-slate-50">
+                          <tr key={item.id} className="hover:bg-slate-50">
                             {/* Image Column */}
                             <td className="px-4 py-3">
                               <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 shrink-0 flex items-center justify-center overflow-hidden">
@@ -1916,7 +1909,7 @@ export default function UsedMaterialPage() {
                                   e: React.ChangeEvent<HTMLInputElement>
                                 ) =>
                                   handleUpdateItem(
-                                    item.item_id,
+                                    item.id,
                                     "quantity",
                                     Number(e.target.value)
                                   )
@@ -1929,7 +1922,7 @@ export default function UsedMaterialPage() {
                             {/* Actions Column */}
                             <td className="px-4 py-3 text-center">
                               <button
-                                onClick={() => handleRemoveItem(item.item_id)}
+                                onClick={() => handleRemoveItem(item.id)}
                                 className="cursor-pointer p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
                                 disabled={savingManual}
                               >

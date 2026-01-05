@@ -172,7 +172,7 @@ export async function PATCH(
         // Verify installer exists and belongs to this organization
         const installerExists = await prisma.employees.findFirst({
           where: {
-            id: installer_id,
+            employee_id: installer_id,
             organization_id: user.organizationId,
           },
           select: { id: true },
@@ -183,7 +183,8 @@ export async function PATCH(
             { status: 400 }
           );
         }
-        updateData.installer_id = installer_id;
+        // Use the UUID id, not the employee_id string
+        updateData.installer_id = installerExists.id;
       }
     }
 
