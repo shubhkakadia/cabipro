@@ -1,0 +1,983 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ============================================
+// CORE & ORGANIZATION MODELS
+// ============================================
+
+model organization {
+  id                  String               @id @default(uuid())
+  name                String               @unique
+  slug                String               @unique
+  email               String?
+  phone               String?
+  address             String?              @db.LongText
+  logo                String?
+  plan                Plan
+  plan_expires_at     DateTime?
+  is_active           Boolean              @default(true)
+  is_deleted          Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  clients             client[]
+  constants_config    constants_config[]
+  contacts            contact[]
+  employees           employees[]          @relation("OrganizationEmployees")
+  items               item[]
+  logs                logs[]
+  lots                lot[]
+  lot_files           lot_file[]
+  lot_tabs            lot_tab[]
+  material_selections material_selection[]
+  materials_to_orders materials_to_order[]
+  module_access       module_access[]
+  projects            project[]
+  purchase_orders     purchase_order[]
+  quotes              quote[]
+  sessions            sessions[]
+  stage               stage[]
+  supplier_files      supplier_file[]
+  suppliers           supplier[]
+  users               users[]              @relation("OrganizationUsers")
+  image               media[]
+
+  @@index([name])
+  @@index([slug])
+  @@index([is_active])
+  @@index([is_deleted])
+  @@index([plan])
+  @@index([plan_expires_at])
+}
+
+enum Plan {
+  STARTER
+  PLUS
+  PRO
+  ENTERPRISE
+}
+
+model constants_config {
+  id              String       @id @default(uuid())
+  category        String
+  value           String
+  organization_id String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([organization_id])
+}
+
+// ============================================
+// AUTH & USER MODELS
+// ============================================
+
+model Admin {
+  id             String           @id @default(uuid())
+  email          String           @unique
+  password       String
+  first_name     String
+  last_name      String
+  image          String?
+  role           Role
+  is_active      Boolean          @default(true)
+  is_deleted     Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  admin_sessions admin_sessions[]
+
+  @@index([email])
+  @@index([is_active])
+  @@index([is_deleted])
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+model admin_sessions {
+  id         String   @id @default(uuid())
+  admin_id   String
+  token      String   @db.VarChar(1000)
+  admin_type String
+  expires_at DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  admin      Admin    @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+
+  @@index([admin_id])
+  @@index([admin_type])
+  @@index([expires_at])
+  @@unique([token])
+}
+
+model users {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  password            String
+  user_type           String
+  first_name          String
+  last_name           String
+  employee_id         String?              @unique
+  organization_id     String
+  emailVerified       Boolean              @default(false)
+  is_active           Boolean              @default(true)
+  lastLogin           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  employee            employees?           @relation(fields: [employee_id], references: [id], onDelete: SetNull)
+  logs                logs[]
+  material_selection  material_selection[]
+  materials_to_orders materials_to_order[] @relation("MaterialsToBeOrderedCreatedBy")
+  module_access       module_access?
+  organization        organization         @relation("OrganizationUsers", fields: [organization_id], references: [id], onDelete: Cascade)
+  purchase_order      purchase_order[]     @relation("PurchaseOrderOrderedBy")
+  sessions            sessions[]
+
+  @@index([email])
+  @@index([employee_id])
+  @@index([organization_id])
+  @@index([organization_id, createdAt])
+}
+
+model module_access {
+  id               String        @id @default(uuid())
+  user_id          String        @unique
+  organizationId   String?
+  all_clients      Boolean       @default(false)
+  add_clients      Boolean       @default(false)
+  client_details   Boolean       @default(false)
+  dashboard        Boolean       @default(false)
+  delete_media     Boolean       @default(false)
+  all_employees    Boolean       @default(false)
+  add_employees    Boolean       @default(false)
+  employee_details Boolean       @default(false)
+  all_projects     Boolean       @default(false)
+  add_projects     Boolean       @default(false)
+  project_details  Boolean       @default(false)
+  all_suppliers    Boolean       @default(false)
+  add_suppliers    Boolean       @default(false)
+  supplier_details Boolean       @default(false)
+  all_items        Boolean       @default(false)
+  add_items        Boolean       @default(false)
+  item_details     Boolean       @default(false)
+  logs             Boolean       @default(false)
+  lotatglance      Boolean       @default(false)
+  materialstoorder Boolean       @default(false)
+  purchaseorder    Boolean       @default(false)
+  statements       Boolean       @default(false)
+  site_photos      Boolean       @default(false)
+  config           Boolean       @default(false)
+  usedmaterial     Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  organization     organization? @relation(fields: [organizationId], references: [id])
+  user             users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([organizationId])
+}
+
+model sessions {
+  id              String       @id @default(uuid())
+  user_id         String
+  organization_id String
+  token           String       @db.VarChar(1000)
+  user_type       String
+  expires_at      DateTime
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  user            users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([user_id])
+  @@index([user_type])
+  @@index([expires_at])
+}
+
+// ============================================
+// EMPLOYEE MODELS
+// ============================================
+
+model employees {
+  id                      String           @id @default(uuid())
+  employee_id             String
+  organization_id         String
+  first_name              String
+  last_name               String?
+  image_id                String?          @unique
+  role                    String
+  email                   String
+  phone                   String
+  dob                     DateTime?
+  join_date               DateTime?
+  address                 String?          @db.LongText
+  emergency_contact_name  String?
+  emergency_contact_phone String?
+  bank_account_name       String?
+  bank_account_number     String?
+  bank_account_bsb        String?
+  supper_account_name     String?
+  supper_account_number   String?
+  tfn_number              String?
+  education               String?
+  availability            String?          @db.LongText
+  notes                   String?
+  abn_number              String?
+  is_active               Boolean          @default(true)
+  is_deleted              Boolean          @default(false)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  image                   media?
+  lot                     lot[]
+  organization            organization     @relation("OrganizationEmployees", fields: [organization_id], references: [id], onDelete: Cascade)
+  stages                  stage_employee[]
+  user                    users?
+
+  @@unique([employee_id, organization_id, is_deleted])
+  @@index([organization_id, is_deleted])
+  @@index([employee_id])
+  @@index([organization_id])
+  @@index([is_deleted])
+}
+
+// ============================================
+// CLIENT & CONTACT MODELS
+// ============================================
+
+model client {
+  id              String       @id @default(uuid())
+  organization_id String
+  type            String
+  name            String
+  address         String?      @db.LongText
+  phone           String?
+  email           String?
+  website         String?
+  notes           String?      @db.LongText
+  is_deleted      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  contacts        contact[]
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  projects        project[]
+
+  @@unique([name, organization_id])
+  @@index([organization_id, is_deleted])
+  @@index([name])
+  @@index([organization_id])
+}
+
+model contact {
+  id                       String       @id @default(uuid())
+  organization_id          String
+  client_id                String?
+  supplier_id              String?
+  first_name               String
+  last_name                String?
+  email                    String?
+  phone                    String?
+  role                     String?
+  preferred_contact_method String?
+  notes                    String?      @db.LongText
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  client                   client?      @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  organization             organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  supplier                 supplier?    @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+
+  @@index([supplier_id], map: "contact_supplier_id_fkey")
+  @@index([organization_id])
+  @@index([client_id])
+}
+
+// ============================================
+// PROJECT & LOT MODELS
+// ============================================
+
+model project {
+  id                 String               @id @default(uuid())
+  organization_id    String
+  project_id         String
+  client_id          String?
+  name               String
+  is_deleted         Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  client             client?              @relation(fields: [client_id], references: [id], onDelete: SetNull)
+  lots               lot[]
+  material_selection material_selection[]
+  materials_to_order materials_to_order[]
+  organization       organization         @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, organization_id])
+  @@index([project_id])
+  @@index([client_id], map: "project_client_id_fkey")
+  @@index([organization_id])
+  @@index([organization_id, is_deleted])
+}
+
+model lot {
+  id                     String              @id @default(uuid())
+  organization_id        String
+  lot_id                 String
+  project_id             String
+  installer_id           String?
+  materials_to_orders_id String?
+  material_selection_id  String?
+  name                   String
+  status                 LotStatus           @default(ACTIVE)
+  startDate              DateTime?
+  installationDueDate    DateTime?
+  notes                  String?             @db.LongText
+  is_deleted             Boolean             @default(false)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  installer              employees?          @relation(fields: [installer_id], references: [id], onDelete: SetNull)
+  material_selection     material_selection?
+  materials_to_orders    materials_to_order? @relation(fields: [materials_to_orders_id], references: [id], onDelete: SetNull)
+  organization           organization        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  project                project             @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  stages                 stage[]
+  tabs                   lot_tab[]
+
+  @@unique([lot_id, organization_id])
+  @@index([lot_id])
+  @@index([project_id])
+  @@index([materials_to_orders_id], map: "lot_materials_to_orders_id_fkey")
+  @@index([organization_id])
+  @@index([organization_id, is_deleted])
+}
+
+enum LotStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model stage {
+  id             String           @id @default(uuid())
+  lot_id         String
+  organizationId String?
+  name           String
+  status         StageStatus
+  notes          String?          @db.LongText
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  assigned_to    stage_employee[]
+  lot            lot              @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  organization   organization?    @relation(fields: [organizationId], references: [id])
+
+  @@index([lot_id])
+  @@index([name])
+  @@index([status])
+}
+
+enum StageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+  NA
+}
+
+model stage_employee {
+  id          String    @id @default(uuid())
+  stage_id    String
+  employee_id String
+  assigned_at DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  employee    employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  stage       stage     @relation(fields: [stage_id], references: [id], onDelete: Cascade)
+
+  @@unique([stage_id, employee_id])
+  @@index([stage_id])
+  @@index([employee_id])
+}
+
+model lot_tab {
+  id              String       @id @default(uuid())
+  organization_id String
+  lot_id          String
+  tab             TabKind
+  notes           String?      @db.LongText
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  files           lot_file[]
+  lot             lot          @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@unique([lot_id, tab])
+  @@index([lot_id, tab])
+  @@index([organization_id])
+}
+
+enum TabKind {
+  ARCHITECTURE_DRAWINGS
+  APPLIANCES_SPECIFICATIONS
+  MATERIAL_SELECTION
+  CABINETRY_DRAWINGS
+  CHANGES_TO_DO
+  SITE_MEASUREMENTS
+  DELIVERY_PHOTOS
+  INSTALLATION_PHOTOS
+  MAINTENANCE_PHOTOS
+  FINISHED_SITE_PHOTOS
+}
+
+model lot_file {
+  id                    String                 @id @default(uuid())
+  organization_id       String
+  tab_id                String
+  file_kind             FileKind               @default(PHOTO)
+  site_group            SiteMeasurements?
+  url                   String
+  filename              String
+  mime_type             String?
+  extension             String?
+  size                  Int?
+  notes                 String?                @db.LongText
+  is_deleted            Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  maintenance_checklist maintenance_checklist?
+  organization          organization           @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  tab                   lot_tab                @relation(fields: [tab_id], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([tab_id])
+  @@index([file_kind])
+  @@index([site_group])
+  @@index([is_deleted])
+  @@index([organization_id])
+  @@index([organization_id, is_deleted])
+}
+
+enum FileKind {
+  PHOTO
+  VIDEO
+  PDF
+  OTHER
+}
+
+enum SiteMeasurements {
+  SITE_PHOTOS
+  MEASUREMENT_PHOTOS
+}
+
+model maintenance_checklist {
+  id                     String    @id @default(uuid())
+  lot_file_id            String?   @unique
+  prepared_by_office     Boolean   @default(false)
+  prepared_by_production Boolean   @default(false)
+  delivered_to_site      Boolean   @default(false)
+  installed              Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  lot_file               lot_file? @relation(fields: [lot_file_id], references: [id], onDelete: Cascade)
+
+  @@index([lot_file_id])
+}
+
+// ============================================
+// MATERIAL SELECTION MODELS
+// ============================================
+
+model quote {
+  id                        String                        @id @default(uuid())
+  organization_id           String
+  createdAt                 DateTime                      @default(now())
+  updatedAt                 DateTime                      @updatedAt
+  materialSelections        material_selection[]
+  materialSelectionVersions material_selection_versions[]
+  organization              organization                  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@index([organization_id])
+  @@index([organization_id, createdAt])
+}
+
+model material_selection {
+  id                 String                        @id @default(uuid())
+  organization_id    String
+  project_id         String?
+  quote_id           String?
+  lot_id             String                        @unique
+  createdBy_id       String?
+  current_version_id String?                       @unique
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+  createdBy          users?                        @relation(fields: [createdBy_id], references: [id], onDelete: SetNull)
+  currentVersion     material_selection_versions?  @relation("CurrentVersion", fields: [current_version_id], references: [id], onDelete: SetNull)
+  lot                lot                           @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  media              media[]
+  organization       organization                  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  project            project?                      @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  quote              quote?                        @relation(fields: [quote_id], references: [id], onDelete: SetNull)
+  versions           material_selection_versions[] @relation("AllVersions")
+
+  @@index([project_id])
+  @@index([createdBy_id], map: "material_selection_createdBy_id_fkey")
+  @@index([quote_id], map: "material_selection_quote_id_fkey")
+  @@index([organization_id])
+  @@index([organization_id, createdAt])
+}
+
+model material_selection_versions {
+  id                    String                            @id @default(uuid())
+  material_selection_id String
+  quote_id              String?
+  version_number        Int                               @default(1)
+  ceiling_height        Decimal?                          @db.Decimal(10, 2)
+  bulkhead_height       Decimal?                          @db.Decimal(10, 2)
+  kicker_height         Decimal?                          @db.Decimal(10, 2)
+  cabinetry_height      Decimal?                          @db.Decimal(10, 2)
+  notes                 String?                           @db.LongText
+  is_current            Boolean                           @default(false)
+  createdAt             DateTime                          @default(now())
+  updatedAt             DateTime                          @updatedAt
+  areas                 material_selection_version_area[]
+  currentFor            material_selection?               @relation("CurrentVersion")
+  material_selection    material_selection                @relation("AllVersions", fields: [material_selection_id], references: [id], onDelete: Cascade)
+  quote                 quote?                            @relation(fields: [quote_id], references: [id], onDelete: SetNull)
+
+  @@unique([material_selection_id, version_number])
+  @@index([createdAt])
+  @@index([material_selection_id])
+  @@index([quote_id])
+}
+
+model material_selection_version_area {
+  id               String                                 @id @default(uuid())
+  version_id       String
+  area_name        String
+  area_instance_id Int                                    @default(1)
+  bed_option       String?
+  notes            String?                                @db.LongText
+  createdAt        DateTime                               @default(now())
+  updatedAt        DateTime                               @updatedAt
+  items            material_selection_version_area_item[]
+  version          material_selection_versions            @relation(fields: [version_id], references: [id], onDelete: Cascade)
+
+  @@index([version_id], map: "material_selection_version_area_version_id_fkey")
+}
+
+model material_selection_version_area_item {
+  id              String                          @id @default(uuid())
+  version_area_id String
+  name            String
+  category        String?
+  item_notes      String?                         @db.LongText
+  is_applicable   Boolean                         @default(false)
+  createdAt       DateTime                        @default(now())
+  updatedAt       DateTime                        @updatedAt
+  version_area    material_selection_version_area @relation(fields: [version_area_id], references: [id], onDelete: Cascade)
+
+  @@index([version_area_id], map: "material_selection_version_area_item_version_area_id_fkey")
+}
+
+// ============================================
+// ITEM MODELS
+// ============================================
+
+model item {
+  id                       String                    @id @default(uuid())
+  organization_id          String
+  supplier_id              String?
+  image_id                 String?                   @unique
+  category                 Category
+  description              String?
+  supplier_reference       String?
+  supplier_product_link    String?                   @db.LongText
+  measurement_unit         String?
+  price                    Decimal?                  @db.Decimal(10, 2)
+  quantity                 Int?                      @default(0)
+  is_deleted               Boolean                   @default(false)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  accessory                accessory?
+  edging_tape              edging_tape?
+  handle                   handle?
+  hardware                 hardware?
+  image                    media?
+  materials_to_order_items materials_to_order_item[]
+  organization             organization              @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  purchase_order_item      purchase_order_item[]
+  sheet                    sheet?
+  stock_transactions       stock_transaction[]
+  supplier                 supplier?                 @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([supplier_id], map: "item_supplier_id_fkey")
+  @@index([organization_id])
+  @@index([organization_id, is_deleted])
+}
+
+enum Category {
+  SHEET
+  HANDLE
+  HARDWARE
+  ACCESSORY
+  EDGING_TAPE
+}
+
+model sheet {
+  item_id    String   @id @unique
+  brand      String?
+  color      String?
+  finish     String?
+  face       String?
+  dimensions String
+  is_sunmica Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  item       item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+}
+
+model handle {
+  item_id    String   @id @unique
+  brand      String?
+  color      String?
+  type       String?
+  dimensions String?
+  material   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  item       item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+}
+
+model hardware {
+  item_id      String   @id @unique
+  brand        String?
+  name         String?
+  type         String?
+  dimensions   String?
+  sub_category String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  item         item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+}
+
+model accessory {
+  item_id   String   @id @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  item      item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+}
+
+model edging_tape {
+  item_id    String   @id @unique
+  brand      String?
+  color      String?
+  finish     String?
+  dimensions String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  item       item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// SUPPLIER MODELS
+// ============================================
+
+model supplier {
+  id              String               @id @default(uuid())
+  organization_id String
+  name            String
+  address         String?              @db.LongText
+  phone           String?
+  email           String?
+  website         String?
+  abn_number      String?
+  notes           String?              @db.LongText
+  is_deleted      Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  contacts        contact[]
+  items           item[]
+  organization    organization         @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  purchase_order  purchase_order[]
+  statements      supplier_statement[]
+
+  @@unique([name, organization_id])
+  @@index([name])
+  @@index([organization_id])
+  @@index([organization_id, is_deleted])
+}
+
+model supplier_statement {
+  id               String         @id @default(uuid())
+  supplier_id      String
+  supplier_file_id String?        @unique
+  month_year       String
+  payment_status   PaymentStatus  @default(PENDING)
+  amount           Decimal?       @db.Decimal(10, 2)
+  due_date         DateTime
+  notes            String?        @db.LongText
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  supplier         supplier       @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  supplier_file    supplier_file? @relation(fields: [supplier_file_id], references: [id], onDelete: Cascade)
+
+  @@index([supplier_file_id])
+  @@index([supplier_id], map: "supplier_statement_supplier_id_fkey")
+  @@index([month_year])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model supplier_file {
+  id                 String              @id @default(uuid())
+  organization_id    String
+  url                String
+  filename           String
+  file_type          String
+  mime_type          String?
+  extension          String?
+  size               Int?
+  is_deleted         Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       organization        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  purchase_order     purchase_order?
+  supplier_statement supplier_statement?
+
+  @@index([organization_id])
+}
+
+// ============================================
+// ORDER MODELS
+// ============================================
+
+model materials_to_order {
+  id                      String                    @id @default(uuid())
+  organization_id         String
+  project_id              String?
+  createdBy_id            String?
+  media_id                String?
+  status                  MTOStatus                 @default(DRAFT)
+  notes                   String?                   @db.LongText
+  used_material_completed Boolean                   @default(false)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  createdBy               users?                    @relation("MaterialsToBeOrderedCreatedBy", fields: [createdBy_id], references: [id], onDelete: SetNull)
+  items                   materials_to_order_item[]
+  lots                    lot[]
+  media                   media[]
+  organization            organization              @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  project                 project?                  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  purchase_order          purchase_order[]
+  stock_transactions      stock_transaction[]
+
+  @@index([project_id])
+  @@index([status])
+  @@index([createdBy_id], map: "materials_to_order_createdBy_id_fkey")
+  @@index([organization_id])
+  @@index([organization_id, status])
+}
+
+enum MTOStatus {
+  DRAFT
+  PARTIALLY_ORDERED
+  FULLY_ORDERED
+  CLOSED
+}
+
+model materials_to_order_item {
+  id                  String                @id @default(uuid())
+  mto_id              String
+  item_id             String
+  quantity            Int
+  quantity_ordered    Int                   @default(0)
+  quantity_ordered_po Int                   @default(0)
+  quantity_used       Int                   @default(0)
+  notes               String?               @db.LongText
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  item                item                  @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  mto                 materials_to_order    @relation(fields: [mto_id], references: [id], onDelete: Cascade)
+  ordered_items       purchase_order_item[]
+
+  @@index([mto_id])
+  @@index([item_id])
+}
+
+model purchase_order {
+  id                 String                @id @default(uuid())
+  organization_id    String
+  supplier_id        String
+  mto_id             String?
+  orderedBy_id       String?
+  invoice_url_id     String?               @unique
+  order_no           String
+  status             PurchaseOrderStatus   @default(DRAFT)
+  total_amount       Decimal?              @db.Decimal(10, 2)
+  delivery_charge    Decimal?              @db.Decimal(10, 2)
+  ordered_at         DateTime?
+  invoice_date       DateTime?
+  notes              String?               @db.LongText
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  invoice_url        supplier_file?        @relation(fields: [invoice_url_id], references: [id], onDelete: SetNull)
+  items              purchase_order_item[]
+  mto                materials_to_order?   @relation(fields: [mto_id], references: [id], onDelete: SetNull)
+  orderedBy          users?                @relation("PurchaseOrderOrderedBy", fields: [orderedBy_id], references: [id], onDelete: SetNull)
+  organization       organization          @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  stock_transactions stock_transaction[]
+  supplier           supplier              @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+
+  @@unique([order_no, organization_id])
+  @@index([mto_id], map: "purchase_order_mto_id_fkey")
+  @@index([orderedBy_id], map: "purchase_order_orderedBy_id_fkey")
+  @@index([supplier_id], map: "purchase_order_supplier_id_fkey")
+  @@index([organization_id])
+  @@index([organization_id, status])
+  @@index([ordered_at])
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+  CANCELLED
+}
+
+model purchase_order_item {
+  id                String                   @id @default(uuid())
+  order_id          String
+  item_id           String
+  mto_item_id       String?
+  quantity          Int
+  quantity_received Int?                     @default(0)
+  unit_price        Decimal?                 @db.Decimal(10, 2)
+  notes             String?                  @db.LongText
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  item              item                     @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  mto_item          materials_to_order_item? @relation(fields: [mto_item_id], references: [id], onDelete: SetNull)
+  order             purchase_order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([item_id], map: "purchase_order_item_item_id_fkey")
+  @@index([mto_item_id], map: "purchase_order_item_mto_item_id_fkey")
+  @@index([order_id], map: "purchase_order_item_order_id_fkey")
+}
+
+model stock_transaction {
+  id                    String               @id @default(uuid())
+  item_id               String
+  materials_to_order_id String?
+  purchase_order_id     String?
+  quantity              Int
+  type                  StockTransactionType
+  notes                 String?              @db.LongText
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  item                  item                 @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  materials_to_order    materials_to_order?  @relation(fields: [materials_to_order_id], references: [id], onDelete: SetNull)
+  purchase_order        purchase_order?      @relation(fields: [purchase_order_id], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([item_id])
+  @@index([purchase_order_id])
+  @@index([materials_to_order_id])
+  @@index([item_id, createdAt])
+}
+
+enum StockTransactionType {
+  ADDED
+  USED
+  WASTED
+}
+
+// ============================================
+// MEDIA & FILE MODELS
+// ============================================
+
+model media {
+  id                    String              @id @default(uuid())
+  organization_id       String
+  employee_id           String?             @unique
+  item_id               String?             @unique
+  materials_to_orderId  String?
+  material_selection_id String?
+  url                   String
+  filename              String?
+  file_type             String?
+  mime_type             String?
+  extension             String?
+  size                  Int?
+  is_deleted            Boolean             @default(false)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  employee              employees?          @relation(fields: [employee_id], references: [id], onDelete: SetNull)
+  item                  item?               @relation(fields: [item_id], references: [id], onDelete: SetNull)
+  material_selection    material_selection? @relation(fields: [material_selection_id], references: [id], onDelete: Cascade)
+  materials_to_order    materials_to_order? @relation(fields: [materials_to_orderId], references: [id], onDelete: Cascade)
+  organization          organization        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+@@unique([organization_id, employee_id])
+@@unique([organization_id, item_id])
+@@unique([organization_id, material_selection_id])
+  @@index([materials_to_orderId], map: "media_materials_to_orderId_fkey")
+  @@index([material_selection_id], map: "media_material_selection_id_fkey")
+  @@index([organization_id])
+}
+
+// ============================================
+// LOGS MODEL
+// ============================================
+
+model logs {
+  id              String       @id @default(uuid())
+  organization_id String
+  user_id         String?
+  entity_type     String
+  entity_id       String
+  action          LogAction
+  description     String?
+  createdAt       DateTime     @default(now())
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  user            users?       @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([user_id])
+  @@index([entity_type])
+  @@index([entity_id])
+  @@index([action])
+  @@index([organization_id])
+  @@index([organization_id, entity_type, entity_id])
+}
+
+enum LogAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  ASSIGN
+  UPLOAD
+  OTHER
+}

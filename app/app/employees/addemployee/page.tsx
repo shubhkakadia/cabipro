@@ -1,0 +1,1192 @@
+"use client";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import Sidebar from "@/components/sidebar";
+import {
+  ChevronLeft,
+  Save,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  CreditCard,
+  GraduationCap,
+  Clock,
+  ChevronDown,
+  Upload,
+  X,
+  Plus,
+  CircleUserRound,
+} from "lucide-react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Image from "next/image";
+import { useUploadProgress } from "@/hooks/useUploadProgress";
+import { validatePhone, formatPhoneToNational } from "@/components/validators";
+import { useRouter } from "next/navigation";
+import AppHeader from "@/components/AppHeader";
+
+// Type definitions
+interface FormData {
+  employee_id: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  email: string;
+  phone: string;
+  dob: string;
+  join_date: string;
+  address: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_account_bsb: string;
+  supper_account_name: string;
+  supper_account_number: string;
+  tfn_number: string;
+  abn_number: string;
+  education: string;
+  availability: string;
+  notes: string;
+  is_active: boolean;
+  image: File | null;
+}
+
+interface Availability {
+  monday: { start: string; end: string };
+  tuesday: { start: string; end: string };
+  wednesday: { start: string; end: string };
+  thursday: { start: string; end: string };
+  friday: { start: string; end: string };
+  saturday: { start: string; end: string };
+  sunday: { start: string; end: string };
+}
+
+type DayOfWeek = keyof Availability;
+
+export default function AddEmployeePage() {
+  const router = useRouter();
+  const formDataInitialState = {
+    employee_id: "",
+    first_name: "",
+    last_name: "",
+    role: "",
+    email: "",
+    phone: "",
+    dob: "",
+    join_date: "",
+    address: "",
+    emergency_contact_name: "",
+    emergency_contact_phone: "",
+    bank_account_name: "",
+    bank_account_number: "",
+    bank_account_bsb: "",
+    supper_account_name: "",
+    supper_account_number: "",
+    tfn_number: "",
+    abn_number: "",
+    education: "",
+    availability: "",
+    notes: "",
+    is_active: true,
+    image: null,
+  };
+  const availabilityInitialState = {
+    monday: { start: "", end: "" },
+    tuesday: { start: "", end: "" },
+    wednesday: { start: "", end: "" },
+    thursday: { start: "", end: "" },
+    friday: { start: "", end: "" },
+    saturday: { start: "", end: "" },
+    sunday: { start: "", end: "" },
+  };
+  const daysOfWeek: DayOfWeek[] = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+  const requiredFields: (keyof FormData)[] = [
+    "employee_id",
+    "first_name",
+    "last_name",
+    "role",
+    "email",
+    "phone",
+  ];
+
+  const [formData, setFormData] = useState<FormData>(formDataInitialState);
+  const [availability, setAvailability] = useState<Availability>(
+    availabilityInitialState
+  );
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Upload progress hook
+  const {
+    showProgressToast,
+    completeUpload,
+    dismissProgressToast,
+    getUploadProgressHandler,
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number
+    ) => (progressEvent: { loaded: number; total?: number }) => void;
+  };
+
+  // Role dropdown state
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [roleSearchTerm, setRoleSearchTerm] = useState("");
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+  const [roleOptions, setRoleOptions] = useState<string[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
+  const [newRoleValue, setNewRoleValue] = useState("");
+  const [isCreatingRole, setIsCreatingRole] = useState(false);
+
+  // Image upload state
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch roles from config API
+  const fetchRoles = useCallback(async () => {
+    try {
+      setLoadingRoles(true);
+
+      const response = await axios.post(
+        `/api/config/read_all_by_category`,
+        { category: "role" },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.status && response.data.data) {
+        // Extract the value field from each config item
+        const roles = response.data.data.map(
+          (item: { value: string }) => item.value
+        );
+        setRoleOptions(roles);
+      }
+    } catch (err) {
+      console.error("Error fetching roles:", err);
+      // Fallback to empty array if API fails
+      setRoleOptions([]);
+    } finally {
+      setLoadingRoles(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
+
+  // Filter role options based on search term
+  const filteredRoleOptions = roleOptions.filter((role: string) =>
+    role.toLowerCase().includes(roleSearchTerm.toLowerCase())
+  );
+
+  // Add this inside the component
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        roleDropdownRef.current &&
+        !roleDropdownRef.current.contains(target)
+      ) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleRoleSelect = (role: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      role: role,
+    }));
+    setRoleSearchTerm(role);
+    setIsRoleDropdownOpen(false);
+  };
+
+  const handleRoleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setRoleSearchTerm(value);
+    setIsRoleDropdownOpen(true);
+    setFormData((prev) => ({
+      ...prev,
+      role: value,
+    }));
+  };
+
+  // Handle create new role
+  const handleCreateNewRole = async () => {
+    if (!newRoleValue || !newRoleValue.trim()) {
+      toast.error("Role value is required");
+      return;
+    }
+
+    try {
+      setIsCreatingRole(true);
+
+      const response = await axios.post(
+        `/api/config/create`,
+        {
+          category: "role",
+          value: newRoleValue.trim(),
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.status) {
+        toast.success("Role created successfully");
+        // Refresh roles list
+        await fetchRoles();
+        // Set the new role as selected
+        setFormData((prev) => ({
+          ...prev,
+          role: newRoleValue.trim(),
+        }));
+        setRoleSearchTerm(newRoleValue.trim());
+        setShowCreateRoleModal(false);
+        setNewRoleValue("");
+        setIsRoleDropdownOpen(false);
+      } else {
+        toast.error(response.data.message || "Failed to create role");
+      }
+    } catch (err) {
+      console.error("Error creating role:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message || "Failed to create role";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to create role");
+      }
+    } finally {
+      setIsCreatingRole(false);
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAvailabilityChange = (
+    day: DayOfWeek,
+    field: "start" | "end",
+    value: string
+  ) => {
+    setAvailability((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        image: file,
+      }));
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      image: null,
+    }));
+    if (imagePreview && imagePreview.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const formatPhone = (phone: string | undefined): string | undefined => {
+    return phone ? formatPhoneToNational(phone) : phone;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Validate phone numbers
+      if (formData.phone && !validatePhone(formData.phone)) {
+        toast.error("Please enter a valid Australian phone number", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (
+        formData.emergency_contact_phone &&
+        !validatePhone(formData.emergency_contact_phone)
+      ) {
+        toast.error("Please enter a valid Australian phone number", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      const hasImageFile = formData.image !== null;
+
+      // Append all form data
+      Object.keys(formData).forEach((key) => {
+        const formKey = key as keyof FormData;
+        if (formKey === "availability") {
+          // Convert availability to JSON string
+          formDataToSend.append(formKey, JSON.stringify(availability));
+        } else if (formKey === "image") {
+          // Append image file if it exists
+          if (formData[formKey]) {
+            formDataToSend.append(formKey, formData[formKey] as File);
+          }
+        } else if (formKey === "is_active") {
+          // Convert boolean to string for FormData
+          formDataToSend.append(formKey, formData[formKey] ? "true" : "false");
+        } else if (formKey === "phone") {
+          // Use formatted phone number
+          const formatted = formatPhone(formData[formKey]);
+          formDataToSend.append(formKey, formatted || "");
+        } else if (formKey === "emergency_contact_phone") {
+          // Use formatted emergency contact phone number
+          const formatted = formatPhone(formData[formKey]);
+          formDataToSend.append(formKey, formatted || "");
+        } else {
+          formDataToSend.append(formKey, String(formData[formKey] || ""));
+        }
+      });
+
+      // Show progress toast only if there's an image file
+      if (hasImageFile) {
+        showProgressToast(1); // 1 file being uploaded
+      }
+
+      const response = await axios.post(
+        "/api/employee/create",
+        formDataToSend,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          ...(hasImageFile && {
+            onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
+          }),
+        }
+      );
+      if (response.data.status) {
+        if (hasImageFile) {
+          completeUpload(1); // 1 file uploaded
+        } else {
+          toast.success("Employee added successfully!", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
+      } else {
+        if (hasImageFile) {
+          dismissProgressToast();
+        }
+        toast.error(response.data.message, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      // Reset form
+      setFormData(formDataInitialState);
+      setAvailability(availabilityInitialState);
+      setRoleSearchTerm("");
+      setIsRoleDropdownOpen(false);
+      setImagePreview(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      console.error("Error adding employee:", err);
+      const hasImageFile = formData.image !== null;
+      if (hasImageFile) {
+        dismissProgressToast();
+      }
+      toast.error("Failed to add employee. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isFormValid = requiredFields.every(
+    (field) => String(formData[field]).trim() !== ""
+  );
+
+  return (
+    <div className="bg-tertiary">
+      <AppHeader />
+      <div className="flex mt-16 h-[calc(100vh-64px)]">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="h-full w-full overflow-y-auto">
+            <div className="px-4 py-2">
+              {/* Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <button
+                  onClick={() => router.back()}
+                  className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-8 h-8 text-slate-600" />
+                </button>
+                <h1 className="text-2xl font-bold text-slate-600">
+                  Add New Employee
+                </h1>
+              </div>
+
+              {/* Form */}
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Employee Image Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="space-y-6 col-span-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-4 flex-0">
+                        <CircleUserRound className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl font-bold text-slate-800">
+                          Employee Photo
+                        </h2>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center flex-1">
+                        <div className="relative group">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                            id="image-upload"
+                          />
+
+                          {imagePreview ? (
+                            <div className="relative">
+                              <div className="w-50 h-50 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+                                <Image
+                                  loading="lazy"
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="w-full h-full object-cover"
+                                  width={128}
+                                  height={128}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleRemoveImage}
+                                className="absolute top-1 right-1 bg-secondary text-white rounded-full p-2 shadow-lg hover:bg-secondary transition-all duration-200 transform hover:scale-110 cursor-pointer"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-primary text-white rounded-full px-4 py-1 text-xs shadow-lg hover:scale-110 transition-all duration-200 cursor-pointer"
+                              >
+                                Change
+                              </button>
+                            </div>
+                          ) : (
+                            <label
+                              htmlFor="image-upload"
+                              className="w-50 h-50 rounded-full border-4 border-dashed border-slate-300 hover:border-primary bg-slate-50 hover:bg-blue-50 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group-hover:shadow-lg"
+                            >
+                              <Upload className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors mb-2" />
+                              <span className="text-xs text-slate-500 group-hover:text-primary font-medium">
+                                Upload Photo
+                              </span>
+                            </label>
+                          )}
+                        </div>
+
+                        <p className="mt-4 text-sm text-slate-600">
+                          Employee Photo{" "}
+                          <span className="text-slate-400">(Optional)</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Personal Information Section */}
+                    <div className="space-y-6 col-span-3 ">
+                      <div className="flex items-center gap-2 mb-4">
+                        <User className="w-5 h-5 text-primary" />
+                        <h2 className="text-xl font-bold text-slate-800">
+                          Personal Information
+                        </h2>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Employee ID <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="employee_id"
+                            value={formData.employee_id}
+                            onChange={handleInputChange}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                            placeholder="Eg. EMP001"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            First Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="first_name"
+                            value={formData.first_name}
+                            onChange={handleInputChange}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                            placeholder="Eg. John"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Last Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="last_name"
+                            value={formData.last_name}
+                            onChange={handleInputChange}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                            placeholder="Eg. Doe"
+                            required
+                          />
+                        </div>
+
+                        <div className="relative" ref={roleDropdownRef}>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Role <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={roleSearchTerm || formData.role}
+                              onChange={handleRoleSearchChange}
+                              onFocus={() => setIsRoleDropdownOpen(true)}
+                              className="w-full text-sm text-slate-800 px-4 py-3 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
+                              placeholder="Search or type a role..."
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsRoleDropdownOpen(!isRoleDropdownOpen)
+                              }
+                              className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              <ChevronDown
+                                className={`w-5 h-5 transition-transform ${
+                                  isRoleDropdownOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          {isRoleDropdownOpen && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                              {loadingRoles ? (
+                                <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                  Loading roles...
+                                </div>
+                              ) : filteredRoleOptions.length > 0 ? (
+                                <>
+                                  {filteredRoleOptions.map((role, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      onClick={() => handleRoleSelect(role)}
+                                      className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
+                                    >
+                                      {role}
+                                    </button>
+                                  ))}
+                                  {roleSearchTerm &&
+                                    !filteredRoleOptions.some(
+                                      (r: string) =>
+                                        r.toLowerCase() ===
+                                        roleSearchTerm.toLowerCase()
+                                    ) && (
+                                      <div className="border-t border-slate-200">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setNewRoleValue(roleSearchTerm);
+                                            setShowCreateRoleModal(true);
+                                          }}
+                                          className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                          Create &quot;{roleSearchTerm}&quot;
+                                        </button>
+                                      </div>
+                                    )}
+                                </>
+                              ) : (
+                                <div className="px-4 py-3">
+                                  <div className="text-sm text-slate-500 mb-2">
+                                    No matching roles found
+                                  </div>
+                                  {roleSearchTerm && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setNewRoleValue(roleSearchTerm);
+                                        setShowCreateRoleModal(true);
+                                      }}
+                                      className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      Create &quot;{roleSearchTerm}&quot;
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <div className="flex items-center gap-1">
+                              <Mail className="w-4 h-4 text-slate-600" />
+                              Email <span className="text-red-500">*</span>
+                            </div>
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                            placeholder="Eg. john.doe@company.com"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-4 h-4 text-slate-600" />
+                              Phone <span className="text-red-500">*</span>
+                            </div>
+                          </label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className={`w-full text-sm text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 ${
+                              formData.phone && !validatePhone(formData.phone)
+                                ? "border-red-500"
+                                : "border-slate-300"
+                            }`}
+                            placeholder="Eg. 0400 123 456 or +61 400 123 456"
+                            required
+                          />
+                          {formData.phone && !validatePhone(formData.phone) && (
+                            <p className="mt-1 text-xs text-red-500">
+                              Please enter a valid Australian phone number
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4 text-slate-600" />
+                              Date of Birth
+                            </div>
+                          </label>
+                          <input
+                            type="date"
+                            name="dob"
+                            value={formData.dob}
+                            onChange={handleInputChange}
+                            max={new Date().toISOString().split("T")[0]}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4 text-slate-600" />
+                              Join Date
+                            </div>
+                          </label>
+                          <input
+                            type="date"
+                            name="join_date"
+                            value={formData.join_date}
+                            onChange={handleInputChange}
+                            max={new Date().toISOString().split("T")[0]}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2 lg:col-span-3">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4 text-slate-600" />
+                              Address
+                            </div>
+                          </label>
+                          <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                            placeholder="Eg. 123 Main Street, City, State, ZIP"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Emergency Contact Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Phone className="w-5 h-5 text-primary" />
+                      <h2 className="text-xl font-bold text-slate-800">
+                        Emergency Contact
+                      </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Emergency Contact Name
+                        </label>
+                        <input
+                          type="text"
+                          name="emergency_contact_name"
+                          value={formData.emergency_contact_name}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. Jane Doe"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Emergency Contact Phone
+                        </label>
+                        <input
+                          type="tel"
+                          name="emergency_contact_phone"
+                          value={formData.emergency_contact_phone}
+                          onChange={handleInputChange}
+                          className={`w-full text-sm text-slate-800 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 ${
+                            formData.emergency_contact_phone &&
+                            !validatePhone(formData.emergency_contact_phone)
+                              ? "border-red-500"
+                              : "border-slate-300"
+                          }`}
+                          placeholder="Eg. 0400 123 456 or +61 400 123 456"
+                        />
+                        {formData.emergency_contact_phone &&
+                          !validatePhone(formData.emergency_contact_phone) && (
+                            <p className="mt-1 text-xs text-red-500">
+                              Please enter a valid Australian phone number
+                            </p>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Banking Information Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CreditCard className="w-5 h-5 text-primary" />
+                      <h2 className="text-xl font-bold text-slate-800">
+                        Banking Information
+                      </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Bank Account Holder Name
+                        </label>
+                        <input
+                          type="text"
+                          name="bank_account_name"
+                          value={formData.bank_account_name}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. John Doe"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Bank Account Number
+                        </label>
+                        <input
+                          type="text"
+                          name="bank_account_number"
+                          value={formData.bank_account_number}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. 1234 5678"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Bank Account BSB
+                        </label>
+                        <input
+                          type="text"
+                          name="bank_account_bsb"
+                          value={formData.bank_account_bsb}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. 123-456"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Super Account Name
+                        </label>
+                        <input
+                          type="text"
+                          name="supper_account_name"
+                          value={formData.supper_account_name}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. John Doe Super"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Super Account Member ID
+                        </label>
+                        <input
+                          type="text"
+                          name="supper_account_number"
+                          value={formData.supper_account_number}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. 1234567890"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          TFN Number
+                        </label>
+                        <input
+                          type="text"
+                          name="tfn_number"
+                          value={formData.tfn_number}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. 123456789"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          ABN Number
+                        </label>
+                        <input
+                          type="text"
+                          name="abn_number"
+                          value={formData.abn_number}
+                          onChange={handleInputChange}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. 12345678901"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <GraduationCap className="w-5 h-5 text-primary" />
+                      <h2 className="text-xl font-bold text-slate-800">
+                        Additional Information
+                      </h2>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Education
+                        </label>
+                        <textarea
+                          name="education"
+                          value={formData.education}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. Bachelor of Engineering, University of Technology"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-4">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4 text-slate-600" />
+                            Weekly Availability
+                          </div>
+                        </label>
+                        <div className="space-y-4">
+                          {daysOfWeek.map((day) => {
+                            const times = availability[day];
+                            return (
+                              <div
+                                key={day}
+                                className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg"
+                              >
+                                <div className="w-24">
+                                  <span className="text-sm font-medium text-slate-700 capitalize">
+                                    {day}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm text-slate-600">
+                                    Start:
+                                  </label>
+                                  <input
+                                    type="time"
+                                    value={times.start}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLInputElement>
+                                    ) =>
+                                      handleAvailabilityChange(
+                                        day,
+                                        "start",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm text-slate-600">
+                                    End:
+                                  </label>
+                                  <input
+                                    type="time"
+                                    value={times.end}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLInputElement>
+                                    ) =>
+                                      handleAvailabilityChange(
+                                        day,
+                                        "end",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          <div className="flex items-center gap-1">
+                            <User className="w-4 h-4 text-slate-600" />
+                            Personal Notes
+                          </div>
+                        </label>
+                        <textarea
+                          name="notes"
+                          value={formData.notes}
+                          onChange={handleInputChange}
+                          rows={4}
+                          className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                          placeholder="Eg. Add any personal notes or additional information about this employee..."
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          These notes are for admin reference only and will not
+                          be visible to the employee.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            name="is_active"
+                            checked={formData.is_active}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                is_active: e.target.checked,
+                              }))
+                            }
+                            className="w-4 h-4 text-primary focus:ring-primary border-slate-300 rounded"
+                          />
+                          <span className="text-sm font-medium text-slate-700">
+                            Active Employee
+                          </span>
+                        </label>
+                        <p className="text-xs text-slate-500 mt-1 ml-6">
+                          Uncheck to mark this employee as inactive
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex justify-end pt-6 border-t border-slate-200">
+                    <button
+                      type="submit"
+                      disabled={!isFormValid || isSubmitting}
+                      className={`cursor-pointer flex items-center gap-2 px-8 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                        isFormValid && !isSubmitting
+                          ? "bg-primary/80 hover:bg-primary text-white"
+                          : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                      }`}
+                    >
+                      <Save className="w-5 h-5" />
+                      {isSubmitting ? "Adding Employee..." : "Add Employee"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Create Role Modal */}
+      {showCreateRoleModal && (
+        <div
+          className="fixed inset-0 backdrop-blur-xs bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowCreateRoleModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h2 className="text-xl font-bold text-slate-800">
+                Create New Role
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateRoleModal(false);
+                  setNewRoleValue("");
+                }}
+                className="cursor-pointer p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Role Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newRoleValue}
+                  onChange={(e) => setNewRoleValue(e.target.value)}
+                  placeholder="Enter role name"
+                  className="w-full text-sm text-slate-800 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowCreateRoleModal(false);
+                    setNewRoleValue("");
+                  }}
+                  className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateNewRole}
+                  disabled={isCreatingRole || !newRoleValue?.trim()}
+                  className="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isCreatingRole ? "Creating..." : "Create Role"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
