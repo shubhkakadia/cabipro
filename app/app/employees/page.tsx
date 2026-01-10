@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import Sidebar from "@/components/sidebar";
 import PaginationFooter from "@/components/PaginationFooter";
 import {
@@ -68,6 +74,15 @@ export default function EmployeesPage() {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"active" | "inactive">("active");
+  const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(
+    null
+  );
+  const [popupPosition, setPopupPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Define all available columns for export
   const availableColumns = useMemo(
@@ -116,6 +131,15 @@ export default function EmployeesPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -404,7 +428,7 @@ export default function EmployeesPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-y-auto">
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -784,15 +808,88 @@ export default function EmployeesPage() {
                                   className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
                                 >
                                   <td className="px-4 py-3">
-                                    <div className="w-10 h-10">
+                                    <div
+                                      className="w-10 h-10 relative"
+                                      onMouseEnter={(event) => {
+                                        const rect =
+                                          event.currentTarget.getBoundingClientRect();
+                                        const popupWidth = 250;
+                                        const popupHeight = 250;
+                                        const gap = 12;
+
+                                        // Calculate initial position (to the right)
+                                        let left = rect.right + gap;
+                                        let top = rect.top;
+
+                                        // Check if popup would go off right edge
+                                        if (
+                                          left + popupWidth >
+                                          window.innerWidth
+                                        ) {
+                                          // Position to the left instead
+                                          left = rect.left - popupWidth - gap;
+                                        }
+
+                                        // Check if popup would go off bottom edge
+                                        if (
+                                          top + popupHeight >
+                                          window.innerHeight
+                                        ) {
+                                          // Position above instead
+                                          top = rect.top - popupHeight - gap;
+                                        }
+
+                                        // Ensure popup doesn't go off left edge
+                                        if (left < 0) {
+                                          left = gap;
+                                        }
+
+                                        // Ensure popup doesn't go off top edge
+                                        if (top < 0) {
+                                          top = gap;
+                                        }
+
+                                        // Clear any existing timeout
+                                        if (popupTimeoutRef.current) {
+                                          clearTimeout(popupTimeoutRef.current);
+                                          popupTimeoutRef.current = null;
+                                        }
+                                        setPopupPosition({ top, left });
+                                        setHoveredEmployeeId(e.id);
+                                        // Trigger animation after a tiny delay to allow position to be set
+                                        requestAnimationFrame(() => {
+                                          setPopupVisible(true);
+                                        });
+                                      }}
+                                      onMouseLeave={() => {
+                                        setPopupVisible(false);
+                                        // Clear any existing timeout
+                                        if (popupTimeoutRef.current) {
+                                          clearTimeout(popupTimeoutRef.current);
+                                        }
+                                        // Delay removing element to allow fade-out animation
+                                        popupTimeoutRef.current = setTimeout(
+                                          () => {
+                                            setHoveredEmployeeId(null);
+                                            setPopupPosition(null);
+                                            popupTimeoutRef.current = null;
+                                          },
+                                          300
+                                        );
+                                      }}
+                                    >
                                       {e.image ? (
-                                        <Image
-                                          src={`/${e.image.url}`}
-                                          alt={e.first_name + " " + e.last_name}
-                                          width={40}
-                                          height={40}
-                                          className="w-full h-full object-cover rounded"
-                                        />
+                                        <>
+                                          <Image
+                                            src={`/${e.image.url}`}
+                                            alt={
+                                              e.first_name + " " + e.last_name
+                                            }
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full object-cover rounded"
+                                          />
+                                        </>
                                       ) : (
                                         <div className="w-10 h-10 bg-linear-to-br from-secondary to-primary rounded text-white text-center flex items-center justify-center font-bold text-sm">
                                           {e.first_name?.[0] || ""}
@@ -845,6 +942,38 @@ export default function EmployeesPage() {
             )}
           </div>
         </div>
+
+        {/* Hover Image Popup */}
+        {hoveredEmployeeId &&
+          popupPosition &&
+          (() => {
+            const hoveredEmployee = paginatedEmployees.find(
+              (emp) => emp.id === hoveredEmployeeId
+            );
+            return hoveredEmployee?.image ? (
+              <div
+                className={`fixed w-[250px] h-[250px] bg-white border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out pointer-events-auto ${
+                  popupVisible
+                    ? "opacity-100 scale-100 translate-y-0"
+                    : "opacity-0 scale-95 translate-y-2"
+                }`}
+                style={{
+                  top: `${popupPosition.top}px`,
+                  left: `${popupPosition.left}px`,
+                }}
+              >
+                <Image
+                  src={`/${hoveredEmployee.image.url}`}
+                  alt={
+                    hoveredEmployee.first_name + " " + hoveredEmployee.last_name
+                  }
+                  width={250}
+                  height={250}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : null;
+          })()}
       </div>
     </div>
   );

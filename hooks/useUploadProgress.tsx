@@ -1,22 +1,21 @@
 "use client";
 import { useRef } from "react";
-import { toast } from "react-toastify";
+import { toast, Id } from "react-toastify";
+import { AxiosProgressEvent } from "axios";
 import UploadProgressBar from "@/components/UploadProgressBar";
 
 /**
  * Custom hook for handling file uploads with progress tracking
- * 
- * @returns {Object} Object containing uploadProgressRef and uploadProgressToastId
  */
 export const useUploadProgress = () => {
-  const uploadProgressRef = useRef(0);
-  const uploadProgressToastId = useRef(null);
+  const uploadProgressRef = useRef<number>(0);
+  const uploadProgressToastId = useRef<Id | null>(null);
 
   /**
    * Show progress toast for file upload
-   * @param {number} fileCount - Number of files being uploaded
+   * @param fileCount - Number of files being uploaded
    */
-  const showProgressToast = (fileCount) => {
+  const showProgressToast = (fileCount: number): void => {
     uploadProgressRef.current = 0;
 
     uploadProgressToastId.current = toast(
@@ -38,10 +37,10 @@ export const useUploadProgress = () => {
 
   /**
    * Update progress in the toast
-   * @param {number} progress - Progress percentage (0-100)
-   * @param {number} fileCount - Number of files being uploaded
+   * @param progress - Progress percentage (0-100)
+   * @param fileCount - Number of files being uploaded
    */
-  const updateProgress = (progress, fileCount) => {
+  const updateProgress = (progress: number, fileCount: number): void => {
     uploadProgressRef.current = progress;
     if (uploadProgressToastId.current) {
       toast.update(uploadProgressToastId.current, {
@@ -59,9 +58,9 @@ export const useUploadProgress = () => {
 
   /**
    * Complete the upload and auto-dismiss after 5 seconds
-   * @param {number} fileCount - Number of files that were uploaded
+   * @param fileCount - Number of files that were uploaded
    */
-  const completeUpload = (fileCount) => {
+  const completeUpload = (fileCount: number): void => {
     uploadProgressRef.current = 100;
     if (uploadProgressToastId.current) {
       const toastId = uploadProgressToastId.current;
@@ -93,7 +92,7 @@ export const useUploadProgress = () => {
   /**
    * Dismiss the progress toast (e.g., on error)
    */
-  const dismissProgressToast = () => {
+  const dismissProgressToast = (): void => {
     if (uploadProgressToastId.current) {
       toast.dismiss(uploadProgressToastId.current);
       uploadProgressToastId.current = null;
@@ -102,11 +101,11 @@ export const useUploadProgress = () => {
 
   /**
    * Get axios onUploadProgress handler
-   * @param {number} fileCount - Number of files being uploaded
-   * @returns {function} onUploadProgress handler for axios
+   * @param fileCount - Number of files being uploaded
+   * @returns onUploadProgress handler for axios
    */
-  const getUploadProgressHandler = (fileCount) => {
-    return (progressEvent) => {
+  const getUploadProgressHandler = (fileCount: number) => {
+    return (progressEvent: AxiosProgressEvent): void => {
       if (progressEvent.total) {
         const progress = Math.round(
           (progressEvent.loaded * 100) / progressEvent.total

@@ -11,7 +11,7 @@ import Sidebar from "@/components/sidebar";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import Image from "next/image";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
 import { useRouter } from "next/navigation";
@@ -69,7 +69,7 @@ export default function AddItemPage() {
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
       fileCount: number
-    ) => (progressEvent: { loaded: number; total?: number }) => void;
+    ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   const [errors, setErrors] = useState<Errors>({});
@@ -799,7 +799,7 @@ export default function AddItemPage() {
         setSelectedCategory("Sheet");
         faceAutoSetRef.current = false;
         // Navigate back to inventory page
-        router.push("/app/inventory");
+        // router.push("/app/inventory");
       } else {
         if (hasImageFile) {
           dismissProgressToast();
@@ -864,7 +864,7 @@ export default function AddItemPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-full w-full overflow-y-auto">

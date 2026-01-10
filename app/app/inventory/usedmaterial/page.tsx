@@ -894,7 +894,7 @@ export default function UsedMaterialPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -1084,7 +1084,7 @@ export default function UsedMaterialPage() {
                                                     true
                                                   );
                                                 }}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center justify-between"
+                                                className="cursor-pointer w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center justify-between"
                                               >
                                                 <span className="font-medium text-slate-700">
                                                   Mark Completed

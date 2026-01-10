@@ -111,7 +111,7 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
   };
 
   return (
-    <header className="top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-sm h-16 fixed">
+    <header className="top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-sm h-16 sticky">
       <nav className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo / Brand */}
         <div className="flex items-center gap-3">

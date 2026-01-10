@@ -885,9 +885,9 @@ export default function DashboardPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-y-auto">
+        <div className="flex-1 flex flex-col overflow-y-auto h-full">
           <div className="h-full w-full overflow-auto">
             {loading ? (
               <div className="flex items-center justify-center h-full">

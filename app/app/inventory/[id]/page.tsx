@@ -28,7 +28,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
@@ -209,7 +209,7 @@ export default function InventoryItemDetailPage() {
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
       fileCount: number
-    ) => (progressEvent: { loaded: number; total?: number }) => void;
+    ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   const [loading, setLoading] = useState(true);
@@ -1765,7 +1765,7 @@ export default function InventoryItemDetailPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">

@@ -645,7 +645,7 @@ model sheet {
   color      String?
   finish     String?
   face       String?
-  dimensions String
+  dimensions String?
   is_sunmica Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

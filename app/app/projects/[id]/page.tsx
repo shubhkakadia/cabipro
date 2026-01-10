@@ -16,7 +16,7 @@ import {
   SquareArrowOutUpRight,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
 import { CiMenuKebab } from "react-icons/ci";
 import { useRouter } from "next/navigation";
@@ -188,7 +188,7 @@ export default function ProjectDetailPage() {
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
       fileCount: number
-    ) => (progressEvent: { loaded: number; total?: number }) => void;
+    ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   // ViewMedia modal state (for SiteMeasurementsSection)
@@ -1550,7 +1550,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">

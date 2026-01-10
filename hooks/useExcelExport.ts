@@ -3,36 +3,51 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 
 /**
+ * Configuration for Excel export hook
+ */
+interface UseExcelExportConfig<T = unknown> {
+  columnMap: Record<string, (item: T) => unknown>;
+  columnWidths?: Record<string, number>;
+  defaultWidth?: number;
+  filenamePrefix: string;
+  sheetName?: string;
+  selectedColumns?: string[] | null;
+}
+
+/**
+ * Options for the exportToExcel function
+ */
+interface ExportOptions {
+  customFilename?: string;
+  customSheetName?: string;
+  customSelectedColumns?: string[];
+}
+
+/**
  * Custom hook for exporting data to Excel
  * 
- * @param {Object} config - Configuration object
- * @param {Object} config.columnMap - Map of column names to data extraction functions
- * @param {Object} [config.columnWidths] - Optional map of column names to widths (default: 15 for all columns)
- * @param {number} [config.defaultWidth] - Default width for columns (default: 15)
- * @param {string} config.filenamePrefix - Prefix for the exported filename
- * @param {string} config.sheetName - Name of the Excel sheet (default: "Sheet1")
- * @param {Array<string>} [config.selectedColumns] - Optional array of selected column names to export
- * @returns {Object} Object containing export function and loading state
+ * @param config - Configuration object
+ * @returns Object containing export function and loading state
  */
-export const useExcelExport = ({
+export const useExcelExport = <T = unknown>({
   columnMap,
   columnWidths = {},
   defaultWidth = 15,
   filenamePrefix,
   sheetName = "Sheet1",
   selectedColumns = null,
-}) => {
-  const [isExporting, setIsExporting] = useState(false);
+}: UseExcelExportConfig<T>) => {
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   /**
    * Export data to Excel
-   * @param {Array} data - Array of data objects to export
-   * @param {Object} [options] - Additional options
-   * @param {string} [options.customFilename] - Custom filename (overrides default)
-   * @param {string} [options.customSheetName] - Custom sheet name (overrides default)
-   * @param {Array<string>} [options.customSelectedColumns] - Custom selected columns (overrides default)
+   * @param data - Array of data objects to export
+   * @param options - Additional options
    */
-  const exportToExcel = async (data, options = {}) => {
+  const exportToExcel = async (
+    data: T[],
+    options: ExportOptions = {}
+  ): Promise<void> => {
     // Validate data
     if (!data || data.length === 0) {
       toast.warning("No data to export. Please adjust your filters or add data.", {
@@ -68,7 +83,7 @@ export const useExcelExport = ({
       if (columnsToExport && columnsToExport.length > 0) {
         // Only include selected columns
         exportData = data.map((item) => {
-          const row = {};
+          const row: Record<string, unknown> = {};
           columnsToExport.forEach((column) => {
             if (columnMap[column]) {
               row[column] = columnMap[column](item);
@@ -79,7 +94,7 @@ export const useExcelExport = ({
       } else {
         // Include all columns from columnMap
         exportData = data.map((item) => {
-          const row = {};
+          const row: Record<string, unknown> = {};
           Object.keys(columnMap).forEach((column) => {
             row[column] = columnMap[column](item);
           });
@@ -135,6 +150,6 @@ export const useExcelExport = ({
   return {
     exportToExcel,
     isExporting,
-  };
+  } as const;
 };
 

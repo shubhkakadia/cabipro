@@ -5,6 +5,7 @@ import "./globals.css";
 import AOSProvider from "@/components/AOSProvider";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import ReduxProvider from "@/components/ReduxProvider";
+import ToastProvider from "@/components/ToastProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -68,13 +69,14 @@ export default function RootLayout({
             `,
           }}
         />
-        <AOSProvider>
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </AOSProvider>
+        <ReduxProvider>
+          <AOSProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </AOSProvider>
+          <ToastProvider />
+        </ReduxProvider>
       </body>
     </html>
   );

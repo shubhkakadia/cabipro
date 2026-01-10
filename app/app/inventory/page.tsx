@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Sidebar from "@/components/sidebar";
 import PaginationFooter from "@/components/PaginationFooter";
 import axios from "axios";
@@ -142,6 +142,13 @@ export default function InventoryPage() {
 
   // Stock Tally states
   const [showStockTallyModal, setShowStockTallyModal] = useState(false);
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Define available columns for export based on active tab
   const getAvailableColumns = () => {
@@ -345,6 +352,15 @@ export default function InventoryPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -578,95 +594,202 @@ export default function InventoryPage() {
       return true;
     });
 
-    // Sort data
-    filtered.sort((a: Item, b: Item) => {
-      let aValue: string | number = "";
-      let bValue: string | number = "";
-
-      // Handle nested object sorting
-      if (sortField === "brand") {
-        aValue =
-          a.sheet?.brand ||
-          a.handle?.brand ||
-          a.hardware?.brand ||
-          a.edging_tape?.brand ||
-          "";
-        bValue =
-          b.sheet?.brand ||
-          b.handle?.brand ||
-          b.hardware?.brand ||
-          b.edging_tape?.brand ||
-          "";
-      } else if (sortField === "color") {
-        aValue =
-          a.sheet?.color || a.handle?.color || a.edging_tape?.color || "";
-        bValue =
-          b.sheet?.color || b.handle?.color || b.edging_tape?.color || "";
-      } else if (sortField === "finish") {
-        aValue = a.sheet?.finish || a.edging_tape?.finish || "";
-        bValue = b.sheet?.finish || b.edging_tape?.finish || "";
-      } else if (sortField === "type") {
-        aValue = a.handle?.type || a.hardware?.type || "";
-        bValue = b.handle?.type || b.hardware?.type || "";
-      } else if (sortField === "material") {
-        aValue = a.handle?.material || "";
-        bValue = b.handle?.material || "";
-      } else if (sortField === "name") {
-        aValue = a.hardware?.name || a.accessory?.name || "";
-        bValue = b.hardware?.name || b.accessory?.name || "";
-      } else if (sortField === "sub_category") {
-        aValue = a.hardware?.sub_category || "";
-        bValue = b.hardware?.sub_category || "";
-      } else if (sortField === "dimensions") {
-        aValue =
-          a.sheet?.dimensions ||
-          a.handle?.dimensions ||
-          a.hardware?.dimensions ||
-          a.edging_tape?.dimensions ||
-          "";
-        bValue =
-          b.sheet?.dimensions ||
-          b.handle?.dimensions ||
-          b.hardware?.dimensions ||
-          b.edging_tape?.dimensions ||
-          "";
-      } else if (sortField === "quantity") {
-        aValue = a.quantity || 0;
-        bValue = b.quantity || 0;
-      } else {
-        aValue = (a[sortField as keyof Item] as string | number) || "";
-        bValue = (b[sortField as keyof Item] as string | number) || "";
+    const getFieldValue = (item: Item, field: string) => {
+      if (field === "brand") {
+        return (
+          item.sheet?.brand ||
+          item.handle?.brand ||
+          item.hardware?.brand ||
+          item.edging_tape?.brand ||
+          ""
+        );
+      } else if (field === "color") {
+        return (
+          item.sheet?.color ||
+          item.handle?.color ||
+          item.edging_tape?.color ||
+          ""
+        );
+      } else if (field === "finish") {
+        return item.sheet?.finish || item.edging_tape?.finish || "";
+      } else if (field === "type") {
+        return item.handle?.type || item.hardware?.type || "";
+      } else if (field === "material") {
+        return item.handle?.material || "";
+      } else if (field === "name") {
+        return item.hardware?.name || item.accessory?.name || "";
+      } else if (field === "sub_category") {
+        return item.hardware?.sub_category || "";
+      } else if (field === "dimensions") {
+        return (
+          item.sheet?.dimensions ||
+          item.handle?.dimensions ||
+          item.hardware?.dimensions ||
+          item.edging_tape?.dimensions ||
+          ""
+        );
       }
+      return item[field] || "";
+    };
+
+    // Sort data
+    filtered.sort((a, b) => {
+      // Multi-level sorting when default sort is active (brand asc for most categories, name asc for accessory)
+      const isDefaultSort =
+        (activeTab === "accessory" &&
+          sortField === "name" &&
+          sortOrder === "asc") ||
+        (activeTab !== "accessory" &&
+          sortField === "brand" &&
+          sortOrder === "asc");
+
+      if (isDefaultSort) {
+        // Apply multi-level sorting based on category
+        if (
+          activeTab === "sheet" ||
+          activeTab === "sunmica" ||
+          activeTab === "edging_tape"
+        ) {
+          // Brand → Color → Finish → Dimensions
+          const aBrand = getFieldValue(a, "brand").toString().toLowerCase();
+          const bBrand = getFieldValue(b, "brand").toString().toLowerCase();
+          if (aBrand !== bBrand) {
+            return aBrand < bBrand ? -1 : aBrand > bBrand ? 1 : 0;
+          }
+
+          const aColor = getFieldValue(a, "color").toString().toLowerCase();
+          const bColor = getFieldValue(b, "color").toString().toLowerCase();
+          if (aColor !== bColor) {
+            return aColor < bColor ? -1 : aColor > bColor ? 1 : 0;
+          }
+
+          const aFinish = getFieldValue(a, "finish").toString().toLowerCase();
+          const bFinish = getFieldValue(b, "finish").toString().toLowerCase();
+          if (aFinish !== bFinish) {
+            return aFinish < bFinish ? -1 : aFinish > bFinish ? 1 : 0;
+          }
+
+          const aDimensions = getFieldValue(a, "dimensions")
+            .toString()
+            .toLowerCase();
+          const bDimensions = getFieldValue(b, "dimensions")
+            .toString()
+            .toLowerCase();
+          return aDimensions < bDimensions
+            ? -1
+            : aDimensions > bDimensions
+            ? 1
+            : 0;
+        } else if (activeTab === "handle") {
+          // Brand → Color → Type → Material → Dimensions
+          const aBrand = getFieldValue(a, "brand").toString().toLowerCase();
+          const bBrand = getFieldValue(b, "brand").toString().toLowerCase();
+          if (aBrand !== bBrand) {
+            return aBrand < bBrand ? -1 : aBrand > bBrand ? 1 : 0;
+          }
+
+          const aColor = getFieldValue(a, "color").toString().toLowerCase();
+          const bColor = getFieldValue(b, "color").toString().toLowerCase();
+          if (aColor !== bColor) {
+            return aColor < bColor ? -1 : aColor > bColor ? 1 : 0;
+          }
+
+          const aType = getFieldValue(a, "type").toString().toLowerCase();
+          const bType = getFieldValue(b, "type").toString().toLowerCase();
+          if (aType !== bType) {
+            return aType < bType ? -1 : aType > bType ? 1 : 0;
+          }
+
+          const aMaterial = getFieldValue(a, "material")
+            .toString()
+            .toLowerCase();
+          const bMaterial = getFieldValue(b, "material")
+            .toString()
+            .toLowerCase();
+          if (aMaterial !== bMaterial) {
+            return aMaterial < bMaterial ? -1 : aMaterial > bMaterial ? 1 : 0;
+          }
+
+          const aDimensions = getFieldValue(a, "dimensions")
+            .toString()
+            .toLowerCase();
+          const bDimensions = getFieldValue(b, "dimensions")
+            .toString()
+            .toLowerCase();
+          return aDimensions < bDimensions
+            ? -1
+            : aDimensions > bDimensions
+            ? 1
+            : 0;
+        } else if (activeTab === "hardware") {
+          // Brand → Name → Type → Sub Category → Dimensions
+          const aBrand = getFieldValue(a, "brand").toString().toLowerCase();
+          const bBrand = getFieldValue(b, "brand").toString().toLowerCase();
+          if (aBrand !== bBrand) {
+            return aBrand < bBrand ? -1 : aBrand > bBrand ? 1 : 0;
+          }
+
+          const aName = getFieldValue(a, "name").toString().toLowerCase();
+          const bName = getFieldValue(b, "name").toString().toLowerCase();
+          if (aName !== bName) {
+            return aName < bName ? -1 : aName > bName ? 1 : 0;
+          }
+
+          const aType = getFieldValue(a, "type").toString().toLowerCase();
+          const bType = getFieldValue(b, "type").toString().toLowerCase();
+          if (aType !== bType) {
+            return aType < bType ? -1 : aType > bType ? 1 : 0;
+          }
+
+          const aSubCategory = getFieldValue(a, "sub_category")
+            .toString()
+            .toLowerCase();
+          const bSubCategory = getFieldValue(b, "sub_category")
+            .toString()
+            .toLowerCase();
+          if (aSubCategory !== bSubCategory) {
+            return aSubCategory < bSubCategory
+              ? -1
+              : aSubCategory > bSubCategory
+              ? 1
+              : 0;
+          }
+
+          const aDimensions = getFieldValue(a, "dimensions")
+            .toString()
+            .toLowerCase();
+          const bDimensions = getFieldValue(b, "dimensions")
+            .toString()
+            .toLowerCase();
+          return aDimensions < bDimensions
+            ? -1
+            : aDimensions > bDimensions
+            ? 1
+            : 0;
+        }
+      }
+
+      // Single field sorting for non-default sorts
+      let aValue = getFieldValue(a, sortField);
+      let bValue = getFieldValue(b, sortField);
 
       // Handle relevance sorting (by search match)
       if (sortOrder === "relevance" && search) {
         const searchLower = search.toLowerCase();
-        const aMatch = String(aValue).toLowerCase().includes(searchLower);
-        const bMatch = String(bValue).toLowerCase().includes(searchLower);
+        const aMatch = aValue.toString().toLowerCase().includes(searchLower);
+        const bMatch = bValue.toString().toLowerCase().includes(searchLower);
         if (aMatch && !bMatch) return -1;
         if (!aMatch && bMatch) return 1;
       }
 
-      // Handle numeric sorting for quantity
-      if (sortField === "quantity") {
-        const aNum = Number(aValue);
-        const bNum = Number(bValue);
-        if (sortOrder === "asc") {
-          return aNum < bNum ? -1 : aNum > bNum ? 1 : 0;
-        } else if (sortOrder === "desc") {
-          return aNum > bNum ? -1 : aNum < bNum ? 1 : 0;
-        }
-        return 0;
-      }
-
       // Convert to string for comparison
-      const aStr = String(aValue).toLowerCase();
-      const bStr = String(bValue).toLowerCase();
+      aValue = aValue.toString().toLowerCase();
+      bValue = bValue.toString().toLowerCase();
 
       if (sortOrder === "asc") {
-        return aStr < bStr ? -1 : aStr > bStr ? 1 : 0;
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else if (sortOrder === "desc") {
-        return aStr > bStr ? -1 : aStr < bStr ? 1 : 0;
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
       return 0;
     });
@@ -920,7 +1043,7 @@ export default function InventoryPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-64px)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           {loading ? (
@@ -1384,15 +1507,90 @@ export default function InventoryPage() {
                                 className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
                               >
                                 <td className="px-4 py-2">
-                                  <div className="w-10 h-10">
+                                  <div
+                                    className="w-10 h-10 relative"
+                                    onMouseEnter={(e) => {
+                                      const rect =
+                                        e.currentTarget.getBoundingClientRect();
+                                      const popupWidth = 250;
+                                      const popupHeight = 250;
+                                      const gap = 12;
+
+                                      // Calculate initial position (to the right)
+                                      let left = rect.right + gap;
+                                      let top = rect.top;
+
+                                      // Check if popup would go off right edge
+                                      if (
+                                        left + popupWidth >
+                                        window.innerWidth
+                                      ) {
+                                        // Position to the left instead
+                                        left = rect.left - popupWidth - gap;
+                                      }
+
+                                      // Check if popup would go off bottom edge
+                                      if (
+                                        top + popupHeight >
+                                        window.innerHeight
+                                      ) {
+                                        // Position above instead
+                                        top =
+                                          window.innerHeight -
+                                          popupHeight -
+                                          gap;
+                                        // top = rect.top - popupHeight - gap;
+                                      }
+
+                                      // Ensure popup doesn't go off left edge
+                                      if (left < 0) {
+                                        left = gap;
+                                      }
+
+                                      // Ensure popup doesn't go off top edge
+                                      if (top < 0) {
+                                        top = gap;
+                                      }
+
+                                      // Clear any existing timeout
+                                      if (popupTimeoutRef.current) {
+                                        clearTimeout(popupTimeoutRef.current);
+                                        popupTimeoutRef.current = null;
+                                      }
+                                      setPopupPosition({ top, left });
+                                      setHoveredItemId(item.id);
+                                      // Trigger animation after a tiny delay to allow position to be set
+                                      requestAnimationFrame(() => {
+                                        setPopupVisible(true);
+                                      });
+                                    }}
+                                    onMouseLeave={() => {
+                                      setPopupVisible(false);
+                                      // Clear any existing timeout
+                                      if (popupTimeoutRef.current) {
+                                        clearTimeout(popupTimeoutRef.current);
+                                      }
+                                      // Delay removing element to allow fade-out animation
+                                      popupTimeoutRef.current = setTimeout(
+                                        () => {
+                                          setHoveredItemId(null);
+                                          setPopupPosition(null);
+                                          popupTimeoutRef.current = null;
+                                        },
+                                        300
+                                      );
+                                    }}
+                                  >
                                     {item.image?.url ? (
-                                      <Image
-                                        src={`/${item.image.url}`}
-                                        alt={item.description || "Item"}
-                                        width={40}
-                                        height={40}
-                                        className="w-full h-full object-cover rounded-md"
-                                      />
+                                      <>
+                                        <Image
+                                          src={`/${item.image.url}`}
+                                          alt={item.description || "Item"}
+                                          width={40}
+                                          height={40}
+                                          className="w-full h-full object-cover rounded-md"
+                                        />
+                                      </>
                                     ) : (
                                       <div className="w-10 h-10 bg-slate-200 rounded-md text-center flex items-center justify-center">
                                         <ImageIcon className="h-4 w-4" />
@@ -1839,6 +2037,36 @@ export default function InventoryPage() {
             }))}
           />
         )}
+
+        {/* Hover Image Popup */}
+        {hoveredItemId &&
+          popupPosition &&
+          (() => {
+            const hoveredItem = paginatedData.find(
+              (item) => item.id === hoveredItemId
+            );
+            return hoveredItem?.image?.url ? (
+              <div
+                className={`fixed w-[250px] h-[250px] bg-white border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out pointer-events-auto ${
+                  popupVisible
+                    ? "opacity-100 scale-100 translate-y-0"
+                    : "opacity-0 scale-95 translate-y-2"
+                }`}
+                style={{
+                  top: `${popupPosition.top}px`,
+                  left: `${popupPosition.left}px`,
+                }}
+              >
+                <Image
+                  src={`/${hoveredItem.image.url}`}
+                  alt={hoveredItem.description || "Item"}
+                  width={250}
+                  height={250}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : null;
+          })()}
       </div>
     </div>
   );

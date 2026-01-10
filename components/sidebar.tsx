@@ -121,9 +121,8 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="bg-white w-60 h-[calc(100vh-4rem)] border-r border-emerald-200">
+    <div className="bg-white w-60 h-[calc(100vh-4rem)] border-r border-emerald-200 shrink-0">
       <div className="flex flex-col h-full px-4 py-4 gap-4">
-
         <div className="flex flex-col justify-between flex-1 min-h-0 gap-4">
           <div className="flex flex-col overflow-y-auto pr-1 gap-1">
             {navdata.map((item) => {
