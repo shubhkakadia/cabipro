@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
@@ -8,7 +9,16 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="col-span-1 lg:col-span-2">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">CabiPro</h3>
+            <Link href="/" className="inline-block mb-3 sm:mb-4">
+              <Image
+                src="/CabiPro.svg"
+                alt="CabiPro Logo"
+                width={150}
+                height={60}
+                className="h-8 sm:h-10 w-auto"
+                unoptimized
+              />
+            </Link>
             <p className="text-xs sm:text-sm text-gray-600 max-w-md leading-relaxed">
               Job management software built specifically for cabinet manufacturers. 
               Track production, manage materials, schedule jobs, and optimize your manufacturing operations.
@@ -30,8 +40,8 @@ export default function Footer() {
                 </Link>
               </li> */}
               <li>
-                <Link href="/blogs" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Blogs
+                <Link href="/blog" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>

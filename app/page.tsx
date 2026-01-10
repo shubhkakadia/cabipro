@@ -8,6 +8,10 @@ import {
   Factory,
   FileImage,
   Truck,
+  Users,
+  Hammer,
+  Building2,
+  ChevronDown,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -25,6 +29,29 @@ const taglines = [
   "Cabinet Manufacturing — Made Manageable.",
 ];
 
+const faqs = [
+  {
+    question: "Is this for cabinet makers or manufacturers?",
+    answer:
+      "CabiPro is designed for both cabinet makers and manufacturers. Whether you run a small custom cabinet shop, a joinery workshop, or a larger manufacturing facility, CabiPro scales to your needs. The software handles everything from individual custom projects to high-volume production runs.",
+  },
+  {
+    question: "Can I manage installs and production scheduling?",
+    answer:
+      "Yes! CabiPro includes comprehensive production scheduling that tracks every job from quote to installation. You can see what stage each job is at (design, production, finishing, ready to install), assign jobs to teams, schedule installations, and manage the entire workflow from workshop to site.",
+  },
+  {
+    question: "Does it handle supplier POs and materials-to-order?",
+    answer:
+      "Absolutely. CabiPro includes full supplier management with purchase order creation, tracking, and delivery management. You can plan materials-to-order for each project, create purchase orders, track partial and full deliveries, upload invoices, and automatically update stock levels when materials arrive.",
+  },
+  {
+    question: "Is it built for Australia?",
+    answer:
+      "Yes, CabiPro is built specifically for Australian cabinet makers. We have engineered our system to natively handle the product structures of major local suppliers like Polytec, Laminex, and Acrilam. This means the software is pre-configured to manage Australian board sizes, specific material ranges, and finishes, ensuring your data aligns perfectly with the products you use every day.",
+  },
+];
+
 export default function Home() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -34,6 +61,7 @@ export default function Home() {
   >("idle");
   const [currentTaglineIndex, setCurrentTaglineIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,6 +73,61 @@ export default function Home() {
     }, 4000); // Change tagline every 3.5 seconds
 
     return () => clearInterval(interval);
+  }, []);
+
+  // FAQ Schema for SEO
+  useEffect(() => {
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "Is this for cabinet makers or manufacturers?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "CabiPro is designed for both cabinet makers and manufacturers. Whether you run a small custom cabinet shop, a joinery workshop, or a larger manufacturing facility, CabiPro scales to your needs. The software handles everything from individual custom projects to high-volume production runs.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I manage installs and production scheduling?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes! CabiPro includes comprehensive production scheduling that tracks every job from quote to installation. You can see what stage each job is at (design, production, finishing, ready to install), assign jobs to teams, schedule installations, and manage the entire workflow from workshop to site.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Does it handle supplier POs and materials-to-order?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Absolutely. CabiPro includes full supplier management with purchase order creation, tracking, and delivery management. You can plan materials-to-order for each project, create purchase orders, track partial and full deliveries, upload invoices, and automatically update stock levels when materials arrive.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Is it built for Australia?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes, CabiPro is built specifically for Australian cabinet makers. We have engineered our system to natively handle the product structures of major local suppliers like Polytec, Laminex, and Acrilam. This means the software is pre-configured to manage Australian board sizes, specific material ranges, and finishes, ensuring your data aligns perfectly with the products you use every day.",
+          },
+        },
+      ],
+    };
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(faqSchema);
+    script.id = "faq-schema";
+    document.head.appendChild(script);
+
+    return () => {
+      const existingScript = document.getElementById("faq-schema");
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
   }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
@@ -85,29 +168,35 @@ export default function Home() {
         className="absolute top-0 left-0 w-full h-full object-cover brightness-70"
       />
       {/* Hero Section */}
-      <section className="overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-        <div className="mx-auto max-w-4xl text-center relative z-10">
-          <div
-            className="relative min-h-[150px] sm:min-h-[200px] md:min-h-[250px] lg:min-h-[280px] flex items-center justify-center px-2"
+      <section className="overflow-hidden bg-white px-4 py-30 sm:px-6 sm:py-16 lg:px-8 lg:py-52">
+        <div className="mx-auto max-w-7xl text-center relative z-10">
+          <h1
+            className="text-3xl font-bold tracking-tight text-gray-100 sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl drop-shadow-2xl leading-tight sm:leading-tight px-2"
             data-aos="fade-up"
           >
-            <h1
-              className={`text-3xl font-bold tracking-tight text-gray-100 sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl transition-opacity duration-500 drop-shadow-2xl leading-tight sm:leading-tight ${
+            Cabinet Maker Software to Manage Jobs, Production, Materials &amp;
+            Installations
+          </h1>
+          <div
+            className="relative min-h-[100px] sm:min-h-[120px] md:min-h-[140px] flex items-center justify-center px-2 mt-4 sm:mt-6"
+            data-aos="fade-up"
+            data-aos-delay="50"
+          >
+            <p
+              className={`text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-gray-100 transition-opacity duration-500 drop-shadow-2xl leading-tight ${
                 isVisible ? "opacity-100" : "opacity-0"
               }`}
             >
               {taglines[currentTaglineIndex]}
-            </h1>
+            </p>
           </div>
-          <p
+          {/* <p
             className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-100 px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Job management software built specifically for cabinet
-            manufacturers. Track production, manage materials, schedule jobs,
-            and optimize your manufacturing floor, all in one place.
-          </p>
+            Job management software built specifically for cabinet makers, cabinet manufacturers, and joinery workshops. Track production, manage materials, schedule jobs, and optimize your manufacturing floor, all in one place.
+          </p> */}
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
             data-aos="fade-up"
@@ -136,7 +225,7 @@ export default function Home() {
             className="text-center text-xs sm:text-sm font-semibold uppercase tracking-wide text-gray-500 mb-6 sm:mb-8"
             data-aos="fade-up"
           >
-            Trusted by cabinet manufacturers
+            Trusted by cabinet makers and joinery workshops
           </p>
           <div
             className="flex items-center justify-center px-4"
@@ -172,8 +261,8 @@ export default function Home() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Powerful features designed specifically for cabinet manufacturers
-              and production facilities.
+              Powerful features designed specifically for cabinet makers,
+              cabinet manufacturers, and joinery workshops.
             </p>
           </div>
           <div className="mt-10 sm:mt-12 md:mt-16 grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -232,6 +321,202 @@ export default function Home() {
                   <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                     {feature.description}
                   </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Who CabiPro is for */}
+      <section className="bg-white py-12 sm:py-16 lg:py-20 xl:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
+              data-aos="fade-up"
+            >
+              Who CabiPro is for
+            </h2>
+            <p
+              className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
+              Built specifically for cabinet makers, joiners, small shops, and
+              manufacturers who need professional job management software.
+            </p>
+          </div>
+          <div className="mt-10 sm:mt-12 md:mt-16 grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "Cabinet Makers",
+                description:
+                  "Small to medium cabinet shops managing custom kitchen, wardrobe, and furniture projects.",
+                icon: Hammer,
+              },
+              {
+                title: "Joinery Workshops",
+                description:
+                  "Custom joinery specialists building bespoke furniture, doors, windows, and architectural joinery.",
+                icon: Building2,
+              },
+              {
+                title: "Small Manufacturing Shops",
+                description:
+                  "Growing workshops ready to move beyond spreadsheets and manual tracking systems.",
+                icon: Factory,
+              },
+              {
+                title: "Cabinet Manufacturers",
+                description:
+                  "Established manufacturers needing production scheduling, material management, and team coordination.",
+                icon: Users,
+              },
+            ].map((item, index) => {
+              const IconComponent = item.icon;
+              return (
+                <div
+                  key={index}
+                  className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md text-center"
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
+                >
+                  <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900 mx-auto">
+                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* What CabiPro replaces */}
+      {/* <section className="bg-gray-50 py-12 sm:py-16 lg:py-20 xl:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
+              data-aos="fade-up"
+            >
+              What CabiPro replaces
+            </h2>
+            <p
+              className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
+              Stop juggling multiple tools and manual processes. CabiPro replaces the patchwork of spreadsheets, generic project management tools, accounting software, and handwritten notes with one integrated system.
+            </p>
+          </div>
+          <div className="mt-10 sm:mt-12 md:mt-16 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                title: "Spreadsheets & Excel",
+                description:
+                  "No more Excel files for job tracking, material lists, or production schedules. Everything is organized, searchable, and connected in one place.",
+                icon: FileSpreadsheet,
+              },
+              {
+                title: "Generic Project Tools",
+                description:
+                  "Replace Trello, Asana, or Monday.com with software built specifically for cabinet manufacturing workflows and terminology.",
+                icon: ClipboardList,
+              },
+              {
+                title: "Accounting Software + Manual Notes",
+                description:
+                  "Stop using MYOB or Xero for job tracking while keeping separate notes. CabiPro handles quotes, jobs, materials, and supplier management together.",
+                icon: Receipt,
+              },
+            ].map((item, index) => {
+              const IconComponent = item.icon;
+              return (
+                <div
+                  key={index}
+                  className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md"
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
+                >
+                  <div className="mb-3 sm:mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 leading-tight">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section> */}
+
+      {/* FAQ Section */}
+      <section className="bg-white py-12 sm:py-16 lg:py-20 xl:py-24">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
+            <h2
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
+              data-aos="fade-up"
+            >
+              Frequently Asked Questions
+            </h2>
+            <p
+              className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
+              Common questions about CabiPro for cabinet makers and joinery
+              workshops.
+            </p>
+          </div>
+          <div className="space-y-4 sm:space-y-6">
+            {faqs.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              return (
+                <div
+                  key={index}
+                  className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                    className="cursor-pointer w-full text-left p-5 sm:p-6 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors touch-manipulation"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${index}`}
+                  >
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight pr-4">
+                      {faq.question}
+                    </h3>
+                    <ChevronDown
+                      className={`h-5 w-5 sm:h-6 sm:w-6 text-gray-500 shrink-0 transition-transform duration-300 ${
+                        isOpen ? "transform rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  <div
+                    id={`faq-answer-${index}`}
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      isOpen ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0">
+                      <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -360,15 +645,15 @@ export default function Home() {
             className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white px-2"
             data-aos="fade-up"
           >
-            Ready to transform your cabinet manufacturing?
+            Ready to transform your cabinet shop or joinery workshop?
           </h2>
           <p
             className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-300 px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join cabinet manufacturers who are already using CabiPro to run more
-            organized, efficient operations.
+            Join cabinet makers and joinery workshops who are already using
+            CabiPro to run more organized, efficient operations.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"

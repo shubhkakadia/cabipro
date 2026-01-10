@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service - CabiPro",
-  description: "CabiPro Terms of Service - Read our terms and conditions for using CabiPro job management software for cabinet manufacturers.",
+  description: "CabiPro Terms of Service - Read our terms and conditions for using CabiPro job management software for cabinet makers, manufacturers, and joinery workshops.",
 };
 
 export default function TermsOfService() {
