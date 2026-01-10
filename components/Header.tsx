@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 
 export default function Header() {
@@ -12,10 +13,18 @@ export default function Header() {
         mobileMenuOpen ? "rounded-t-2xl" : "rounded-2xl"
       } transition-all duration-300 ease-in-out`}
     >
-      <nav className="mx-auto flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-4">
+      <nav className="mx-auto flex items-center justify-between px-3 lg:px-6 py-1">
         <div className="flex items-center">
-          <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-900">
-            CabiPro
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/CabiPro.svg"
+              alt="CabiPro Logo"
+              width={150}
+              height={60}
+              className="h-12 sm:h-14 w-auto"
+              unoptimized
+              priority
+            />
           </Link>
         </div>
 
@@ -31,10 +40,10 @@ export default function Header() {
             Pricing
           </Link> */}
           <Link
-            href="/blogs"
+            href="/blog"
             className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
           >
-            Blogs
+            Blog
           </Link>
           <Link
             href="/contact"
@@ -107,11 +116,11 @@ export default function Header() {
             Pricing
           </Link> */}
           <Link
-            href="/blogs"
+            href="/blog"
             className="block rounded-md px-3 py-2.5 sm:py-2 text-sm sm:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors touch-manipulation"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Blogs
+            Blog
           </Link>
           <Link
             href="/contact"
