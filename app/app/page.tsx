@@ -110,7 +110,7 @@ interface Stage {
 }
 
 interface Item {
-  item_id: string;
+  id: string;
   category: string;
   quantity: number;
   description?: string;
@@ -1372,7 +1372,7 @@ export default function DashboardPage() {
                               dashboardData.top10items.map(
                                 (item: Item, index: number) => (
                                   <tr
-                                    key={item.item_id}
+                                    key={item.id}
                                     className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
                                   >
                                     <td className="py-3 px-2 text-center">
