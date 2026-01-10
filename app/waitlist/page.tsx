@@ -153,9 +153,9 @@ export default function Waitlist() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Be among the first cabinet manufacturers to experience CabiPro. Get
+            Be among the first cabinet makers, manufacturers, and joinery workshops to experience CabiPro. Get
             early access, exclusive pricing, and help shape the future of job
-            management for cabinet manufacturing.
+            management for cabinet shops and joinery businesses.
           </p>
         </div>
 

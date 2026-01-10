@@ -24,10 +24,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Features() {
   const router = useRouter();
-  const features = [
+  const [activeTab, setActiveTab] = useState("project");
+  
+  const allFeatures = [
     {
       title: "User Accounts & Access Control",
       description:
@@ -246,6 +250,77 @@ export default function Features() {
     },
   ];
 
+  // Group features by category
+  const featureGroups = {
+    all: {
+      name: "All Features",
+      features: allFeatures,
+    },
+    project: {
+      name: "Project Management",
+      features: allFeatures.filter((f) =>
+        [
+          "Projects & Job Tracking",
+          "Production Scheduling & Job Status",
+          "Workshop & Factory Overview",
+          "Quotes & Orders",
+          "Documents & Drawings",
+        ].includes(f.title)
+      ),
+    },
+    team: {
+      name: "Team & Clients",
+      features: allFeatures.filter((f) =>
+        [
+          "Clients & Contacts",
+          "Staff Management",
+          "User Accounts & Access Control",
+        ].includes(f.title)
+      ),
+    },
+    materials: {
+      name: "Materials & Inventory",
+      features: allFeatures.filter((f) =>
+        [
+          "Inventory Management",
+          "Material Selection & Specifications",
+          "Material Usage Tracking",
+          "Materials to Order",
+          "Supplier Management",
+          "Purchase Orders",
+          "Supplier Statements & Payments",
+        ].includes(f.title)
+      ),
+    },
+    system: {
+      name: "System & Tools",
+      features: allFeatures.filter((f) =>
+        [
+          "Activity History (Who Did What)",
+          "Mobile Access",
+          "Notifications & Alerts",
+        ].includes(f.title)
+      ),
+    },
+  };
+
+  const tabs = Object.keys(featureGroups).map((key) => ({
+    id: key,
+    name: featureGroups[key as keyof typeof featureGroups].name,
+    count: featureGroups[key as keyof typeof featureGroups].features.length,
+  }));
+
+  const displayedFeatures = featureGroups[activeTab as keyof typeof featureGroups]?.features || [];
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    // Smooth scroll to top of features section
+    // const featuresSection = document.getElementById('features-section');
+    // if (featuresSection) {
+    //   featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // }
+  };
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -262,21 +337,143 @@ export default function Features() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-100 drop-shadow-2xl px-2 leading-tight"
             data-aos="fade-up"
           >
-            Built for cabinet manufacturers
+            Built for Cabinet Makers, Manufacturers &amp; Joinery Workshops
           </h1>
           <p
             className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-200 drop-shadow-2xl px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Everything you need to manage production orders, materials,
-            customers, and your manufacturing floor, all in one place.
+            Everything cabinet makers, manufacturers, and joinery workshops need to manage production orders, materials, customers, and manufacturing floors, all in one place.
           </p>
         </div>
       </section>
 
+      {/* Feature Categories Section */}
+      <section className="bg-white px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center mb-10 sm:mb-12">
+            <h2
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
+              data-aos="fade-up"
+            >
+              Explore Our Features
+            </h2>
+            <p
+              className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
+              Dive deeper into specific feature categories designed for cabinet manufacturing
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <Link
+              href="/features/quoting-software"
+              className="group rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm transition-all hover:shadow-md hover:border-gray-300"
+              data-aos="fade-up"
+              data-aos-delay="200"
+            >
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900 group-hover:bg-gray-200 transition-colors">
+                <CreditCard className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
+                Quoting Software
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                Create professional quotes, manage clients, and convert quotes to jobs seamlessly.
+              </p>
+            </Link>
+            <Link
+              href="/features/project-management"
+              className="group rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm transition-all hover:shadow-md hover:border-gray-300"
+              data-aos="fade-up"
+              data-aos-delay="300"
+            >
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900 group-hover:bg-gray-200 transition-colors">
+                <FolderKanban className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
+                Project Management
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                Track projects, schedule production, assign teams, and manage your workshop floor.
+              </p>
+            </Link>
+            <Link
+              href="/features/inventory-management"
+              className="group rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm transition-all hover:shadow-md hover:border-gray-300"
+              data-aos="fade-up"
+              data-aos-delay="400"
+            >
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900 group-hover:bg-gray-200 transition-colors">
+                <Package className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
+                Inventory Management
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                Track materials, manage suppliers, plan orders, and optimize your inventory.
+              </p>
+            </Link>
+            <Link
+              href="/features/invoicing"
+              className="group rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm transition-all hover:shadow-md hover:border-gray-300"
+              data-aos="fade-up"
+              data-aos-delay="500"
+            >
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900 group-hover:bg-gray-200 transition-colors">
+                <DollarSign className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors">
+                Invoicing
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                Manage supplier payments, track invoices, and maintain clear financial records.
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Tab Navigation */}
+      <section className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex overflow-x-auto scrollbar-hide -mb-px">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`
+                  cursor-pointer flex items-center gap-2 px-4 sm:px-6 py-4 text-sm sm:text-base font-medium whitespace-nowrap border-b-2 transition-colors
+                  ${
+                    activeTab === tab.id
+                      ? "border-gray-900 text-gray-900"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }
+                `}
+              >
+                <span>{tab.name}</span>
+                <span
+                  className={`
+                    px-2 py-0.5 rounded-full text-xs font-semibold
+                    ${
+                      activeTab === tab.id
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }
+                  `}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Grid */}
-      <section className="relative bg-gray-100 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 z-20 overflow-hidden">
+      <section id="features-section" className="relative bg-gray-100 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 z-20 overflow-hidden">
         {/* Animated Background Illustrations */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Floating circles */}
@@ -303,8 +500,9 @@ export default function Features() {
         </div>
         
         <div className="relative mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
-            {features.map((feature, index) => {
+          {displayedFeatures.length > 0 ? (
+            <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
+              {displayedFeatures.map((feature, index) => {
               const IconComponent = feature.icon;
               return (
                 <div
@@ -350,7 +548,12 @@ export default function Features() {
                 </div>
               );
             })}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">No features found in this category.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -362,7 +565,7 @@ export default function Features() {
               className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
               data-aos="fade-up"
             >
-              Why cabinet manufacturers choose CabiPro
+              Why cabinet makers and joinery workshops choose CabiPro
             </h2>
             <p
               className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
@@ -387,7 +590,7 @@ export default function Features() {
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 Not a generic project management tool. Every feature is designed
-                specifically for how cabinet manufacturing actually works.
+                specifically for how cabinet makers, manufacturers, and joinery workshops actually work.
               </p>
             </div>
             <div
@@ -418,7 +621,7 @@ export default function Features() {
                 Scales With You
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                From small manufacturers to large production facilities, CabiPro
+                From small cabinet shops to large joinery workshops and manufacturing facilities, CabiPro
                 scales with your business. Add production teams and features as
                 you grow.
               </p>
