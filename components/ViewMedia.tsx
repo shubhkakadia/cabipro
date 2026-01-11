@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import {
@@ -39,7 +39,6 @@ interface ViewMediaProps {
   selectedFile: ViewFile;
   setSelectedFile: (file: ViewFile | null) => void;
   setViewFileModal: (open: boolean) => void;
-  setPageNumber: (page: number) => void;
   allFiles?: Array<{
     id?: string;
     filename?: string;
@@ -56,7 +55,6 @@ export default function ViewMedia({
   selectedFile,
   setSelectedFile,
   setViewFileModal,
-  setPageNumber,
   allFiles = [],
   currentIndex = 0,
 }: ViewMediaProps) {
@@ -198,12 +196,11 @@ export default function ViewMedia({
   const handleClose = useCallback(() => {
     setViewFileModal(false);
     setSelectedFile(null);
-    setPageNumber(1);
     setNumPages(null);
     setPdfScale(1.0);
     setImageScale(1.0);
     setCurrentPageInView(1);
-  }, [setViewFileModal, setSelectedFile, setPageNumber]);
+  }, [setViewFileModal, setSelectedFile]);
 
   // Handle keyboard navigation
   useEffect(() => {

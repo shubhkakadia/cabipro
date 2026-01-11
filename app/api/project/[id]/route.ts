@@ -13,7 +13,7 @@ export async function GET(
 
     const project = await prisma.project.findFirst({
       where: {
-        project_id: id,
+        id: id,
         organization_id: user.organizationId,
         is_deleted: false,
       },
@@ -89,7 +89,7 @@ export async function PATCH(
     // Check if project exists and belongs to this organization
     const existingProject = await prisma.project.findFirst({
       where: {
-        project_id: id,
+        id: id,
         organization_id: user.organizationId,
       },
     });
@@ -193,7 +193,7 @@ export async function DELETE(
     // Check if project exists and is not already deleted
     const existingProject = await prisma.project.findFirst({
       where: {
-        project_id: id,
+        id: id,
         organization_id: user.organizationId,
       },
     });

@@ -95,6 +95,21 @@ interface Item {
   [key: string]: unknown;
 }
 
+interface ExportRow {
+  po: PurchaseOrder;
+  item: POItem | null;
+  orderNo: string;
+  supplierName: string;
+  status: string;
+  createdAtStr: string;
+  orderedAtStr: string;
+  orderedByName: string;
+  projectId: string;
+  projectName: string;
+  notes: string;
+  imageUrl: string;
+}
+
 interface POItem {
   id: string;
   item_id?: string;
@@ -886,6 +901,7 @@ export default function PurchaseOrderPage() {
         );
       }
     } catch (err) {
+      console.error("Error deleting purchase order:", err);
       toast.error("Failed to delete purchase order", {
         position: "top-right",
         autoClose: 3000,
@@ -985,7 +1001,7 @@ export default function PurchaseOrderPage() {
       const projectName = po.mto?.project?.name || "";
 
       const rows = (po.items || []).map((it: POItem) => {
-        const item = it.item || {} as Item;
+        const item = it.item || ({} as Item);
         const imageUrl = item.image?.url ? `${origin}/${item.image.url}` : "";
 
         return {
@@ -1029,48 +1045,40 @@ export default function PurchaseOrderPage() {
   // Column mapping for Excel export
   const columnMap = useMemo(() => {
     return {
-      "Order No": (row: { orderNo: string }) => row.orderNo,
-      Supplier: (row: { supplierName: string }) => row.supplierName,
-      Status: (row: { status: string }) => row.status,
-      "Created At": (row: { createdAtStr: string }) => row.createdAtStr,
-      "Ordered At": (row: { orderedAtStr: string }) => row.orderedAtStr,
-      "Ordered By": (row: { orderedByName: string }) => row.orderedByName,
-      "Project ID": (row: { projectId: string }) => row.projectId,
-      "Project Name": (row: { projectName: string }) => row.projectName,
-      Notes: (row: { notes: string }) => row.notes,
-      "Image URL": (row: { imageUrl: string }) => row.imageUrl,
-      "Sheet Color": (row: { item: POItem | null }) =>
-        row.item?.item?.sheet?.color || "",
-      "Sheet Finish": (row: { item: POItem | null }) =>
-        row.item?.item?.sheet?.finish || "",
-      "Sheet Face": (row: { item: POItem | null }) =>
-        row.item?.item?.sheet?.face || "",
-      "Sheet Dimensions": (row: { item: POItem | null }) =>
+      "Order No": (row: ExportRow) => row.orderNo,
+      Supplier: (row: ExportRow) => row.supplierName,
+      Status: (row: ExportRow) => row.status,
+      "Created At": (row: ExportRow) => row.createdAtStr,
+      "Ordered At": (row: ExportRow) => row.orderedAtStr,
+      "Ordered By": (row: ExportRow) => row.orderedByName,
+      "Project ID": (row: ExportRow) => row.projectId,
+      "Project Name": (row: ExportRow) => row.projectName,
+      Notes: (row: ExportRow) => row.notes,
+      "Image URL": (row: ExportRow) => row.imageUrl,
+      "Sheet Color": (row: ExportRow) => row.item?.item?.sheet?.color || "",
+      "Sheet Finish": (row: ExportRow) => row.item?.item?.sheet?.finish || "",
+      "Sheet Face": (row: ExportRow) => row.item?.item?.sheet?.face || "",
+      "Sheet Dimensions": (row: ExportRow) =>
         row.item?.item?.sheet?.dimensions || "",
-      "Handle Color": (row: { item: POItem | null }) =>
-        row.item?.item?.handle?.color || "",
-      "Handle Type": (row: { item: POItem | null }) =>
-        row.item?.item?.handle?.type || "",
-      "Handle Dimensions": (row: { item: POItem | null }) =>
+      "Handle Color": (row: ExportRow) => row.item?.item?.handle?.color || "",
+      "Handle Type": (row: ExportRow) => row.item?.item?.handle?.type || "",
+      "Handle Dimensions": (row: ExportRow) =>
         row.item?.item?.handle?.dimensions || "",
-      "Handle Material": (row: { item: POItem | null }) =>
+      "Handle Material": (row: ExportRow) =>
         row.item?.item?.handle?.material || "",
-      "Hardware Name": (row: { item: POItem | null }) =>
-        row.item?.item?.hardware?.name || "",
-      "Hardware Type": (row: { item: POItem | null }) =>
-        row.item?.item?.hardware?.type || "",
-      "Hardware Dimensions": (row: { item: POItem | null }) =>
+      "Hardware Name": (row: ExportRow) => row.item?.item?.hardware?.name || "",
+      "Hardware Type": (row: ExportRow) => row.item?.item?.hardware?.type || "",
+      "Hardware Dimensions": (row: ExportRow) =>
         row.item?.item?.hardware?.dimensions || "",
-      "Hardware Sub Category": (row: { item: POItem | null }) =>
+      "Hardware Sub Category": (row: ExportRow) =>
         row.item?.item?.hardware?.sub_category || "",
-      "Accessory Name": (row: { item: POItem | null }) =>
+      "Accessory Name": (row: ExportRow) =>
         row.item?.item?.accessory?.name || "",
-      Category: (row: { item: POItem | null }) =>
-        row.item?.item?.category || "",
-      Quantity: (row: { item: POItem | null }) => row.item?.quantity ?? "",
-      "Unit Price (including GST)": (row: { item: POItem | null }) =>
+      Category: (row: ExportRow) => row.item?.item?.category || "",
+      Quantity: (row: ExportRow) => row.item?.quantity ?? "",
+      "Unit Price (including GST)": (row: ExportRow) =>
         row.item?.unit_price ?? "",
-      Total: (row: { item: POItem | null }) => {
+      Total: (row: ExportRow) => {
         if (!row.item) return "";
         const qty = parseFloat(String(row.item.quantity || 0));
         const price = parseFloat(String(row.item.unit_price || 0));
@@ -1113,28 +1121,19 @@ export default function PurchaseOrderPage() {
   }, []);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<ExportRow>({
     columnMap,
     columnWidths,
     filenamePrefix: "purchase_orders",
     sheetName: "PurchaseOrders",
-    selectedColumns:
-      selectedColumns.length === availableColumns.length
-        ? undefined
-        : selectedColumns,
-  }) as {
-    exportToExcel: (data: typeof flattenedPOData) => Promise<void>;
-    isExporting: boolean;
-  };
-
-  const handleExportToExcel = () => {
-    exportToExcel(flattenedPOData);
-  };
+    selectedColumns,
+    availableColumns,
+  });
 
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -1258,7 +1257,7 @@ export default function PurchaseOrderPage() {
 
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() => exportToExcel(flattenedPOData)}
                               disabled={
                                 isExporting ||
                                 filteredAndSortedPOs.length === 0 ||
@@ -2246,7 +2245,9 @@ export default function PurchaseOrderPage() {
                                                             <span className="text-xs text-gray-600">
                                                               $
                                                               {parseFloat(
-                                                                String(item.unit_price)
+                                                                String(
+                                                                  item.unit_price
+                                                                )
                                                               ).toFixed(2)}
                                                             </span>
                                                           </td>
@@ -2255,10 +2256,14 @@ export default function PurchaseOrderPage() {
                                                               $
                                                               {formatMoney(
                                                                 parseFloat(
-                                                                  String(item.quantity)
+                                                                  String(
+                                                                    item.quantity
+                                                                  )
                                                                 ) *
                                                                   parseFloat(
-                                                                    String(item.unit_price)
+                                                                    String(
+                                                                      item.unit_price
+                                                                    )
                                                                   )
                                                               )}
                                                             </span>
@@ -2458,7 +2463,9 @@ export default function PurchaseOrderPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-slate-200">
                         {selectedPO.items.map((item: POItem) => {
-                          const orderedQty = parseFloat(String(item.quantity || 0));
+                          const orderedQty = parseFloat(
+                            String(item.quantity || 0)
+                          );
                           const existingReceived = getExistingReceived(item);
                           const remainingQty = getRemaining(item);
                           const newDelivery = quantityReceived[item.id] || 0;
@@ -2781,7 +2788,6 @@ export default function PurchaseOrderPage() {
       {/* Invoice Preview Modal */}
       {showInvoicePreview && selectedInvoiceFile && (
         <ViewMedia
-          setPageNumber={() => {}}
           selectedFile={selectedInvoiceFile}
           setSelectedFile={(file: ViewFile | null) =>
             setSelectedInvoiceFile(file)

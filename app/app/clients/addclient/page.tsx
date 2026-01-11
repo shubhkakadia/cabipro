@@ -415,14 +415,14 @@ export default function AddClientPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-full w-full overflow-y-auto">
             <div className="px-4 py-2">
               {/* Header */}
               <div className="flex items-center gap-2 mb-4">
-                <button
+              <button
                   onClick={() => router.back()}
                   className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
                 >

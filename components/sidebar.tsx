@@ -7,7 +7,6 @@ import {
   PanelsTopLeft,
   InspectionPanel,
   Warehouse,
-  SquareArrowOutUpRight,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -30,7 +29,7 @@ export default function Sidebar() {
     {
       icon: LayoutDashboard,
       label: "Dashboard",
-      href: "/app/",
+      href: "/app",
       access: false,
       subtabs: [],
     },
@@ -201,7 +200,7 @@ export default function Sidebar() {
                         )}
                       </button>
 
-                      <div
+                      {/* <div
                         className="p-1.5 rounded-md hover:bg-teal-100 transition-colors duration-200 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -218,7 +217,7 @@ export default function Sidebar() {
                         aria-label={`Open ${item.label} in new tab`}
                       >
                         <SquareArrowOutUpRight className="w-3.5 h-3.5 text-teal-600 group-hover:text-emerald-700" />
-                      </div>
+                      </div> */}
                     </div>
 
                     {dropdownOpen && (
@@ -240,7 +239,7 @@ export default function Sidebar() {
                               <span className="text-sm font-medium">
                                 {link.name}
                               </span>
-                              <div
+                              {/* <div
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
@@ -248,7 +247,7 @@ export default function Sidebar() {
                                 className="ml-auto p-1.5 rounded-md hover:bg-teal-100 transition-colors duration-200 cursor-pointer"
                               >
                                 <SquareArrowOutUpRight className="w-3.5 h-3.5 text-teal-600 group-hover:text-emerald-700" />
-                              </div>
+                              </div> */}
                             </button>
                           );
                         })}
@@ -287,7 +286,7 @@ export default function Sidebar() {
                   >
                     {item.label}
                   </h1>
-                  <div
+                  {/* <div
                     className="p-1.5 rounded-md hover:bg-teal-100 transition-colors duration-200 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -303,7 +302,7 @@ export default function Sidebar() {
                     aria-label={`Open ${item.label} in new tab`}
                   >
                     <SquareArrowOutUpRight className="w-3.5 h-3.5 text-teal-600 group-hover:text-emerald-700" />
-                  </div>
+                  </div> */}
                 </button>
               );
             })}
@@ -336,7 +335,7 @@ export default function Sidebar() {
               >
                 Settings
               </h1>
-              <div
+              {/* <div
                 className="ml-auto p-1.5 rounded-md hover:bg-teal-100 transition-colors duration-200 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -352,7 +351,7 @@ export default function Sidebar() {
                 aria-label="Open Settings in new tab"
               >
                 <SquareArrowOutUpRight className="w-3.5 h-3.5 text-teal-600 group-hover:text-emerald-700" />
-              </div>
+              </div> */}
             </button>
             <p className="text-xs text-teal-600/80 text-center mt-2 px-2">
               v{versions.version}

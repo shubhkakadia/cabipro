@@ -1163,7 +1163,6 @@ export default function DeleteFilesPage() {
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
           setViewFileModal={setViewFileModal}
-          setPageNumber={() => {}}
         />
       )}
 

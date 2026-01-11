@@ -194,7 +194,6 @@ export default function ProjectDetailPage() {
   // ViewMedia modal state (for SiteMeasurementsSection)
   const [viewFileModal, setViewFileModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
-  const [pageNumber, setPageNumber] = useState(1); // Used by ViewMedia component
 
   const [showDeleteFileModal, setShowDeleteFileModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<FileData | null>(null);
@@ -285,7 +284,7 @@ export default function ProjectDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, selectedLot?.id, selectedLot?.lot_id]);
 
   const fetchLotData = useCallback(
     async (forceRefresh = false) => {
@@ -549,7 +548,7 @@ export default function ProjectDetailPage() {
     if (selectedLot && selectedLot.id) {
       fetchLotData();
     }
-  }, [selectedLot?.id, fetchLotData]);
+  }, [selectedLot?.id, fetchLotData, selectedLot]);
 
   useEffect(() => {
     fetchClients();
@@ -1586,9 +1585,9 @@ export default function ProjectDetailPage() {
                 <div className="flex items-center gap-4 mb-4">
                   <button
                     onClick={() => router.back()}
-                    className="cursor-pointer p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
                   >
-                    <ChevronLeft className="w-6 h-6 text-slate-600" />
+                    <ChevronLeft className="w-8 h-8 text-slate-600" />
                   </button>
                   <div className="flex-1 flex items-center gap-2">
                     {isProjectEditing ? (
@@ -2401,7 +2400,7 @@ export default function ProjectDetailPage() {
                           Material Selection
                         </h2>
                         <MaterialSelection
-                          lot_id={selectedLot?.lot_id || ""}
+                          lot_id={selectedLot?.id || ""}
                           project_id={id}
                         />
                       </div>
@@ -3151,7 +3150,6 @@ export default function ProjectDetailPage() {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             setViewFileModal={setViewFileModal}
-            setPageNumber={setPageNumber}
             allFiles={
               (selectedFile.allFiles as Array<{
                 id?: string;

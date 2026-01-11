@@ -1,11 +1,5 @@
 "use client";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Sidebar from "@/components/sidebar";
 import PaginationFooter from "@/components/PaginationFooter";
 import {
@@ -190,22 +184,13 @@ export default function EmployeesPage() {
   }, []);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<Employee>({
     columnMap,
     filenamePrefix: "employees",
     sheetName: "Employees",
-    selectedColumns:
-      selectedColumns.length === availableColumns.length
-        ? undefined
-        : selectedColumns,
-  }) as {
-    exportToExcel: (data: Employee[]) => Promise<void>;
-    isExporting: boolean;
-  };
-
-  const handleExportToExcel = () => {
-    exportToExcel(filteredAndSortedEmployees);
-  };
+    selectedColumns,
+    availableColumns,
+  });
 
   // Get distinct roles from employees data
   const distinctRoles = useMemo(() => {
@@ -600,7 +585,9 @@ export default function EmployeesPage() {
                           </div>
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() =>
+                                exportToExcel(filteredAndSortedEmployees)
+                              }
                               disabled={
                                 isExporting ||
                                 filteredAndSortedEmployees.length === 0 ||

@@ -462,22 +462,13 @@ export default function ProjectsPage() {
   }, []);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<Project>({
     columnMap,
     filenamePrefix: "projects",
     sheetName: "Projects",
-    selectedColumns:
-      selectedColumns.length === availableColumns.length
-        ? undefined
-        : selectedColumns,
-  }) as {
-    exportToExcel: (data: Project[]) => Promise<void>;
-    isExporting: boolean;
-  };
-
-  const handleExportToExcel = () => {
-    exportToExcel(filteredAndSortedProjects);
-  };
+    selectedColumns,
+    availableColumns,
+  });
 
   // Helper function to get client name from project
   const getClientName = (project: Project): string | null => {
@@ -729,7 +720,9 @@ export default function ProjectsPage() {
                           </div>
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() =>
+                                exportToExcel(filteredAndSortedProjects)
+                              }
                               disabled={
                                 isExporting ||
                                 filteredAndSortedProjects.length === 0 ||
@@ -931,7 +924,7 @@ export default function ProjectsPage() {
                                     key={project.id}
                                     onClick={() => {
                                       router.push(
-                                        `/app/projects/${project.project_id}`
+                                        `/app/projects/${project.id}`
                                       );
                                     }}
                                     className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"

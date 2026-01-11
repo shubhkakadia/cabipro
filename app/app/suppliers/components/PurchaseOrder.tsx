@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { toast } from "react-toastify";
 // import { useAuth } from "@/contexts/AuthContext";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
@@ -135,7 +135,7 @@ export default function PurchaseOrder({ supplierId, onCountChange }: PurchaseOrd
     showProgressToast: (fileCount: number) => void;
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
-    getUploadProgressHandler: (fileCount: number) => (progressEvent: { loaded: number; total?: number }) => void;
+    getUploadProgressHandler: (fileCount: number) => (progressEvent: AxiosProgressEvent) => void;
   };
   
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -1321,7 +1321,6 @@ export default function PurchaseOrder({ supplierId, onCountChange }: PurchaseOrd
           selectedFile={selectedInvoiceFile}
           setSelectedFile={(file: ViewFile | null) => setSelectedInvoiceFile(file)}
           setViewFileModal={setShowInvoicePreview}
-          setPageNumber={() => {}}
         />
       )}
 

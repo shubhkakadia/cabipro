@@ -12,8 +12,8 @@ import {
 import { formData } from "./MaterialSelectionConstants";
 import axios from "axios";
 import { toast } from "react-toastify";
-import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import Image from "next/image";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 
@@ -88,6 +88,19 @@ interface Version {
   areas?: Area[];
 }
 
+interface ExportRow {
+  "Area Name": string;
+  "Bed Option": string;
+  "Area Notes": string;
+  "Item Name": string;
+  Category: string;
+  Applicable: string;
+  "Item Notes": string;
+  "Row Type"?: "data" | "separator" | "height_header" | "height_data";
+  "Height Label"?: string;
+  "Height Value"?: string | number;
+}
+
 interface MaterialSelectionData {
   id: string;
   current_version_id: string;
@@ -141,7 +154,6 @@ export default function MaterialSelection({
     {}
   );
   const [lotData, setLotData] = useState<LotData | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
 
   // File upload states
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -1971,6 +1983,186 @@ export default function MaterialSelection({
     }
   };
 
+  // Convert version data to export rows
+  const convertVersionDataToExportRows = (versionData: Version | null): ExportRow[] => {
+    if (!versionData) return [];
+
+    const rows: ExportRow[] = [];
+
+    // Process areas - only include areas with values
+    if (versionData.areas && Array.isArray(versionData.areas)) {
+      versionData.areas.forEach((area: Area) => {
+        const hasItems =
+          area.items && Array.isArray(area.items) && area.items.length > 0;
+        const hasAreaNotes =
+          area.notes &&
+          typeof area.notes === "string" &&
+          area.notes.trim() !== "";
+
+        if (hasItems || hasAreaNotes) {
+          const areaName = area.area_name || "";
+          const bedOption = area.bed_option || "";
+          const areaNote = area.notes || "";
+
+          // If area has items, add each item as a row
+          if (hasItems && area.items && area.items.length > 0) {
+            area.items.forEach(
+              (item: {
+                name?: string;
+                category?: string | null;
+                is_applicable?: boolean;
+                item_notes?: string;
+              }) => {
+                rows.push({
+                  "Area Name": areaName,
+                  "Bed Option": bedOption,
+                  "Area Notes": areaNote,
+                  "Item Name": item.name || "",
+                  Category: item.category || "",
+                  Applicable: item.is_applicable ? "Yes" : "No",
+                  "Item Notes": item.item_notes || "",
+                  "Row Type": "data",
+                });
+              }
+            );
+          } else {
+            // If area only has notes but no items, add one row with area info
+            rows.push({
+              "Area Name": areaName,
+              "Bed Option": bedOption,
+              "Area Notes": areaNote,
+              "Item Name": "",
+              Category: "",
+              Applicable: "",
+              "Item Notes": "",
+              "Row Type": "data",
+            });
+          }
+        }
+      });
+    }
+
+    // Add heights section if any height values exist
+    const hasHeights =
+      versionData.ceiling_height ||
+      versionData.bulkhead_height ||
+      versionData.kicker_height ||
+      versionData.cabinetry_height;
+
+    if (hasHeights) {
+      // Add separator row (empty row)
+      rows.push({
+        "Area Name": "",
+        "Bed Option": "",
+        "Area Notes": "",
+        "Item Name": "",
+        Category: "",
+        Applicable: "",
+        "Item Notes": "",
+        "Row Type": "separator",
+      });
+
+      // Add heights header
+      rows.push({
+        "Area Name": "Heights",
+        "Bed Option": "",
+        "Area Notes": "",
+        "Item Name": "",
+        Category: "",
+        Applicable: "",
+        "Item Notes": "",
+        "Row Type": "height_header",
+      });
+
+      // Add height data rows
+      if (versionData.ceiling_height) {
+        rows.push({
+          "Area Name": "Ceiling Height (mm)",
+          "Bed Option": String(versionData.ceiling_height),
+          "Area Notes": "",
+          "Item Name": "",
+          Category: "",
+          Applicable: "",
+          "Item Notes": "",
+          "Row Type": "height_data",
+        });
+      }
+      if (versionData.bulkhead_height) {
+        rows.push({
+          "Area Name": "Bulkhead Height (mm)",
+          "Bed Option": String(versionData.bulkhead_height),
+          "Area Notes": "",
+          "Item Name": "",
+          Category: "",
+          Applicable: "",
+          "Item Notes": "",
+          "Row Type": "height_data",
+        });
+      }
+      if (versionData.kicker_height) {
+        rows.push({
+          "Area Name": "Kicker Height (mm)",
+          "Bed Option": String(versionData.kicker_height),
+          "Area Notes": "",
+          "Item Name": "",
+          Category: "",
+          Applicable: "",
+          "Item Notes": "",
+          "Row Type": "height_data",
+        });
+      }
+      if (versionData.cabinetry_height) {
+        rows.push({
+          "Area Name": "Cabinetry Height (mm)",
+          "Bed Option": String(versionData.cabinetry_height),
+          "Area Notes": "",
+          "Item Name": "",
+          Category: "",
+          Applicable: "",
+          "Item Notes": "",
+          "Row Type": "height_data",
+        });
+      }
+    }
+
+    return rows;
+  };
+
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    return {
+      "Area Name": (row: ExportRow) => row["Area Name"],
+      "Bed Option": (row: ExportRow) => row["Bed Option"],
+      "Area Notes": (row: ExportRow) => row["Area Notes"],
+      "Item Name": (row: ExportRow) => row["Item Name"],
+      Category: (row: ExportRow) => row.Category,
+      Applicable: (row: ExportRow) => row.Applicable,
+      "Item Notes": (row: ExportRow) => row["Item Notes"],
+    };
+  }, []);
+
+  // Column widths
+  const columnWidths = useMemo(
+    () => ({
+      "Area Name": 20,
+      "Bed Option": 15,
+      "Area Notes": 30,
+      "Item Name": 25,
+      Category: 15,
+      Applicable: 12,
+      "Item Notes": 40,
+    }),
+    []
+  );
+
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport({
+    columnMap,
+    columnWidths,
+    filenamePrefix: "Material_Selection",
+    sheetName: "Material Selection",
+  });
+
   // Export to Excel
   const handleExportToExcel = async () => {
     if (!selectedVersionId) {
@@ -1987,122 +2179,27 @@ export default function MaterialSelection({
         return;
       }
 
-      // Prepare data for Excel
-      const excelData = [];
+      // Convert version data to export rows
+      const exportRows = convertVersionDataToExportRows(versionData);
 
-      // Add header row
-      excelData.push([
-        "Area Name",
-        "Bed Option",
-        "Area Notes",
-        "Item Name",
-        "Category",
-        "Applicable",
-        "Item Notes",
-      ]);
-
-      // Process areas - only include areas with values
-      if (versionData.areas && Array.isArray(versionData.areas)) {
-        versionData.areas.forEach((area: Area) => {
-          // Check if area has any items or notes
-          const hasItems =
-            area.items && Array.isArray(area.items) && area.items.length > 0;
-          const hasAreaNotes =
-            area.notes &&
-            typeof area.notes === "string" &&
-            area.notes.trim() !== "";
-
-          if (hasItems || hasAreaNotes) {
-            const areaName = area.area_name || "";
-            const bedOption = area.bed_option || "";
-            const areaNote = area.notes || "";
-
-            // If area has items, add each item as a row
-            if (hasItems && area.items && area.items.length > 0) {
-              area.items.forEach(
-                (item: {
-                  name?: string;
-                  category?: string | null;
-                  is_applicable?: boolean;
-                  item_notes?: string;
-                }) => {
-                  excelData.push([
-                    areaName,
-                    bedOption,
-                    areaNote,
-                    item.name || "",
-                    item.category || "",
-                    item.is_applicable ? "Yes" : "No",
-                    item.item_notes || "",
-                  ]);
-                }
-              );
-            } else {
-              // If area only has notes but no items, add one row with area info
-              excelData.push([areaName, bedOption, areaNote, "", "", "", ""]);
-            }
-          }
+      if (exportRows.length === 0) {
+        toast.warning("No data to export.", {
+          position: "top-right",
+          autoClose: 3000,
         });
+        return;
       }
-
-      // Add heights section if any height values exist
-      const hasHeights =
-        versionData.ceiling_height ||
-        versionData.bulkhead_height ||
-        versionData.kicker_height ||
-        versionData.cabinetry_height;
-
-      if (hasHeights) {
-        excelData.push([]); // Empty row
-        excelData.push(["Heights"]); // Header
-        excelData.push([
-          "Ceiling Height (mm)",
-          versionData.ceiling_height || "",
-        ]);
-        excelData.push([
-          "Bulkhead Height (mm)",
-          versionData.bulkhead_height || "",
-        ]);
-        excelData.push(["Kicker Height (mm)", versionData.kicker_height || ""]);
-        excelData.push([
-          "Cabinetry Height (mm)",
-          versionData.cabinetry_height || "",
-        ]);
-      }
-
-      // Create workbook and worksheet
-      const ws = XLSX.utils.aoa_to_sheet(excelData);
-
-      // Set column widths
-      ws["!cols"] = [
-        { wch: 20 }, // Area Name
-        { wch: 15 }, // Bed Option
-        { wch: 30 }, // Area Notes
-        { wch: 25 }, // Item Name
-        { wch: 15 }, // Category
-        { wch: 12 }, // Applicable
-        { wch: 40 }, // Item Notes
-      ];
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Material Selection");
 
       // Get version number for filename
       const versionNumber =
         versionsList.find((v) => v.id === selectedVersionId)?.version_number ||
         "1";
 
-      // Generate filename
-      const filename = `Material_Selection_V${versionNumber}_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
-
-      // Export file
-      XLSX.writeFile(wb, filename);
-
-      toast.success("Material selection exported to Excel successfully!", {
-        position: "top-right",
-        autoClose: 3000,
+      // Export using the hook with custom filename
+      await exportToExcel(exportRows, {
+        customFilename: `Material_Selection_V${versionNumber}_${
+          new Date().toISOString().split("T")[0]
+        }.xlsx`,
       });
     } catch (err) {
       console.error("Error exporting to Excel:", err);
@@ -2270,6 +2367,11 @@ export default function MaterialSelection({
     );
   }
 
+  console.log("materialSelectionData", materialSelectionData);
+  console.log("isCurrentVersion", isCurrentVersion);
+  console.log("versionsList", versionsList);
+  console.log("selectedVersionId", selectedVersionId);
+
   return (
     <div className="space-y-6">
       {/* Version Selector and Create Button */}
@@ -2322,11 +2424,11 @@ export default function MaterialSelection({
               </button>
               <button
                 onClick={handleExportToExcel}
-                disabled={!selectedVersionId}
+                disabled={!selectedVersionId || isExporting}
                 className="cursor-pointer hover:bg-green-600 flex items-center gap-2 px-6 py-2 bg-green-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
               >
                 <Download className="w-4 h-4" />
-                Export to Excel
+                {isExporting ? "Exporting..." : "Export to Excel"}
               </button>
             </>
           )}
@@ -2376,7 +2478,7 @@ export default function MaterialSelection({
             onChange={(e) =>
               handleHeightChange("ceilingHeight", e.target.value)
             }
-            disabled={!isCurrentVersion || !!materialSelectionData}
+            disabled={!isCurrentVersion && !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2395,7 +2497,7 @@ export default function MaterialSelection({
             onChange={(e) =>
               handleHeightChange("bulkheadHeight", e.target.value)
             }
-            disabled={!isCurrentVersion || !!materialSelectionData}
+            disabled={!isCurrentVersion && !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2412,7 +2514,7 @@ export default function MaterialSelection({
             id="kickerHeight"
             value={heights.kickerHeight}
             onChange={(e) => handleHeightChange("kickerHeight", e.target.value)}
-            disabled={!isCurrentVersion || !!materialSelectionData}
+            disabled={!isCurrentVersion && !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -2431,7 +2533,7 @@ export default function MaterialSelection({
             onChange={(e) =>
               handleHeightChange("cabinetryHeight", e.target.value)
             }
-            disabled={!isCurrentVersion || !!materialSelectionData}
+            disabled={!isCurrentVersion && !!materialSelectionData}
             className="border border-slate-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-secondary focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"
           />
         </div>
@@ -3539,7 +3641,6 @@ export default function MaterialSelection({
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
           setViewFileModal={setViewFileModal}
-          setPageNumber={setPageNumber}
         />
       )}
     </div>

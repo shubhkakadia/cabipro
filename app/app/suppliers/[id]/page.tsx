@@ -1,6 +1,12 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import Sidebar from "@/components/sidebar";
 // import CRMLayout from "@/components/tabs";
 // import TabsController from "@/components/tabscontroller";
@@ -147,7 +153,7 @@ export default function SupplierDetailPage() {
 
   const fetchSupplier = useCallback(async () => {
     if (!id || typeof id !== "string") return;
-    
+
     try {
       setLoading(true);
 
@@ -168,7 +174,7 @@ export default function SupplierDetailPage() {
         console.error("Error Response:", err.response?.data);
         setError(
           err.response?.data?.message ||
-          "An error occurred while fetching supplier data"
+            "An error occurred while fetching supplier data"
         );
       } else {
         setError("An error occurred while fetching supplier data");
@@ -180,7 +186,7 @@ export default function SupplierDetailPage() {
 
   const fetchItems = useCallback(async () => {
     if (!id || typeof id !== "string") return;
-    
+
     try {
       setLoadingItems(true);
 
@@ -257,7 +263,7 @@ export default function SupplierDetailPage() {
 
   const handleSave = async () => {
     if (!id || typeof id !== "string") return;
-    
+
     try {
       setIsUpdating(true);
 
@@ -300,7 +306,7 @@ export default function SupplierDetailPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-          "Failed to update supplier. Please try again.",
+            "Failed to update supplier. Please try again.",
           {
             position: "top-right",
             autoClose: 5000,
@@ -337,7 +343,6 @@ export default function SupplierDetailPage() {
     }));
   };
 
-
   const formatValue = (value: unknown): string => {
     if (
       value === null ||
@@ -357,13 +362,14 @@ export default function SupplierDetailPage() {
     if (!name) return "?";
     const parts = name.trim().split(" ");
     if (parts.length === 1) return parts[0]?.[0]?.toUpperCase() || "?";
-    return `${parts[0]?.[0] || ""}${parts[parts.length - 1]?.[0] || ""
-      }`.toUpperCase();
+    return `${parts[0]?.[0] || ""}${
+      parts[parts.length - 1]?.[0] || ""
+    }`.toUpperCase();
   };
 
   const handleDeleteSupplierConfirm = async () => {
     if (!supplier) return;
-    
+
     try {
       setIsDeletingSupplier(true);
       const response = await axios.delete(
@@ -413,10 +419,7 @@ export default function SupplierDetailPage() {
   const filteredItems = useMemo(() => {
     return items.filter((item: Item) => {
       // Category filter
-      if (
-        itemsCategoryTab !== "all" &&
-        item.category !== itemsCategoryTab
-      ) {
+      if (itemsCategoryTab !== "all" && item.category !== itemsCategoryTab) {
         return false;
       }
       // Search filter
@@ -440,11 +443,10 @@ export default function SupplierDetailPage() {
     });
   }, [items, itemsCategoryTab, searchQuery]);
 
-
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
@@ -481,9 +483,9 @@ export default function SupplierDetailPage() {
                 <div className="flex items-center gap-3 mb-4">
                   <button
                     onClick={() => router.back()}
-                    className="cursor-pointer p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
                   >
-                    <ChevronLeft className="w-6 h-6 text-slate-600" />
+                    <ChevronLeft className="w-8 h-8 text-slate-600" />
                   </button>
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-slate-600">
@@ -492,7 +494,10 @@ export default function SupplierDetailPage() {
                   </div>
                   <div className="flex gap-2">
                     {!isEditing ? (
-                      <div ref={dropdownRef} className="relative dropdown-container">
+                      <div
+                        ref={dropdownRef}
+                        className="relative dropdown-container"
+                      >
                         <button
                           onClick={() => setShowDropdown(!showDropdown)}
                           className="cursor-pointer flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
@@ -582,7 +587,10 @@ export default function SupplierDetailPage() {
                                       type="email"
                                       value={editData.email || ""}
                                       onChange={(e) =>
-                                        handleInputChange("email", e.target.value)
+                                        handleInputChange(
+                                          "email",
+                                          e.target.value
+                                        )
                                       }
                                       placeholder={supplier.email || "Email"}
                                       className="text-sm text-slate-600 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none flex-1"
@@ -595,19 +603,26 @@ export default function SupplierDetailPage() {
                                         type="tel"
                                         value={editData.phone || ""}
                                         onChange={(e) =>
-                                          handleInputChange("phone", e.target.value)
+                                          handleInputChange(
+                                            "phone",
+                                            e.target.value
+                                          )
                                         }
                                         placeholder="Eg. 0400 123 456 or +61 400 123 456"
-                                        className={`text-sm text-slate-600 px-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none w-full ${editData.phone && !validatePhone(editData.phone)
+                                        className={`text-sm text-slate-600 px-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none w-full ${
+                                          editData.phone &&
+                                          !validatePhone(editData.phone)
                                             ? "border-red-500"
                                             : "border-slate-300"
-                                          }`}
+                                        }`}
                                       />
-                                      {editData.phone && !validatePhone(editData.phone) && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                          Please enter a valid Australian phone number
-                                        </p>
-                                      )}
+                                      {editData.phone &&
+                                        !validatePhone(editData.phone) && (
+                                          <p className="mt-1 text-xs text-red-500">
+                                            Please enter a valid Australian
+                                            phone number
+                                          </p>
+                                        )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -621,12 +636,16 @@ export default function SupplierDetailPage() {
                                           e.target.value
                                         )
                                       }
-                                      placeholder={supplier.website || "Website"}
+                                      placeholder={
+                                        supplier.website || "Website"
+                                      }
                                       className="text-sm text-slate-600 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none flex-1"
                                     />
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-sm text-slate-600">ABN</p>
+                                    <p className="text-sm text-slate-600">
+                                      ABN
+                                    </p>
                                     <input
                                       type="text"
                                       value={editData.abn_number || ""}
@@ -653,7 +672,9 @@ export default function SupplierDetailPage() {
                                           e.target.value
                                         )
                                       }
-                                      placeholder={supplier.address || "Address"}
+                                      placeholder={
+                                        supplier.address || "Address"
+                                      }
                                       className="text-sm text-slate-600 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none flex-1"
                                     />
                                   </div>
@@ -662,7 +683,10 @@ export default function SupplierDetailPage() {
                                     <textarea
                                       value={editData.notes || ""}
                                       onChange={(e) =>
-                                        handleInputChange("notes", e.target.value)
+                                        handleInputChange(
+                                          "notes",
+                                          e.target.value
+                                        )
                                       }
                                       placeholder={formatValue(supplier.notes)}
                                       rows={3}
@@ -733,7 +757,9 @@ export default function SupplierDetailPage() {
                     {/* Contacts - 30% width */}
                     <ContactSection
                       contacts={contacts as Contact[]}
-                      onContactsUpdate={(contacts) => setContacts(contacts as Contact[])}
+                      onContactsUpdate={(contacts) =>
+                        setContacts(contacts as Contact[])
+                      }
                       parentId={supplier?.supplier_id || ""}
                       parentType="supplier"
                       parentName={supplier?.name || ""}
@@ -747,10 +773,11 @@ export default function SupplierDetailPage() {
                       <nav className="flex space-x-8 px-4">
                         <button
                           onClick={() => setActiveTab("materials-to-order")}
-                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "materials-to-order"
-                            ? "border-primary text-primary"
-                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "materials-to-order"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
                         >
                           <div className="flex items-center gap-2">
                             <Package className="w-4 h-4" />
@@ -764,10 +791,11 @@ export default function SupplierDetailPage() {
                         </button>
                         <button
                           onClick={() => setActiveTab("purchase-order")}
-                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "purchase-order"
-                            ? "border-primary text-primary"
-                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "purchase-order"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
                         >
                           <div className="flex items-center gap-2">
                             <PackagePlus className="w-4 h-4" />
@@ -781,10 +809,11 @@ export default function SupplierDetailPage() {
                         </button>
                         <button
                           onClick={() => setActiveTab("statements")}
-                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "statements"
-                            ? "border-primary text-primary"
-                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "statements"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
                         >
                           <div className="flex items-center gap-2">
                             <Receipt className="w-4 h-4" />
@@ -793,10 +822,11 @@ export default function SupplierDetailPage() {
                         </button>
                         <button
                           onClick={() => setActiveTab("cost-sheet")}
-                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "cost-sheet"
-                            ? "border-primary text-primary"
-                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "cost-sheet"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
                         >
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4" />
@@ -805,10 +835,11 @@ export default function SupplierDetailPage() {
                         </button>
                         <button
                           onClick={() => setActiveTab("items")}
-                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "items"
-                            ? "border-primary text-primary"
-                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                          className={`cursor-pointer py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "items"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
                         >
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4" />
@@ -823,7 +854,6 @@ export default function SupplierDetailPage() {
                       {/* Materials to Order Tab */}
                       {activeTab === "materials-to-order" && (
                         <MaterialsToOrder
-                          supplier={supplier}
                           supplierId={id}
                           onCountChange={setMtoCount}
                         />
@@ -875,10 +905,11 @@ export default function SupplierDetailPage() {
                               {/* Always show "All" tab */}
                               <button
                                 onClick={() => setItemsCategoryTab("all")}
-                                className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${itemsCategoryTab === "all"
-                                  ? "border-primary text-primary"
-                                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                  }`}
+                                className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                                  itemsCategoryTab === "all"
+                                    ? "border-primary text-primary"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                }`}
                               >
                                 All
                               </button>
@@ -886,10 +917,11 @@ export default function SupplierDetailPage() {
                               {availableCategories.SHEET && (
                                 <button
                                   onClick={() => setItemsCategoryTab("SHEET")}
-                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${itemsCategoryTab === "SHEET"
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
+                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                                    itemsCategoryTab === "SHEET"
+                                      ? "border-primary text-primary"
+                                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                  }`}
                                 >
                                   Sheet
                                 </button>
@@ -897,32 +929,39 @@ export default function SupplierDetailPage() {
                               {availableCategories.HANDLE && (
                                 <button
                                   onClick={() => setItemsCategoryTab("HANDLE")}
-                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${itemsCategoryTab === "HANDLE"
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
+                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                                    itemsCategoryTab === "HANDLE"
+                                      ? "border-primary text-primary"
+                                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                  }`}
                                 >
                                   Handle
                                 </button>
                               )}
                               {availableCategories.HARDWARE && (
                                 <button
-                                  onClick={() => setItemsCategoryTab("HARDWARE")}
-                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${itemsCategoryTab === "HARDWARE"
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
+                                  onClick={() =>
+                                    setItemsCategoryTab("HARDWARE")
+                                  }
+                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                                    itemsCategoryTab === "HARDWARE"
+                                      ? "border-primary text-primary"
+                                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                  }`}
                                 >
                                   Hardware
                                 </button>
                               )}
                               {availableCategories.ACCESSORY && (
                                 <button
-                                  onClick={() => setItemsCategoryTab("ACCESSORY")}
-                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${itemsCategoryTab === "ACCESSORY"
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
+                                  onClick={() =>
+                                    setItemsCategoryTab("ACCESSORY")
+                                  }
+                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                                    itemsCategoryTab === "ACCESSORY"
+                                      ? "border-primary text-primary"
+                                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                  }`}
                                 >
                                   Accessory
                                 </button>
@@ -932,10 +971,11 @@ export default function SupplierDetailPage() {
                                   onClick={() =>
                                     setItemsCategoryTab("EDGING_TAPE")
                                   }
-                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${itemsCategoryTab === "EDGING_TAPE"
-                                    ? "border-primary text-primary"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
+                                  className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                                    itemsCategoryTab === "EDGING_TAPE"
+                                      ? "border-primary text-primary"
+                                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                  }`}
                                 >
                                   Edging Tape
                                 </button>
@@ -1003,11 +1043,14 @@ export default function SupplierDetailPage() {
                                               alt={item.item_id}
                                               className="w-12 h-12 object-cover rounded border border-slate-200"
                                               onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
+                                                const target =
+                                                  e.target as HTMLImageElement;
                                                 target.style.display = "none";
-                                                const nextSibling = target.nextSibling as HTMLElement;
+                                                const nextSibling =
+                                                  target.nextSibling as HTMLElement;
                                                 if (nextSibling) {
-                                                  nextSibling.style.display = "flex";
+                                                  nextSibling.style.display =
+                                                    "flex";
                                                 }
                                               }}
                                               width={48}
@@ -1194,7 +1237,7 @@ export default function SupplierDetailPage() {
                                         <p className="text-xs text-slate-900">
                                           $
                                           {parseFloat(
-                                            item.price || 0
+                                            String(item.price) || "0"
                                           ).toFixed(2)}
                                         </p>
                                       </td>

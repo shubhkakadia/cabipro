@@ -531,7 +531,6 @@ export default function FileUploadSection({
   // ViewMedia modal state
   const [viewFileModal, setViewFileModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
-  const [, setPageNumber] = useState(1);
 
   // Carousel state for Finished Site Photos
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -987,7 +986,6 @@ export default function FileUploadSection({
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
           setViewFileModal={setViewFileModal}
-          setPageNumber={setPageNumber}
           allFiles={
             (selectedFile.allFiles as Array<{
               id?: string;

@@ -221,7 +221,7 @@ export default function ConfigPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">

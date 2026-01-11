@@ -1014,20 +1014,15 @@ export default function InventoryPage() {
   }, [activeTab]);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<Item>({
     columnMap,
     filenamePrefix: `${activeTab}_inventory_export`,
     sheetName: `${
       activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
     } Inventory`,
-    selectedColumns:
-      selectedColumns.length === availableColumns.length
-        ? undefined
-        : selectedColumns,
-  }) as {
-    exportToExcel: (data: Item[]) => Promise<void>;
-    isExporting: boolean;
-  };
+    selectedColumns,
+    availableColumns,
+  });
 
   // Compute dynamic column count for table states
   const columnCount = useMemo(() => {

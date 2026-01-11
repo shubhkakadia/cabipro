@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
+import { useExcelExport } from "@/hooks/useExcelExport";
 
 // Type definitions
 interface Stage {
@@ -77,7 +78,6 @@ export default function LotAtGlancePage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [stageFilters, setStageFilters] = useState<StageFilters>({});
-  const [isExporting, setIsExporting] = useState(false);
   const [showFilterDropdowns, setShowFilterDropdowns] = useState<
     Record<string, boolean>
   >({});
@@ -345,113 +345,52 @@ export default function LotAtGlancePage() {
   // Check if any filters are active
   const hasActiveFilters = search || Object.keys(stageFilters).length > 0;
 
-  // Export to Excel
-  const handleExportToExcel = async () => {
-    if (filteredLots.length === 0) {
-      toast.warning(
-        "No data to export. Please adjust your filters or add lots.",
-        {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-        }
-      );
-      return;
-    }
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    const map: Record<string, (lot: Lot) => string> = {
+      "Client Name": (lot: Lot) => lot.project?.client?.client_name || "N/A",
+      "Project Name": (lot: Lot) => lot.project?.name || "N/A",
+      "Lot ID": (lot: Lot) => lot.lot_id || "",
+      "Percentage Completed": (lot: Lot) => `${getPercentageCompleted(lot)}%`,
+    };
 
-    if (selectedColumns.length === 0) {
-      toast.warning("Please select at least one column to export.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-      });
-      return;
-    }
-
-    setIsExporting(true);
-
-    try {
-      // Dynamic import of xlsx to avoid SSR issues
-      const XLSX = await import("xlsx");
-
-      // Map of column names to their data extraction functions
-      const columnMap: Record<string, (lot: Lot) => string> = {
-        "Client Name": (lot: Lot) => lot.project?.client?.client_name || "N/A",
-        "Project Name": (lot: Lot) => lot.project?.name || "N/A",
-        "Lot ID": (lot: Lot) => lot.lot_id || "",
-        "Percentage Completed": (lot: Lot) => `${getPercentageCompleted(lot)}%`,
+    // Add stage columns to the map
+    stages.forEach((stage: string) => {
+      map[stage] = (lot: Lot) => {
+        const status = getStageStatus(lot, stage);
+        return formatStatus(status);
       };
+    });
 
-      // Add stage columns to the map
-      stages.forEach((stage: string) => {
-        columnMap[stage] = (lot: Lot) => {
-          const status = getStageStatus(lot, stage);
-          return formatStatus(status);
-        };
-      });
+    return map;
+  }, []);
 
-      // Add stage widths
-      stages.forEach(() => {
-        // We'll set stage widths to 18 in the export
-      });
+  // Column widths
+  const columnWidths = useMemo(() => {
+    const widths: Record<string, number> = {
+      "Client Name": 25,
+      "Project Name": 25,
+      "Lot ID": 15,
+      "Percentage Completed": 20,
+    };
 
-      // Prepare data for export - only include selected columns
-      const exportData = filteredLots.map((lot: Lot) => {
-        const row: Record<string, string> = {};
-        selectedColumns.forEach((column: string) => {
-          if (columnMap[column]) {
-            row[column] = columnMap[column](lot);
-          }
-        });
-        return row;
-      });
+    // Add stage widths (all stages are 18)
+    stages.forEach((stage: string) => {
+      widths[stage] = 18;
+    });
 
-      // Create a new workbook
-      const wb = XLSX.utils.book_new();
+    return widths;
+  }, []);
 
-      // Create a worksheet from the data
-      const ws = XLSX.utils.json_to_sheet(exportData);
-
-      // Set column widths for selected columns only
-      const colWidths = selectedColumns.map((column) => {
-        if (column === "Client Name") return { wch: 25 };
-        if (column === "Project Name") return { wch: 25 };
-        if (column === "Lot ID") return { wch: 15 };
-        if (column === "Percentage Completed") return { wch: 20 };
-        return { wch: 18 }; // Stage columns
-      });
-      ws["!cols"] = colWidths;
-
-      // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Lots at a Glance");
-
-      // Generate filename with current date
-      const currentDate = new Date().toISOString().split("T")[0];
-      const filename = `lots_at_glance_${currentDate}.xlsx`;
-
-      // Save the file
-      XLSX.writeFile(wb, filename);
-
-      // Show success message
-      toast.success(
-        `Successfully exported ${exportData.length} lots to ${filename}`,
-        {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-        }
-      );
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      toast.error("Failed to export data to Excel. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport<Lot>({
+    columnMap,
+    columnWidths,
+    filenamePrefix: "lots_at_glance",
+    sheetName: "Lots at a Glance",
+    selectedColumns,
+    availableColumns,
+  });
 
   // Handle project name click - navigate to project page
   const handleProjectNameClick = (lot: Lot, event: React.MouseEvent) => {
@@ -734,7 +673,7 @@ export default function LotAtGlancePage() {
                           {/* Export to Excel */}
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() => exportToExcel(filteredLots)}
                               disabled={
                                 isExporting ||
                                 filteredLots.length === 0 ||

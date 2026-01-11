@@ -7,9 +7,6 @@ import React, {
   useCallback,
 } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import TabsController from "@/components/tabscontroller";
 import PaginationFooter from "@/components/PaginationFooter";
 import {
   Plus,
@@ -22,14 +19,9 @@ import {
   ChevronDown,
   AlertTriangle,
 } from "lucide-react";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
-import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
-// import { useDispatch } from "react-redux";
-// import { replaceTab } from "@/state/reducer/tabs";
-// import { v4 as uuidv4 } from "uuid";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
 
@@ -44,7 +36,7 @@ interface PurchaseOrder {
 }
 
 interface Supplier {
-  supplier_id: string;
+  id: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -60,7 +52,6 @@ interface Supplier {
 
 export default function SuppliersPage() {
   const router = useRouter();
-  // const dispatch = useDispatch();
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -335,27 +326,18 @@ export default function SuppliersPage() {
   }, []);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<Supplier>({
     columnMap,
     filenamePrefix: "suppliers",
     sheetName: "Suppliers",
-    selectedColumns:
-      selectedColumns.length === availableColumns.length
-        ? undefined
-        : selectedColumns,
-  }) as {
-    exportToExcel: (data: Supplier[]) => Promise<void>;
-    isExporting: boolean;
-  };
-
-  const handleExportToExcel = () => {
-    exportToExcel(filteredAndSortedSuppliers);
-  };
+    selectedColumns,
+    availableColumns,
+  });
 
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -457,7 +439,9 @@ export default function SuppliersPage() {
                             ref={columnDropdownRef}
                           >
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() =>
+                                exportToExcel(filteredAndSortedSuppliers)
+                              }
                               disabled={
                                 isExporting ||
                                 filteredAndSortedSuppliers.length === 0 ||
@@ -626,10 +610,10 @@ export default function SuppliersPage() {
 
                                 return (
                                   <tr
-                                    key={supplier.supplier_id}
+                                    key={supplier.id}
                                     onClick={() => {
                                       router.push(
-                                        `/app/suppliers/${supplier.supplier_id}`
+                                        `/app/suppliers/${supplier.id}`
                                       );
                                     }}
                                     className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"

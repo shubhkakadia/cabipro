@@ -12,7 +12,7 @@ import {
   FileText,
 } from "lucide-react";
 // import { useAuth } from "@/contexts/AuthContext";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { toast } from "react-toastify";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
@@ -77,7 +77,7 @@ export default function Statement({ supplierId }: StatementProps) {
     showProgressToast: (fileCount: number) => void;
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
-    getUploadProgressHandler: (fileCount: number) => (progressEvent: { loaded: number; total?: number }) => void;
+    getUploadProgressHandler: (fileCount: number) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   const [statements, setStatements] = useState<Statement[]>([]);
@@ -752,7 +752,6 @@ export default function Statement({ supplierId }: StatementProps) {
           selectedFile={selectedFile}
           setSelectedFile={(file: ViewFile | null) => setSelectedFile(file)}
           setViewFileModal={setViewFileModal}
-          setPageNumber={() => {}}
         />
       )}
 
@@ -1073,7 +1072,6 @@ export default function Statement({ supplierId }: StatementProps) {
               }}
               setSelectedFile={() => {}}
               setViewFileModal={setShowFilePreview}
-              setPageNumber={() => {}}
             />
           )}
         </div>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import {
   Plus,
@@ -262,7 +262,8 @@ export default function ClientsPage() {
     if (selectedColumns.length === 0) {
       setSelectedColumns([...availableColumns]);
     }
-  }, [availableColumns, selectedColumns.length]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Column mapping for Excel export
   const columnMap = useMemo(() => {
@@ -313,18 +314,13 @@ export default function ClientsPage() {
   }, []);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<Client>({
     columnMap,
     filenamePrefix: "clients",
     sheetName: "Clients",
-    selectedColumns:
-      selectedColumns.length === availableColumns.length
-        ? undefined
-        : selectedColumns,
-  }) as {
-    exportToExcel: (data: Client[]) => Promise<void>;
-    isExporting: boolean;
-  };
+    selectedColumns,
+    availableColumns,
+  });
 
   // Handlers (handleChange, handleSubmit)
   const handleSort = (field: string) => {
@@ -423,7 +419,7 @@ export default function ClientsPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">

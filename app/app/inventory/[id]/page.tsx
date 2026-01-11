@@ -222,7 +222,6 @@ export default function InventoryItemDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
   const [viewFileModal, setViewFileModal] = useState(false);
-  const [pageNumber, setPageNumber] = useState(1);
   const [formData, setFormData] = useState<FormData>({});
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -1802,9 +1801,9 @@ export default function InventoryItemDetailPage() {
                 <div className="flex items-center gap-3 mb-4">
                   <button
                     onClick={() => router.back()}
-                    className="cursor-pointer p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
                   >
-                    <ChevronLeft className="w-6 h-6 text-slate-600" />
+                    <ChevronLeft className="w-8 h-8 text-slate-600" />
                   </button>
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-slate-600">
@@ -2672,7 +2671,6 @@ export default function InventoryItemDetailPage() {
             selectedFile={selectedFile}
             setSelectedFile={(file: ViewFile | null) => setSelectedFile(file)}
             setViewFileModal={setViewFileModal}
-            setPageNumber={setPageNumber}
             allFiles={
               item?.image
                 ? [

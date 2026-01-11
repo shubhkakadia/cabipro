@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Sidebar from "@/components/sidebar";
 import PaginationFooter from "@/components/PaginationFooter";
 import {
@@ -428,12 +428,13 @@ export default function LogsPage() {
   }, []);
 
   // Initialize Excel export hook
-  const { exportToExcel, isExporting } = useExcelExport({
+  const { exportToExcel, isExporting } = useExcelExport<Log>({
     columnMap,
     filenamePrefix: "logs",
     sheetName: "Logs",
-    selectedColumns: selectedColumns.length === availableColumns.length ? undefined : selectedColumns,
-  }) as { exportToExcel: (data: Log[]) => Promise<void>; isExporting: boolean };
+    selectedColumns,
+    availableColumns,
+  });
 
   const getActionColor = (action: string | undefined): string => {
     switch (action) {

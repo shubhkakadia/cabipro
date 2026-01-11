@@ -7,10 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import PaginationFooter from "@/components/PaginationFooter";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -40,6 +37,7 @@ import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import CreateMaterialsToOrderModal from "./components/CreateMaterialsToOrderModal";
 import AppHeader from "@/components/AppHeader";
+import { useExcelExport } from "@/hooks/useExcelExport";
 
 // Type definitions
 interface MediaFile {
@@ -150,6 +148,35 @@ interface Supplier {
   supplier_id: string;
 }
 
+interface ExportRow {
+  Project: string;
+  Lot: string;
+  Items: number;
+  "Items Remaining": number;
+  Status: string;
+  "Supplier Name": string;
+  "Image URL": string;
+  Category: string;
+  "Sheet Color": string;
+  "Sheet Finish": string;
+  "Sheet Face": string;
+  "Sheet Dimensions": string;
+  "Handle Color": string;
+  "Handle Type": string;
+  "Handle Dimensions": string;
+  "Handle Material": string;
+  "Hardware Name": string;
+  "Hardware Type": string;
+  "Hardware Dimensions": string;
+  "Hardware Sub Category": string;
+  "Accessory Name": string;
+  Quantity: number | string;
+  "Quantity Ordered": number | string;
+  "Created At": string;
+  "Created By": string;
+  Notes: string;
+}
+
 export default function MaterialsToOrderPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -169,7 +196,6 @@ export default function MaterialsToOrderPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isExporting, setIsExporting] = useState(false);
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   // Define all available columns for export
   const availableColumns: string[] = [
@@ -547,207 +573,195 @@ export default function MaterialsToOrderPage() {
     }
   };
 
-  const handleExportToExcel = async () => {
-    if (filteredAndSortedMTOs.length === 0) {
-      toast.warning("No data to export.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
-    setIsExporting(true);
-    try {
-      const XLSX = await import("xlsx");
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
+  // Flatten MTOs to export rows
+  const flattenedExportData = useMemo(() => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-      // Column width map
-      const columnWidthMap = {
-        Project: 22,
-        Lot: 24,
-        Items: 8,
-        "Items Remaining": 12,
-        Status: 14,
-        "Supplier Name": 22,
-        "Image URL": 28,
-        Category: 12,
-        "Sheet Color": 14,
-        "Sheet Finish": 14,
-        "Sheet Face": 12,
-        "Sheet Dimensions": 18,
-        "Handle Color": 14,
-        "Handle Type": 14,
-        "Handle Dimensions": 18,
-        "Handle Material": 16,
-        "Hardware Name": 18,
-        "Hardware Type": 16,
-        "Hardware Dimensions": 18,
-        "Hardware Sub Category": 20,
-        "Accessory Name": 18,
-        Quantity: 10,
-        "Quantity Ordered": 16,
-        "Created At": 20,
-        "Created By": 22,
-        Notes: 30,
-      };
+    return filteredAndSortedMTOs.flatMap((mto: MTO) => {
+      const projectName = mto.project?.name || "";
+      const lotsJoined = (mto.lots || []).map((l: Lot) => l.name).join(", ");
+      const itemsCount = mto.__itemsCount || mto.items?.length || 0;
+      const itemsRemaining =
+        mto.__itemsRemaining ||
+        mto.items?.filter(
+          (it: MTOItem) => (it.quantity_ordered_po || 0) < (it.quantity || 0)
+        ).length ||
+        0;
+      const createdAtStr = mto.createdAt
+        ? new Date(mto.createdAt).toLocaleString()
+        : "";
+      const createdByName = mto.createdBy?.employee
+        ? `${mto.createdBy.employee.first_name || ""} ${
+            mto.createdBy.employee.last_name || ""
+          }`.trim()
+        : "";
+      const notes = mto.notes || "";
 
-      // Flatten to one row per item with detailed columns
-      const exportData = filteredAndSortedMTOs.flatMap((mto: MTO) => {
-        const projectName = mto.project?.name || "";
-        const lotsJoined = (mto.lots || []).map((l: Lot) => l.name).join(", ");
-        const itemsCount = mto.__itemsCount || mto.items?.length || 0;
-        const itemsRemaining =
-          mto.__itemsRemaining ||
-          mto.items?.filter(
-            (it: MTOItem) => (it.quantity_ordered_po || 0) < (it.quantity || 0)
-          ).length ||
-          0;
-        const createdAtStr = mto.createdAt
-          ? new Date(mto.createdAt).toLocaleString()
-          : "";
-        const createdByName = mto.createdBy?.employee
-          ? `${mto.createdBy.employee.first_name || ""} ${
-              mto.createdBy.employee.last_name || ""
-            }`.trim()
-          : "";
-        const notes = mto.notes || "";
+      const rows = (mto.items || []).map((it: MTOItem) => {
+        const item = it.item || {};
+        const supplierName = item.supplier?.name || "";
+        const imageUrl = item.image?.url ? `${origin}/${item.image.url}` : "";
+        const category = item.category || "";
+        const sheetColor = item.sheet?.color || "";
+        const sheetFinish = item.sheet?.finish || "";
+        const sheetFace = item.sheet?.face || "";
+        const sheetDimensions = item.sheet?.dimensions || "";
+        const handleColor = item.handle?.color || "";
+        const handleType = item.handle?.type || "";
+        const handleDimensions = item.handle?.dimensions || "";
+        const handleMaterial = item.handle?.material || "";
+        const hwName = item.hardware?.name || "";
+        const hwType = item.hardware?.type || "";
+        const hwDimensions = item.hardware?.dimensions || "";
+        const hwSubCategory = item.hardware?.sub_category || "";
+        const accName = item.accessory?.name || "";
 
-        const rows = (mto.items || []).map((it: MTOItem) => {
-          const item = it.item || {};
-          const supplierName = item.supplier?.name || "";
-          const imageUrl = item.image?.url ? `${origin}/${item.image.url}` : "";
-          const category = item.category || "";
-          // Sheet details
-          const sheetColor = item.sheet?.color || "";
-          const sheetFinish = item.sheet?.finish || "";
-          const sheetFace = item.sheet?.face || "";
-          const sheetDimensions = item.sheet?.dimensions || "";
-          // Handle details
-          const handleColor = item.handle?.color || "";
-          const handleType = item.handle?.type || "";
-          const handleDimensions = item.handle?.dimensions || "";
-          const handleMaterial = item.handle?.material || "";
-          // Hardware details
-          const hwName = item.hardware?.name || "";
-          const hwType = item.hardware?.type || "";
-          const hwDimensions = item.hardware?.dimensions || "";
-          const hwSubCategory = item.hardware?.sub_category || "";
-          // Accessory details
-          const accName = item.accessory?.name || "";
+        const actualQuantityOrdered = (it.ordered_items || []).reduce(
+          (sum: number, poItem: { quantity?: number }) =>
+            sum + (poItem.quantity || 0),
+          0
+        );
 
-          // Calculate actual quantity ordered from purchase order items
-          const actualQuantityOrdered = (it.ordered_items || []).reduce(
-            (sum: number, poItem: { quantity?: number }) =>
-              sum + (poItem.quantity || 0),
-            0
-          );
-
-          // Build full row with all columns
-          const fullRow = {
-            Project: projectName,
-            Lot: lotsJoined,
-            Items: itemsCount,
-            "Items Remaining": itemsRemaining,
-            Status: mto.status || "",
-            "Supplier Name": supplierName,
-            "Image URL": imageUrl,
-            Category: category,
-            "Sheet Color": sheetColor,
-            "Sheet Finish": sheetFinish,
-            "Sheet Face": sheetFace,
-            "Sheet Dimensions": sheetDimensions,
-            "Handle Color": handleColor,
-            "Handle Type": handleType,
-            "Handle Dimensions": handleDimensions,
-            "Handle Material": handleMaterial,
-            "Hardware Name": hwName,
-            "Hardware Type": hwType,
-            "Hardware Dimensions": hwDimensions,
-            "Hardware Sub Category": hwSubCategory,
-            "Accessory Name": accName,
-            Quantity: it.quantity ?? "",
-            "Quantity Ordered": actualQuantityOrdered || "",
-            "Created At": createdAtStr,
-            "Created By": createdByName,
-            Notes: notes,
-          };
-
-          // Filter to only selected columns
-          const filteredRow = {};
-          selectedColumns.forEach((column) => {
-            if (fullRow.hasOwnProperty(column)) {
-              filteredRow[column] = fullRow[column];
-            }
-          });
-
-          return filteredRow;
-        });
-
-        // If no items, still output one row for the MTO with blanks for item columns
-        if (rows.length === 0) {
-          const fullRow = {
-            Project: projectName,
-            Lot: lotsJoined,
-            Items: itemsCount,
-            "Items Remaining": itemsRemaining,
-            Status: mto.status || "",
-            "Supplier Name": "",
-            "Image URL": "",
-            Category: "",
-            "Sheet Color": "",
-            "Sheet Finish": "",
-            "Sheet Face": "",
-            "Sheet Dimensions": "",
-            "Handle Color": "",
-            "Handle Type": "",
-            "Handle Dimensions": "",
-            "Handle Material": "",
-            "Hardware Name": "",
-            "Hardware Type": "",
-            "Hardware Dimensions": "",
-            "Hardware Sub Category": "",
-            "Accessory Name": "",
-            Quantity: "",
-            "Quantity Ordered": "",
-            "Created At": createdAtStr,
-            "Created By": createdByName,
-            Notes: notes,
-          };
-
-          // Filter to only selected columns
-          const filteredRow = {};
-          selectedColumns.forEach((column) => {
-            if (fullRow.hasOwnProperty(column)) {
-              filteredRow[column] = fullRow[column];
-            }
-          });
-
-          rows.push(filteredRow);
-        }
-        return rows;
+        return {
+          Project: projectName,
+          Lot: lotsJoined,
+          Items: itemsCount,
+          "Items Remaining": itemsRemaining,
+          Status: mto.status || "",
+          "Supplier Name": supplierName,
+          "Image URL": imageUrl,
+          Category: category,
+          "Sheet Color": sheetColor,
+          "Sheet Finish": sheetFinish,
+          "Sheet Face": sheetFace,
+          "Sheet Dimensions": sheetDimensions,
+          "Handle Color": handleColor,
+          "Handle Type": handleType,
+          "Handle Dimensions": handleDimensions,
+          "Handle Material": handleMaterial,
+          "Hardware Name": hwName,
+          "Hardware Type": hwType,
+          "Hardware Dimensions": hwDimensions,
+          "Hardware Sub Category": hwSubCategory,
+          "Accessory Name": accName,
+          Quantity: it.quantity ?? "",
+          "Quantity Ordered": actualQuantityOrdered || "",
+          "Created At": createdAtStr,
+          "Created By": createdByName,
+          Notes: notes,
+        } as ExportRow;
       });
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportData);
+      // If no items, still output one row for the MTO with blanks for item columns
+      if (rows.length === 0) {
+        rows.push({
+          Project: projectName,
+          Lot: lotsJoined,
+          Items: itemsCount,
+          "Items Remaining": itemsRemaining,
+          Status: mto.status || "",
+          "Supplier Name": "",
+          "Image URL": "",
+          Category: "",
+          "Sheet Color": "",
+          "Sheet Finish": "",
+          "Sheet Face": "",
+          "Sheet Dimensions": "",
+          "Handle Color": "",
+          "Handle Type": "",
+          "Handle Dimensions": "",
+          "Handle Material": "",
+          "Hardware Name": "",
+          "Hardware Type": "",
+          "Hardware Dimensions": "",
+          "Hardware Sub Category": "",
+          "Accessory Name": "",
+          Quantity: "",
+          "Quantity Ordered": "",
+          "Created At": createdAtStr,
+          "Created By": createdByName,
+          Notes: notes,
+        } as ExportRow);
+      }
 
-      // Set column widths for selected columns only
-      const colWidths = selectedColumns.map((column) => ({
-        wch: columnWidthMap[column] || 15,
-      }));
-      ws["!cols"] = colWidths;
+      return rows;
+    });
+  }, [filteredAndSortedMTOs]);
 
-      XLSX.utils.book_append_sheet(wb, ws, "MaterialsToOrder");
-      const currentDate = new Date().toISOString().split("T")[0];
-      const filename = `materials_to_order_${currentDate}.xlsx`;
-      XLSX.writeFile(wb, filename);
-      toast.success(`Exported ${exportData.length} rows to ${filename}`);
-    } catch (err) {
-      console.error("Error exporting to Excel:", err);
-      toast.error("Failed to export data to Excel.");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    return {
+      Project: (row: ExportRow) => row.Project,
+      Lot: (row: ExportRow) => row.Lot,
+      Items: (row: ExportRow) => row.Items,
+      "Items Remaining": (row: ExportRow) => row["Items Remaining"],
+      Status: (row: ExportRow) => row.Status,
+      "Supplier Name": (row: ExportRow) => row["Supplier Name"],
+      "Image URL": (row: ExportRow) => row["Image URL"],
+      Category: (row: ExportRow) => row.Category,
+      "Sheet Color": (row: ExportRow) => row["Sheet Color"],
+      "Sheet Finish": (row: ExportRow) => row["Sheet Finish"],
+      "Sheet Face": (row: ExportRow) => row["Sheet Face"],
+      "Sheet Dimensions": (row: ExportRow) => row["Sheet Dimensions"],
+      "Handle Color": (row: ExportRow) => row["Handle Color"],
+      "Handle Type": (row: ExportRow) => row["Handle Type"],
+      "Handle Dimensions": (row: ExportRow) => row["Handle Dimensions"],
+      "Handle Material": (row: ExportRow) => row["Handle Material"],
+      "Hardware Name": (row: ExportRow) => row["Hardware Name"],
+      "Hardware Type": (row: ExportRow) => row["Hardware Type"],
+      "Hardware Dimensions": (row: ExportRow) => row["Hardware Dimensions"],
+      "Hardware Sub Category": (row: ExportRow) => row["Hardware Sub Category"],
+      "Accessory Name": (row: ExportRow) => row["Accessory Name"],
+      Quantity: (row: ExportRow) => row.Quantity,
+      "Quantity Ordered": (row: ExportRow) => row["Quantity Ordered"],
+      "Created At": (row: ExportRow) => row["Created At"],
+      "Created By": (row: ExportRow) => row["Created By"],
+      Notes: (row: ExportRow) => row.Notes,
+    };
+  }, []);
+
+  // Column width map
+  const columnWidths = useMemo(
+    () => ({
+      Project: 22,
+      Lot: 24,
+      Items: 8,
+      "Items Remaining": 12,
+      Status: 14,
+      "Supplier Name": 22,
+      "Image URL": 28,
+      Category: 12,
+      "Sheet Color": 14,
+      "Sheet Finish": 14,
+      "Sheet Face": 12,
+      "Sheet Dimensions": 18,
+      "Handle Color": 14,
+      "Handle Type": 14,
+      "Handle Dimensions": 18,
+      "Handle Material": 16,
+      "Hardware Name": 18,
+      "Hardware Type": 16,
+      "Hardware Dimensions": 18,
+      "Hardware Sub Category": 20,
+      "Accessory Name": 18,
+      Quantity: 10,
+      "Quantity Ordered": 16,
+      "Created At": 20,
+      "Created By": 22,
+      Notes: 30,
+    }),
+    []
+  );
+
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport<ExportRow>({
+    columnMap,
+    columnWidths,
+    filenamePrefix: "materials_to_order",
+    sheetName: "MaterialsToOrder",
+    selectedColumns,
+    availableColumns,
+  });
 
   const handleOpenMediaModal = (mto: MTO) => {
     setSelectedMtoForMedia(mto);
@@ -991,7 +1005,7 @@ export default function MaterialsToOrderPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16 h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -1101,7 +1115,7 @@ export default function MaterialsToOrderPage() {
 
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={handleExportToExcel}
+                              onClick={() => exportToExcel(flattenedExportData)}
                               disabled={
                                 isExporting ||
                                 filteredAndSortedMTOs.length === 0 ||
@@ -1922,16 +1936,18 @@ export default function MaterialsToOrderPage() {
                                                                               )
                                                                             );
                                                                           })()}
-                                                                          {item.quantity_received && item.quantity_received > 0 && (
-                                                                            <div className="flex items-center gap-1.5 text-green-600 text-xs">
-                                                                              <span>
-                                                                                Received:{" "}
-                                                                                {
-                                                                                  item.quantity_received
-                                                                                }
-                                                                              </span>
-                                                                            </div>
-                                                                          )}
+                                                                          {item.quantity_received &&
+                                                                            item.quantity_received >
+                                                                              0 && (
+                                                                              <div className="flex items-center gap-1.5 text-green-600 text-xs">
+                                                                                <span>
+                                                                                  Received:{" "}
+                                                                                  {
+                                                                                    item.quantity_received
+                                                                                  }
+                                                                                </span>
+                                                                              </div>
+                                                                            )}
                                                                         </div>
                                                                       </td>
                                                                       <td className="px-3 py-2 whitespace-nowrap">
@@ -2008,11 +2024,13 @@ export default function MaterialsToOrderPage() {
                                                                             Ordered
                                                                           </span>
                                                                         )}
-                                                                        {item.quantity_received && item.quantity_received > 0 && (
-                                                                          <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
-                                                                            Received
-                                                                          </span>
-                                                                        )}
+                                                                        {item.quantity_received &&
+                                                                          item.quantity_received >
+                                                                            0 && (
+                                                                            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
+                                                                              Received
+                                                                            </span>
+                                                                          )}
                                                                         {Number(
                                                                           item.quantity_ordered_po ||
                                                                             0
@@ -2378,7 +2396,6 @@ export default function MaterialsToOrderPage() {
           selectedFile={selectedFile}
           setSelectedFile={(file: ViewFile | null) => setSelectedFile(file)}
           setViewFileModal={setViewFileModal}
-          setPageNumber={() => {}}
         />
       )}
 

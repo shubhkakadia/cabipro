@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { toast } from "react-toastify";
 import {
   Package,
@@ -24,6 +24,7 @@ import DeleteConfirmation from "@/components/DeleteConfirmation";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 import AddItemModal from "../../suppliers/purchaseorder/components/AddItemModal";
 import { useUploadProgress } from "../../../../hooks/useUploadProgress";
+import { useExcelExport } from "@/hooks/useExcelExport";
 
 // Type definitions
 interface MaterialsToOrderProps {
@@ -119,6 +120,20 @@ interface CategoryItems {
   edging_tape: CategoryRow[];
 }
 
+interface ExportRow {
+  Category: string;
+  Brand: string;
+  Color: string;
+  Type: string;
+  Material: string;
+  Finish: string;
+  Name: string;
+  "Sub Category": string;
+  Dimensions: string;
+  Unit: string;
+  Quantity: string | number;
+}
+
 interface SearchResults {
   sheet: Item[];
   handle: Item[];
@@ -186,7 +201,7 @@ export default function MaterialsToOrder({
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
       fileCount: number
-    ) => (progressEvent: { loaded: number; total?: number }) => void;
+    ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   const [categoryItems, setCategoryItems] = useState<CategoryItems>({
@@ -236,7 +251,6 @@ export default function MaterialsToOrder({
   });
   const [viewFileModal, setViewFileModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
-  const [_pageNumber, setPageNumber] = useState(1);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -1019,43 +1033,8 @@ export default function MaterialsToOrder({
     [searchResults, isItemAlreadySelected]
   );
 
-  const handleExportToExcel = () => {
-    // Helper function to escape CSV values
-    const escapeCSV = (value: unknown): string => {
-      if (value === null || value === undefined || value === "") return "";
-      const stringValue = String(value);
-      // If value contains comma, quote, or newline, wrap in quotes and escape quotes
-      if (
-        stringValue.includes(",") ||
-        stringValue.includes('"') ||
-        stringValue.includes("\n")
-      ) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    };
-
-    // Define CSV header columns
-    const csvHeaderColumns = [
-      "Category",
-      "Brand",
-      "Color",
-      "Type",
-      "Material",
-      "Finish",
-      "Name",
-      "Sub Category",
-      "Dimensions",
-      "Unit",
-      "Quantity",
-    ];
-
-    // Calculate the number of fields needed after "Category" (before Unit and Quantity)
-    // Category is index 0, Unit is second-to-last, Quantity is last
-    // So we need: header.length - 3 (Category, Unit, Quantity) = fields between Category and Unit
-    const fieldsAfterCategory = csvHeaderColumns.length - 3; // 8 fields: Brand through Dimensions
-
-    // Create workbook data
+  // Convert categoryItems to export rows
+  const convertCategoryItemsToExportRows = useMemo((): ExportRow[] => {
     const categories = [
       "sheet",
       "handle",
@@ -1071,112 +1050,103 @@ export default function MaterialsToOrder({
       edging_tape: "Edging Tape",
     };
 
-    let csvContent = csvHeaderColumns.join(",") + "\n";
+    const rows: ExportRow[] = [];
 
     categories.forEach((category: string) => {
       const items = categoryItems[category as keyof CategoryItems];
       items.forEach((row: CategoryRow) => {
         if (row.item && row.quantity) {
           const item = row.item;
-          const fields = [];
-
-          fields.push(
-            escapeCSV(categoryNames[category as keyof typeof categoryNames])
-          );
+          const exportRow: ExportRow = {
+            Category: categoryNames[category as keyof typeof categoryNames],
+            Brand: "",
+            Color: "",
+            Type: "",
+            Material: "",
+            Finish: "",
+            Name: "",
+            "Sub Category": "",
+            Dimensions: "",
+            Unit: item.measurement_unit || "",
+            Quantity: row.quantity || "",
+          };
 
           // Category-specific fields
           if (category === "sheet" && item.sheet) {
-            fields.push(escapeCSV(item.sheet.brand || ""));
-            fields.push(escapeCSV(item.sheet.color || ""));
-            fields.push(""); // Type (empty for sheet)
-            fields.push(""); // Material (empty for sheet)
-            fields.push(escapeCSV(item.sheet.finish || ""));
-            fields.push(""); // Name (empty for sheet)
-            fields.push(""); // Sub Category (empty for sheet)
-            fields.push(escapeCSV(item.sheet.dimensions || ""));
+            exportRow.Brand = item.sheet.brand || "";
+            exportRow.Color = item.sheet.color || "";
+            exportRow.Finish = item.sheet.finish || "";
+            exportRow.Dimensions = item.sheet.dimensions || "";
           } else if (category === "handle" && item.handle) {
-            fields.push(escapeCSV(item.handle.brand || ""));
-            fields.push(escapeCSV(item.handle.color || ""));
-            fields.push(escapeCSV(item.handle.type || ""));
-            fields.push(escapeCSV(item.handle.material || ""));
-            fields.push(""); // Finish (empty for handle)
-            fields.push(""); // Name (empty for handle)
-            fields.push(""); // Sub Category (empty for handle)
-            fields.push(escapeCSV(item.handle.dimensions || ""));
+            exportRow.Brand = item.handle.brand || "";
+            exportRow.Color = item.handle.color || "";
+            exportRow.Type = item.handle.type || "";
+            exportRow.Material = item.handle.material || "";
+            exportRow.Dimensions = item.handle.dimensions || "";
           } else if (category === "hardware" && item.hardware) {
-            fields.push(escapeCSV(item.hardware.brand || ""));
-            fields.push(""); // Color (empty for hardware)
-            fields.push(""); // Type (empty for hardware)
-            fields.push(""); // Material (empty for hardware)
-            fields.push(""); // Finish (empty for hardware)
-            fields.push(escapeCSV(item.hardware.name || ""));
-            fields.push(escapeCSV(item.hardware.sub_category || ""));
-            fields.push(escapeCSV(item.hardware.dimensions || ""));
+            exportRow.Brand = item.hardware.brand || "";
+            exportRow.Name = item.hardware.name || "";
+            exportRow["Sub Category"] = item.hardware.sub_category || "";
+            exportRow.Dimensions = item.hardware.dimensions || "";
           } else if (category === "accessory" && item.accessory) {
-            fields.push(""); // Brand (empty for accessory)
-            fields.push(""); // Color (empty for accessory)
-            fields.push(""); // Type (empty for accessory)
-            fields.push(""); // Material (empty for accessory)
-            fields.push(""); // Finish (empty for accessory)
-            fields.push(escapeCSV(item.accessory.name || ""));
-            fields.push(""); // Sub Category (empty for accessory)
-            fields.push(""); // Dimensions (empty for accessory)
+            exportRow.Name = item.accessory.name || "";
           } else if (category === "edging_tape" && item.edging_tape) {
-            fields.push(escapeCSV(item.edging_tape.brand || ""));
-            fields.push(escapeCSV(item.edging_tape.color || ""));
-            fields.push(""); // Type (empty for edging_tape)
-            fields.push(""); // Material (empty for edging_tape)
-            fields.push(escapeCSV(item.edging_tape.finish || ""));
-            fields.push(""); // Name (empty for edging_tape)
-            fields.push(""); // Sub Category (empty for edging_tape)
-            fields.push(escapeCSV(item.edging_tape.dimensions || ""));
-          } else {
-            // Unknown category, add empty fields based on calculated count
-            // This ensures alignment with CSV header structure
-            for (let i = 0; i < fieldsAfterCategory; i++) {
-              fields.push("");
-            }
+            exportRow.Brand = item.edging_tape.brand || "";
+            exportRow.Color = item.edging_tape.color || "";
+            exportRow.Finish = item.edging_tape.finish || "";
+            exportRow.Dimensions = item.edging_tape.dimensions || "";
           }
 
-          fields.push(escapeCSV(item.measurement_unit || ""));
-          fields.push(escapeCSV(row.quantity || ""));
-
-          csvContent += fields.join(",") + "\n";
+          rows.push(exportRow);
         }
       });
     });
 
-    // Create blob and download
-    try {
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `materials_to_order_${Date.now()}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("Materials exported successfully!");
-    } catch (err) {
-      console.error("Error exporting to Excel:", err);
-      if (axios.isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message ||
-            "Failed to export materials. Please try again.",
-          {
-            position: "top-right",
-            autoClose: 3000,
-          }
-        );
-      } else {
-        toast.error("Failed to export materials. Please try again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    }
-  };
+    return rows;
+  }, [categoryItems]);
+
+  // Column mapping for Excel export
+  const columnMap = useMemo(() => {
+    return {
+      Category: (row: ExportRow) => row.Category,
+      Brand: (row: ExportRow) => row.Brand,
+      Color: (row: ExportRow) => row.Color,
+      Type: (row: ExportRow) => row.Type,
+      Material: (row: ExportRow) => row.Material,
+      Finish: (row: ExportRow) => row.Finish,
+      Name: (row: ExportRow) => row.Name,
+      "Sub Category": (row: ExportRow) => row["Sub Category"],
+      Dimensions: (row: ExportRow) => row.Dimensions,
+      Unit: (row: ExportRow) => row.Unit,
+      Quantity: (row: ExportRow) => row.Quantity,
+    };
+  }, []);
+
+  // Column widths
+  const columnWidths = useMemo(
+    () => ({
+      Category: 15,
+      Brand: 20,
+      Color: 15,
+      Type: 15,
+      Material: 20,
+      Finish: 15,
+      Name: 25,
+      "Sub Category": 18,
+      Dimensions: 18,
+      Unit: 10,
+      Quantity: 12,
+    }),
+    []
+  );
+
+  // Initialize Excel export hook
+  const { exportToExcel, isExporting } = useExcelExport({
+    columnMap,
+    columnWidths,
+    filenamePrefix: "materials_to_order",
+    sheetName: "Materials To Order",
+  });
 
   const handleDeleteMaterials = async () => {
     setIsDeleting(true);
@@ -1724,12 +1694,12 @@ export default function MaterialsToOrder({
           )}
 
           <button
-            onClick={handleExportToExcel}
-            disabled={!hasItems}
+            onClick={() => exportToExcel(convertCategoryItemsToExportRows)}
+            disabled={!hasItems || isExporting}
             className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
-            Export to Excel
+            {isExporting ? "Exporting..." : "Export to Excel"}
           </button>
           <button
             onClick={handleSaveMaterials}
@@ -3334,7 +3304,6 @@ export default function MaterialsToOrder({
           selectedFile={selectedFile}
           setSelectedFile={setSelectedFile}
           setViewFileModal={setViewFileModal}
-          setPageNumber={setPageNumber}
         />
       )}
     </div>

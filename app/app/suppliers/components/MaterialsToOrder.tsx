@@ -1440,7 +1440,6 @@ export default function MaterialsToOrder({
           selectedFile={selectedFile}
           setSelectedFile={(file: ViewFile | null) => setSelectedFile(file)}
           setViewFileModal={setViewFileModal}
-          setPageNumber={() => {}}
         />
       )}
 

@@ -1091,7 +1091,6 @@ export default function PurchaseOrderForm({
             setSelectedInvoiceFile(file)
           }
           setViewFileModal={setShowInvoicePreview}
-          setPageNumber={() => {}}
         />
       )}
     </div>

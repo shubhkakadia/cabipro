@@ -12,6 +12,7 @@ interface UseExcelExportConfig<T = unknown> {
   filenamePrefix: string;
   sheetName?: string;
   selectedColumns?: string[] | null;
+  availableColumns?: string[]; // If provided, normalize selectedColumns (if all selected, pass undefined)
 }
 
 /**
@@ -25,7 +26,7 @@ interface ExportOptions {
 
 /**
  * Custom hook for exporting data to Excel
- * 
+ *
  * @param config - Configuration object
  * @returns Object containing export function and loading state
  */
@@ -36,8 +37,17 @@ export const useExcelExport = <T = unknown>({
   filenamePrefix,
   sheetName = "Sheet1",
   selectedColumns = null,
+  availableColumns,
 }: UseExcelExportConfig<T>) => {
   const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // Normalize selectedColumns: if all columns are selected, treat as undefined (export all)
+  const normalizedSelectedColumns =
+    selectedColumns &&
+    availableColumns &&
+    selectedColumns.length === availableColumns.length
+      ? undefined
+      : selectedColumns;
 
   /**
    * Export data to Excel
@@ -50,19 +60,23 @@ export const useExcelExport = <T = unknown>({
   ): Promise<void> => {
     // Validate data
     if (!data || data.length === 0) {
-      toast.warning("No data to export. Please adjust your filters or add data.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-      });
+      toast.warning(
+        "No data to export. Please adjust your filters or add data.",
+        {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+        }
+      );
       return;
     }
 
     // Determine which columns to export
-    const columnsToExport = options.customSelectedColumns || selectedColumns;
+    const columnsToExport =
+      options.customSelectedColumns || normalizedSelectedColumns;
 
     // If selectedColumns is provided and empty, show warning
-    if (columnsToExport !== null && columnsToExport.length === 0) {
+    if (columnsToExport !== null && columnsToExport?.length === 0) {
       toast.warning("Please select at least one column to export.", {
         position: "top-right",
         autoClose: 3000,
@@ -121,7 +135,8 @@ export const useExcelExport = <T = unknown>({
 
       // Generate filename with current date
       const currentDate = new Date().toISOString().split("T")[0];
-      const filename = options.customFilename || `${filenamePrefix}_${currentDate}.xlsx`;
+      const filename =
+        options.customFilename || `${filenamePrefix}_${currentDate}.xlsx`;
 
       // Save the file
       XLSX.writeFile(wb, filename);
@@ -152,4 +167,3 @@ export const useExcelExport = <T = unknown>({
     isExporting,
   } as const;
 };
-

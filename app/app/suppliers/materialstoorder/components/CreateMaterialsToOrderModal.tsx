@@ -176,25 +176,31 @@ export default function CreateMaterialsToOrderModal({
 
     let matchesDetails = false;
     if (item.sheet) {
-      matchesDetails =
+      matchesDetails = !!(
         item.sheet.brand?.toLowerCase().includes(searchLower) ||
         item.sheet.color?.toLowerCase().includes(searchLower) ||
-        item.sheet.finish?.toLowerCase().includes(searchLower);
+        item.sheet.finish?.toLowerCase().includes(searchLower)
+      );
     } else if (item.handle) {
-      matchesDetails =
+      matchesDetails = !!(
         item.handle.brand?.toLowerCase().includes(searchLower) ||
         item.handle.color?.toLowerCase().includes(searchLower) ||
-        item.handle.type?.toLowerCase().includes(searchLower);
+        item.handle.type?.toLowerCase().includes(searchLower)
+      );
     } else if (item.hardware) {
-      matchesDetails =
+      matchesDetails = !!(
         item.hardware.brand?.toLowerCase().includes(searchLower) ||
-        item.hardware.name?.toLowerCase().includes(searchLower);
+        item.hardware.name?.toLowerCase().includes(searchLower)
+      );
     } else if (item.accessory) {
-      matchesDetails = item.accessory.name?.toLowerCase().includes(searchLower);
+      matchesDetails = !!item.accessory.name
+        ?.toLowerCase()
+        .includes(searchLower);
     } else if (item.edging_tape) {
-      matchesDetails =
+      matchesDetails = !!(
         item.edging_tape.brand?.toLowerCase().includes(searchLower) ||
-        item.edging_tape.color?.toLowerCase().includes(searchLower);
+        item.edging_tape.color?.toLowerCase().includes(searchLower)
+      );
     }
 
     return matchesCategory || matchesDesc || matchesDetails;
@@ -414,7 +420,7 @@ export default function CreateMaterialsToOrderModal({
     if (item.handle)
       return `${item.handle.brand} ${item.handle.color} ${item.handle.type}`;
     if (item.hardware) return `${item.hardware.brand} ${item.hardware.name}`;
-    if (item.accessory) return item.accessory.name;
+    if (item.accessory) return item.accessory.name || "Item";
     if (item.edging_tape)
       return `${item.edging_tape.brand} ${item.edging_tape.color}`;
     return item.description || "Item";
@@ -586,7 +592,7 @@ export default function CreateMaterialsToOrderModal({
                   {selectedItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan="6"
+                        colSpan={6}
                         className="px-4 py-8 text-center text-slate-500 text-sm"
                       >
                         No items selected. Search and add items above.
@@ -925,7 +931,6 @@ export default function CreateMaterialsToOrderModal({
           selectedFile={previewFile}
           setSelectedFile={(file: ViewFile | null) => setPreviewFile(file)}
           setViewFileModal={setShowFilePreview}
-          setPageNumber={() => {}}
         />
       )}
 

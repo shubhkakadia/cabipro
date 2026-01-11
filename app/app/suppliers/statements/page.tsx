@@ -8,8 +8,6 @@ import {
   useCallback,
 } from "react";
 import Sidebar from "@/components/sidebar";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import PaginationFooter from "@/components/PaginationFooter";
 import {
   Edit,
@@ -28,15 +26,11 @@ import {
   AlertTriangle,
   FileText,
 } from "lucide-react";
-// import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
-// import { useDispatch } from "react-redux";
-// import { replaceTab } from "@/state/reducer/tabs";
-// import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import AppHeader from "@/components/AppHeader";
 
@@ -1147,7 +1141,7 @@ export default function StatementsPage() {
   return (
     <div className="bg-tertiary">
       <AppHeader />
-      <div className="flex mt-16">
+      <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -1793,7 +1787,6 @@ export default function StatementsPage() {
             {/* View File Modal */}
             {viewFileModal && selectedFile && (
               <ViewMedia
-                setPageNumber={() => {}}
                 selectedFile={selectedFile}
                 setSelectedFile={(file: ViewFile | null) =>
                   setSelectedFile(file)
@@ -2185,7 +2178,6 @@ export default function StatementsPage() {
                 {/* File Preview Modal */}
                 {showFilePreview && statementForm.file && (
                   <ViewMedia
-                    setPageNumber={() => {}}
                     selectedFile={{
                       name: statementForm.file.name,
                       url: URL.createObjectURL(statementForm.file),

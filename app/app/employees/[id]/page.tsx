@@ -1145,12 +1145,12 @@ export default function EmployeeDetailPage() {
               <div className="p-3">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <button
-                    onClick={() => router.back()}
-                    className="cursor-pointer p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                  >
-                    <ChevronLeft className="w-6 h-6 text-slate-600" />
-                  </button>
+                <button
+                  onClick={() => router.back()}
+                  className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-8 h-8 text-slate-600" />
+                </button>
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-slate-600">
                       {employee.first_name} {employee.last_name}
@@ -2520,7 +2520,6 @@ export default function EmployeeDetailPage() {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             setViewFileModal={setViewFileModal}
-            setPageNumber={() => {}}
           />
         )}
 
