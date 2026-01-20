@@ -69,7 +69,7 @@ export default function AddItemModal({
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
   const [measuringUnitOptions, setMeasuringUnitOptions] = useState<string[]>(
-    []
+    [],
   );
   const [loadingMeasuringUnits, setLoadingMeasuringUnits] = useState(false);
   const [showCreateMeasuringUnitModal, setShowCreateMeasuringUnitModal] =
@@ -122,7 +122,7 @@ export default function AddItemModal({
   });
 
   const filteredCategories = categories.filter((category: string) =>
-    category.toLowerCase().includes(searchTerm.toLowerCase())
+    category.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const hardwareSubCategories: string[] = [
@@ -143,23 +143,23 @@ export default function AddItemModal({
 
   const filteredSubCategories = hardwareSubCategories.filter(
     (subCategory: string) =>
-      subCategory.toLowerCase().includes(subCategorySearchTerm.toLowerCase())
+      subCategory.toLowerCase().includes(subCategorySearchTerm.toLowerCase()),
   );
 
   // Face options
   const faceOptions: string[] = ["single side", "double side"];
   const filteredFaces = faceOptions.filter((face: string) =>
-    face.toLowerCase().includes(faceSearchTerm.toLowerCase())
+    face.toLowerCase().includes(faceSearchTerm.toLowerCase()),
   );
 
   // Measuring unit handlers
   const filteredMeasuringUnits = measuringUnitOptions.filter((unit: string) =>
-    unit.toLowerCase().includes(measuringUnitSearchTerm.toLowerCase())
+    unit.toLowerCase().includes(measuringUnitSearchTerm.toLowerCase()),
   );
 
   // Finish handlers
   const filteredFinishes = finishOptions.filter((finish: string) =>
-    finish.toLowerCase().includes(finishSearchTerm.toLowerCase())
+    finish.toLowerCase().includes(finishSearchTerm.toLowerCase()),
   );
 
   // Fetch suppliers on component mount
@@ -177,7 +177,7 @@ export default function AddItemModal({
       console.error("Error fetching suppliers:", error);
       if (axios.isAxiosError(error)) {
         toast.error(
-          error.response?.data?.message || "Failed to fetch suppliers"
+          error.response?.data?.message || "Failed to fetch suppliers",
         );
       }
     }
@@ -200,13 +200,13 @@ export default function AddItemModal({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
         const units = (response.data.data as ConfigItem[]).map(
-          (item: ConfigItem) => item.value
+          (item: ConfigItem) => item.value,
         );
         setMeasuringUnitOptions(units);
       }
@@ -214,7 +214,7 @@ export default function AddItemModal({
       console.error("Error fetching measuring units:", error);
       if (axios.isAxiosError(error)) {
         toast.error(
-          error.response?.data?.message || "Failed to fetch measuring units"
+          error.response?.data?.message || "Failed to fetch measuring units",
         );
       }
       // Fallback to empty array if API fails
@@ -241,13 +241,13 @@ export default function AddItemModal({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
         const finishes = (response.data.data as ConfigItem[]).map(
-          (item: ConfigItem) => item.value
+          (item: ConfigItem) => item.value,
         );
         setFinishOptions(finishes);
       }
@@ -255,7 +255,7 @@ export default function AddItemModal({
       console.error("Error fetching finishes:", error);
       if (axios.isAxiosError(error)) {
         toast.error(
-          error.response?.data?.message || "Failed to fetch finishes"
+          error.response?.data?.message || "Failed to fetch finishes",
         );
       }
       // Fallback to empty array if API fails
@@ -275,7 +275,7 @@ export default function AddItemModal({
       setFilteredSuppliers(suppliers);
     } else {
       const filtered = suppliers.filter((supplier: Supplier) =>
-        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase()),
       );
       setFilteredSuppliers(filtered);
     }
@@ -290,7 +290,7 @@ export default function AddItemModal({
       }));
       // Find supplier name and set search term
       const supplier = suppliers.find(
-        (s: Supplier) => s.supplier_id === supplierId
+        (s: Supplier) => s.supplier_id === supplierId,
       );
       if (supplier) {
         setSupplierSearchTerm(supplier.name);
@@ -373,7 +373,7 @@ export default function AddItemModal({
   };
 
   const handleSubCategorySearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setSubCategorySearchTerm(e.target.value);
     setIsSubCategoryDropdownOpen(true);
@@ -393,7 +393,7 @@ export default function AddItemModal({
   };
 
   const handleSupplierSearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setSupplierSearchTerm(e.target.value);
     setIsSupplierDropdownOpen(true);
@@ -410,7 +410,7 @@ export default function AddItemModal({
   };
 
   const handleMeasuringUnitSearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = e.target.value;
     setMeasuringUnitSearchTerm(value);
@@ -482,7 +482,7 @@ export default function AddItemModal({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -536,7 +536,7 @@ export default function AddItemModal({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -570,7 +570,7 @@ export default function AddItemModal({
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const target = e.target as HTMLInputElement;
     const { name, value, type } = target;
@@ -701,7 +701,7 @@ export default function AddItemModal({
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files[0];
+    const file = e?.target?.files?.[0] || null;
     if (file) {
       setFormData((prev) => ({
         ...prev,
@@ -864,7 +864,7 @@ export default function AddItemModal({
                             >
                               {category}
                             </button>
-                          )
+                          ),
                         )
                       ) : (
                         <div className="px-4 py-3 text-sm text-slate-500 text-center">
@@ -951,7 +951,7 @@ export default function AddItemModal({
                               onClick={() =>
                                 handleSupplierSelect(
                                   supplier.supplier_id,
-                                  supplier.name
+                                  supplier.name,
                                 )
                               }
                               className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
@@ -996,7 +996,7 @@ export default function AddItemModal({
                       type="button"
                       onClick={() =>
                         setIsMeasuringUnitDropdownOpen(
-                          !isMeasuringUnitDropdownOpen
+                          !isMeasuringUnitDropdownOpen,
                         )
                       }
                       className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -1027,20 +1027,20 @@ export default function AddItemModal({
                               >
                                 {unit}
                               </button>
-                            )
+                            ),
                           )}
                           {measuringUnitSearchTerm &&
                             !filteredMeasuringUnits.some(
                               (u) =>
                                 u.toLowerCase() ===
-                                measuringUnitSearchTerm.toLowerCase()
+                                measuringUnitSearchTerm.toLowerCase(),
                             ) && (
                               <div className="border-t border-slate-200">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setNewMeasuringUnitValue(
-                                      measuringUnitSearchTerm
+                                      measuringUnitSearchTerm,
                                     );
                                     setShowCreateMeasuringUnitModal(true);
                                   }}
@@ -1062,7 +1062,7 @@ export default function AddItemModal({
                               type="button"
                               onClick={() => {
                                 setNewMeasuringUnitValue(
-                                  measuringUnitSearchTerm
+                                  measuringUnitSearchTerm,
                                 );
                                 setShowCreateMeasuringUnitModal(true);
                               }}
@@ -1160,7 +1160,7 @@ export default function AddItemModal({
                                     type="button"
                                     onClick={() =>
                                       setIsFinishDropdownOpen(
-                                        !isFinishDropdownOpen
+                                        !isFinishDropdownOpen,
                                       )
                                     }
                                     className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -1193,23 +1193,23 @@ export default function AddItemModal({
                                             >
                                               {finish}
                                             </button>
-                                          )
+                                          ),
                                         )}
                                         {finishSearchTerm &&
                                           !filteredFinishes.some(
                                             (f) =>
                                               f.toLowerCase() ===
-                                              finishSearchTerm.toLowerCase()
+                                              finishSearchTerm.toLowerCase(),
                                           ) && (
                                             <div className="border-t border-slate-200">
                                               <button
                                                 type="button"
                                                 onClick={() => {
                                                   setNewFinishValue(
-                                                    finishSearchTerm
+                                                    finishSearchTerm,
                                                   );
                                                   setShowCreateFinishModal(
-                                                    true
+                                                    true,
                                                   );
                                                 }}
                                                 className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
@@ -1231,7 +1231,7 @@ export default function AddItemModal({
                                             type="button"
                                             onClick={() => {
                                               setNewFinishValue(
-                                                finishSearchTerm
+                                                finishSearchTerm,
                                               );
                                               setShowCreateFinishModal(true);
                                             }}
@@ -1313,7 +1313,9 @@ export default function AddItemModal({
                                 <input
                                   type="text"
                                   name={field}
-                                  value={formData[field]}
+                                  value={
+                                    formData[field as keyof FormData] as string
+                                  }
                                   onChange={handleInputChange}
                                   className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
                                   placeholder={`Enter ${field}`}
@@ -1321,7 +1323,7 @@ export default function AddItemModal({
                               </div>
                             )}
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                     <div>
@@ -1358,13 +1360,13 @@ export default function AddItemModal({
                           <input
                             type="text"
                             name={field}
-                            value={formData[field]}
+                            value={formData[field as keyof FormData] as string}
                             onChange={handleInputChange}
                             className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
                             placeholder={`Enter ${field}`}
                           />
                         </div>
-                      )
+                      ),
                     )}
                   </div>
                 )}
@@ -1394,7 +1396,7 @@ export default function AddItemModal({
                           type="button"
                           onClick={() =>
                             setIsSubCategoryDropdownOpen(
-                              !isSubCategoryDropdownOpen
+                              !isSubCategoryDropdownOpen,
                             )
                           }
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -1440,7 +1442,7 @@ export default function AddItemModal({
                         <input
                           type="text"
                           name={field}
-                          value={formData[field]}
+                          value={formData[field as keyof FormData] as string}
                           onChange={handleInputChange}
                           className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
                           placeholder={`Enter ${field.replace("_", " ")}`}
@@ -1521,20 +1523,20 @@ export default function AddItemModal({
                                         >
                                           {finish}
                                         </button>
-                                      )
+                                      ),
                                     )}
                                     {finishSearchTerm &&
                                       !filteredFinishes.some(
                                         (f) =>
                                           f.toLowerCase() ===
-                                          finishSearchTerm.toLowerCase()
+                                          finishSearchTerm.toLowerCase(),
                                       ) && (
                                         <div className="border-t border-slate-200">
                                           <button
                                             type="button"
                                             onClick={() => {
                                               setNewFinishValue(
-                                                finishSearchTerm
+                                                finishSearchTerm,
                                               );
                                               setShowCreateFinishModal(true);
                                             }}
@@ -1578,7 +1580,9 @@ export default function AddItemModal({
                             <input
                               type="text"
                               name={field}
-                              value={formData[field]}
+                              value={
+                                formData[field as keyof FormData] as string
+                              }
                               onChange={handleInputChange}
                               className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
                               placeholder={`Enter ${field}`}

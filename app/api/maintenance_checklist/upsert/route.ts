@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!lotFile) {
       return NextResponse.json(
         { status: false, message: "Lot file not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -34,35 +34,34 @@ export async function POST(request: NextRequest) {
         where: { lot_file_id },
       });
 
-    const maintenance_checklist =
-      await prisma.maintenance_checklist.upsert({
-        where: { lot_file_id },
-        update: {
-          prepared_by_office,
-          prepared_by_production,
-          delivered_to_site,
-          installed,
-        },
-        create: {
-          lot_file_id,
-          prepared_by_office,
-          prepared_by_production,
-          delivered_to_site,
-          installed,
-        },
-      });
+    const maintenance_checklist = await prisma.maintenance_checklist.upsert({
+      where: { lot_file_id },
+      update: {
+        prepared_by_office,
+        prepared_by_production,
+        delivered_to_site,
+        installed,
+      },
+      create: {
+        lot_file_id,
+        prepared_by_office,
+        prepared_by_production,
+        delivered_to_site,
+        installed,
+      },
+    });
 
     const logged = await withLogging(
       request,
       "maintenance_checklist",
       maintenance_checklist.id,
       existingMaintenanceChecklist ? "UPDATE" : "CREATE",
-      `Maintenance checklist upserted successfully: ${maintenance_checklist.id}`
+      `Maintenance checklist upserted successfully: ${maintenance_checklist.id}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log maintenance checklist upsert: ${maintenance_checklist.id}`
+        `Failed to log maintenance checklist upsert: ${maintenance_checklist.id}`,
       );
     }
 
@@ -75,19 +74,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Upsert succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/maintenance_checklist/upsert:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -15,7 +15,7 @@ import { COOKIE_NAMES } from "./cookies";
  * @returns The organization slug or null
  */
 export function getOrganizationSlugFromRequest(
-  request: NextRequest
+  request: NextRequest,
 ): string | null {
   return request.cookies.get(COOKIE_NAMES.ORG_SLUG)?.value || null;
 }
@@ -29,7 +29,7 @@ export function getOrganizationSlugFromRequest(
  */
 export async function getOrganizationBySlug(
   prisma: PrismaClient,
-  slug: string
+  slug: string,
 ) {
   return prisma.organization.findUnique({
     where: {
@@ -50,7 +50,7 @@ export async function getOrganizationBySlug(
  */
 export async function getCurrentTenant(
   prisma: PrismaClient,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const slug = getOrganizationSlugFromRequest(request);
 
@@ -72,13 +72,13 @@ export async function getCurrentTenant(
  */
 export async function requireOrganization(
   prisma: PrismaClient,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const organization = await getCurrentTenant(prisma, request);
 
   if (!organization) {
     throw new Error(
-      `Organization not found for slug: ${getOrganizationSlugFromRequest(request) || "none"}`
+      `Organization not found for slug: ${getOrganizationSlugFromRequest(request) || "none"}`,
     );
   }
 
@@ -96,7 +96,7 @@ export async function requireOrganization(
  */
 export async function setOrganizationContext(
   prisma: PrismaClient,
-  request: NextRequest
+  request: NextRequest,
 ) {
   const organization = await getCurrentTenant(prisma, request);
 
@@ -121,7 +121,7 @@ export async function setOrganizationContext(
 export async function withOrganizationFromRequest<T>(
   prisma: PrismaClient,
   request: NextRequest,
-  fn: (organization: { id: string; slug: string; name: string }) => Promise<T>
+  fn: (organization: { id: string; slug: string; name: string }) => Promise<T>,
 ): Promise<T> {
   const organization = await requireOrganization(prisma, request);
 
@@ -150,7 +150,7 @@ export async function withOrganizationFromRequest<T>(
  */
 export async function setupOrganizationFromRequest(
   prisma: PrismaClient,
-  request: NextRequest
+  request: NextRequest,
 ) {
   return requireOrganization(prisma, request).then((org) => {
     setOrganizationId(org.id);

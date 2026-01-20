@@ -56,13 +56,13 @@ export async function POST(request: NextRequest) {
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Try admin authentication first
     const adminResult = await authenticateAdmin(email, password);
-    
+
     if (adminResult) {
       // Admin login successful
       const response = NextResponse.json({
@@ -74,7 +74,12 @@ export async function POST(request: NextRequest) {
 
       // Set admin authentication cookie
       const secure = isSecureRequest(request);
-      setAdminAuthCookie(adminResult.token, response, adminResult.expiresAt, secure);
+      setAdminAuthCookie(
+        adminResult.token,
+        response,
+        adminResult.expiresAt,
+        secure,
+      );
       // Admin sessions should not carry an organization slug cookie.
       deleteOrganizationSlugCookie(response);
 
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (!result) {
       return NextResponse.json(
         { error: "Invalid email or password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -100,7 +105,7 @@ export async function POST(request: NextRequest) {
     if (!organization) {
       return NextResponse.json(
         { error: "Organization not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -118,14 +123,19 @@ export async function POST(request: NextRequest) {
     // Set authentication cookie
     const secure = isSecureRequest(request);
     setAuthCookie(result.token, response, undefined, result.expiresAt, secure);
-    setOrganizationSlugCookie(organization.slug, response, result.expiresAt, secure);
+    setOrganizationSlugCookie(
+      organization.slug,
+      response,
+      result.expiresAt,
+      secure,
+    );
 
     return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "An error occurred during login" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

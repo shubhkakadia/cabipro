@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { success: true, message: "Email sent successfully", data },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: unknown) {
     console.error("Error sending email:", error);
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "Failed to send email", details: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

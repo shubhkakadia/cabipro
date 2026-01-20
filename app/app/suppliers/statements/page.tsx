@@ -33,6 +33,7 @@ import DeleteConfirmation from "@/components/DeleteConfirmation";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 import Image from "next/image";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Supplier {
@@ -109,14 +110,14 @@ export default function StatementsPage() {
     file: null,
   });
   const [editingStatement, setEditingStatement] = useState<Statement | null>(
-    null
+    null,
   );
   const [isEditingStatement, setIsEditingStatement] = useState(false);
   const [isUpdatingStatement, setIsUpdatingStatement] = useState(false);
   const [showDeleteStatementModal, setShowDeleteStatementModal] =
     useState(false);
   const [statementToDelete, setStatementToDelete] = useState<Statement | null>(
-    null
+    null,
   );
   const [isDeletingStatement, setIsDeletingStatement] = useState(false);
   const [viewFileModal, setViewFileModal] = useState(false);
@@ -326,7 +327,7 @@ export default function StatementsPage() {
       }
     });
     return Array.from(years).sort(
-      (a: string, b: string) => parseInt(b) - parseInt(a)
+      (a: string, b: string) => parseInt(b) - parseInt(a),
     );
   }, [statements]);
 
@@ -356,7 +357,7 @@ export default function StatementsPage() {
   // Filter suppliers for search dropdown
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter((supplier: Supplier) =>
-      supplier.name?.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+      supplier.name?.toLowerCase().includes(supplierSearchTerm.toLowerCase()),
     );
   }, [suppliers, supplierSearchTerm]);
 
@@ -375,7 +376,7 @@ export default function StatementsPage() {
     let filtered = statements.filter((statement: Statement) =>
       activeTab === "pending"
         ? statement.payment_status === "PENDING"
-        : statement.payment_status === "PAID"
+        : statement.payment_status === "PAID",
     );
 
     // Apply year filter
@@ -464,7 +465,7 @@ export default function StatementsPage() {
   const endIndex = itemsPerPage === 0 ? totalItems : startIndex + itemsPerPage;
   const paginatedStatements = filteredAndSortedStatements.slice(
     startIndex,
-    endIndex
+    endIndex,
   );
 
   const handleSort = (field: string) => {
@@ -522,7 +523,7 @@ export default function StatementsPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -596,7 +597,7 @@ export default function StatementsPage() {
 
   // Supplier selection handlers
   const handleSupplierSearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setSupplierSearchTerm(e.target.value);
     setIsSupplierDropdownOpen(true);
@@ -735,7 +736,7 @@ export default function StatementsPage() {
             }
           });
           return row;
-        }
+        },
       );
 
       const wb = XLSX.utils.book_new();
@@ -762,7 +763,7 @@ export default function StatementsPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Failed to export data to Excel.", {
@@ -817,7 +818,7 @@ export default function StatementsPage() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -854,7 +855,7 @@ export default function StatementsPage() {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error("Failed to upload statement", {
@@ -897,7 +898,7 @@ export default function StatementsPage() {
 
   const handleUpdateStatement = async (
     statement: Statement | null = null,
-    newStatus: string | null = null
+    newStatus: string | null = null,
   ) => {
     // If statement and newStatus are provided, it's a status-only update from table
     const isStatusOnlyUpdate = statement !== null && newStatus !== null;
@@ -937,7 +938,7 @@ export default function StatementsPage() {
         }
         formData.append(
           "month_year",
-          formatMonthYear(statementForm.month_year)
+          formatMonthYear(statementForm.month_year),
         );
         formData.append("due_date", statementForm.due_date);
         formData.append("amount", statementForm.amount || "");
@@ -962,7 +963,7 @@ export default function StatementsPage() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1009,7 +1010,7 @@ export default function StatementsPage() {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error("Failed to update statement", {
@@ -1042,7 +1043,7 @@ export default function StatementsPage() {
         `/api/supplier/${statementToDelete.supplier_id}/statements/${statementToDelete.id}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1070,7 +1071,7 @@ export default function StatementsPage() {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error("Failed to delete statement", {
@@ -1176,13 +1177,16 @@ export default function StatementsPage() {
                     <h1 className="text-xl font-bold text-slate-600">
                       Supplier Statements
                     </h1>
-                    <button
-                      onClick={() => setShowUploadStatementModal(true)}
-                      className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-primary/80 hover:bg-primary text-white rounded-lg transition-all duration-200 text-xs font-medium"
-                    >
-                      <Receipt className="w-4 h-4" />
-                      Upload Statement
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() => setShowUploadStatementModal(true)}
+                        className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-primary/80 hover:bg-primary text-white rounded-lg transition-all duration-200 text-xs font-medium"
+                      >
+                        <Receipt className="w-4 h-4" />
+                        Upload Statement
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1320,7 +1324,7 @@ export default function StatementsPage() {
                                     >
                                       {formatMonthName(month)}
                                     </button>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -1345,7 +1349,9 @@ export default function StatementsPage() {
                                       onClick={() => {
                                         if (sortField === option.value) {
                                           setSortOrder(
-                                            sortOrder === "asc" ? "desc" : "asc"
+                                            sortOrder === "asc"
+                                              ? "desc"
+                                              : "asc",
                                           );
                                         } else {
                                           setSortField(option.value);
@@ -1434,7 +1440,7 @@ export default function StatementsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -1587,7 +1593,7 @@ export default function StatementsPage() {
                                   </td>
                                   <td className="px-3 py-2 text-xs text-slate-700 whitespace-nowrap">
                                     {new Date(
-                                      statement.due_date
+                                      statement.due_date,
                                     ).toLocaleDateString()}
                                   </td>
                                   <td className="px-3 py-2 text-xs text-slate-700 whitespace-nowrap">
@@ -1611,7 +1617,7 @@ export default function StatementsPage() {
                                               openStatusDropdownId ===
                                                 statement.id
                                                 ? null
-                                                : statement.id
+                                                : statement.id,
                                             )
                                           }
                                           disabled={
@@ -1652,7 +1658,7 @@ export default function StatementsPage() {
                                                   ) {
                                                     handleUpdateStatement(
                                                       statement,
-                                                      "PENDING"
+                                                      "PENDING",
                                                     );
                                                   }
                                                   setOpenStatusDropdownId(null);
@@ -1679,7 +1685,7 @@ export default function StatementsPage() {
                                                   ) {
                                                     handleUpdateStatement(
                                                       statement,
-                                                      "PAID"
+                                                      "PAID",
                                                     );
                                                   }
                                                   setOpenStatusDropdownId(null);
@@ -1862,7 +1868,7 @@ export default function StatementsPage() {
                               type="button"
                               onClick={() =>
                                 setIsSupplierDropdownOpen(
-                                  !isSupplierDropdownOpen
+                                  !isSupplierDropdownOpen,
                                 )
                               }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -1893,7 +1899,7 @@ export default function StatementsPage() {
                                     onClick={() =>
                                       handleSupplierSelect(
                                         supplier.supplier_id,
-                                        supplier.name
+                                        supplier.name,
                                       )
                                     }
                                     className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
@@ -2188,7 +2194,7 @@ export default function StatementsPage() {
                     setSelectedFile={(file: ViewFile | null) => {
                       if (!file && statementForm.file) {
                         URL.revokeObjectURL(
-                          URL.createObjectURL(statementForm.file)
+                          URL.createObjectURL(statementForm.file),
                         );
                       }
                     }}

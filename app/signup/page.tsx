@@ -52,7 +52,6 @@ export default function SignupPage() {
 
   // Generate slug from organization name
 
-
   // Calculate password strength
   const calculatePasswordStrength = (password: string) => {
     if (!password) {
@@ -87,7 +86,8 @@ export default function SignupPage() {
 
     if (score <= 2) {
       strength = "weak";
-      strengthFeedback = feedback.length > 0 ? `Add: ${feedback.slice(0, 2).join(", ")}` : "";
+      strengthFeedback =
+        feedback.length > 0 ? `Add: ${feedback.slice(0, 2).join(", ")}` : "";
     } else if (score === 3) {
       strength = "fair";
       strengthFeedback = feedback.length > 0 ? `Add: ${feedback[0]}` : "";
@@ -102,7 +102,9 @@ export default function SignupPage() {
     return { strength, score, feedback: strengthFeedback };
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -158,7 +160,12 @@ export default function SignupPage() {
   const handleStep1Submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Validate step 1
-    if (!formData.first_name || !formData.last_name || !formData.email || !formData.password) {
+    if (
+      !formData.first_name ||
+      !formData.last_name ||
+      !formData.email ||
+      !formData.password
+    ) {
       setError("Please fill in all personal details");
       return;
     }
@@ -200,24 +207,31 @@ export default function SignupPage() {
       submitFormData.append("email", formData.email);
       submitFormData.append("password", formData.password);
       submitFormData.append("organization_name", formData.organization_name);
-      
+
       if (formData.organization_email) {
-        submitFormData.append("organization_email", formData.organization_email);
+        submitFormData.append(
+          "organization_email",
+          formData.organization_email,
+        );
       }
       if (formData.organization_phone) {
-        submitFormData.append("organization_phone", formData.organization_phone);
+        submitFormData.append(
+          "organization_phone",
+          formData.organization_phone,
+        );
       }
       if (formData.organization_address) {
-        submitFormData.append("organization_address", formData.organization_address);
+        submitFormData.append(
+          "organization_address",
+          formData.organization_address,
+        );
       }
       if (formData.organization_logo) {
         submitFormData.append("organization_logo", formData.organization_logo);
       }
 
       const response = await axios.post("/api/signup", submitFormData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        withCredentials: true,
       });
       const data = await response.data;
 
@@ -266,7 +280,9 @@ export default function SignupPage() {
         setError(error.response.data.error);
       } else {
         setError(
-          error instanceof Error ? error.message : "Signup failed. Please try again."
+          error instanceof Error
+            ? error.message
+            : "Signup failed. Please try again.",
         );
       }
     } finally {
@@ -314,7 +330,8 @@ export default function SignupPage() {
               Start your journey
             </h2>
             <p className="text-lg text-gray-300 mb-12 max-w-md">
-              Create your account and get started managing your cabinet manufacturing operations with ease.
+              Create your account and get started managing your cabinet
+              manufacturing operations with ease.
             </p>
 
             {/* Step Indicator */}
@@ -521,10 +538,10 @@ export default function SignupPage() {
                                 passwordStrength.strength === "weak"
                                   ? "bg-red-500 w-1/4"
                                   : passwordStrength.strength === "fair"
-                                  ? "bg-yellow-500 w-1/2"
-                                  : passwordStrength.strength === "good"
-                                  ? "bg-blue-500 w-3/4"
-                                  : "bg-green-500 w-full"
+                                    ? "bg-yellow-500 w-1/2"
+                                    : passwordStrength.strength === "good"
+                                      ? "bg-blue-500 w-3/4"
+                                      : "bg-green-500 w-full"
                               }`}
                             />
                           </div>
@@ -533,10 +550,10 @@ export default function SignupPage() {
                               passwordStrength.strength === "weak"
                                 ? "text-red-600"
                                 : passwordStrength.strength === "fair"
-                                ? "text-yellow-600"
-                                : passwordStrength.strength === "good"
-                                ? "text-blue-600"
-                                : "text-green-600"
+                                  ? "text-yellow-600"
+                                  : passwordStrength.strength === "good"
+                                    ? "text-blue-600"
+                                    : "text-green-600"
                             }`}
                           >
                             {passwordStrength.strength.charAt(0).toUpperCase() +
@@ -722,7 +739,10 @@ export default function SignupPage() {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <ImageIcon className="w-10 h-10 mb-3 text-gray-400" />
                           <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
+                            or drag and drop
                           </p>
                           <p className="text-xs text-gray-500">
                             PNG, JPG, GIF up to 5MB

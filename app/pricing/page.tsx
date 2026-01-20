@@ -8,7 +8,7 @@ import AnimatedCounter from "@/components/AnimatedCounter";
 export default function Pricing() {
   const router = useRouter();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
-    "monthly"
+    "monthly",
   );
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -171,7 +171,7 @@ export default function Pricing() {
               type="button"
               onClick={() =>
                 setBillingCycle(
-                  billingCycle === "monthly" ? "annual" : "monthly"
+                  billingCycle === "monthly" ? "annual" : "monthly",
                 )
               }
               className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out"
@@ -262,7 +262,7 @@ export default function Pricing() {
                   <button
                     onClick={() =>
                       router.push(
-                        plan.name === "Enterprise" ? "/contact" : "/waitlist"
+                        plan.name === "Enterprise" ? "/contact" : "/waitlist",
                       )
                     }
                     className="cursor-pointer mt-8 w-full rounded-lg bg-gray-900 px-8 py-4 text-base font-medium text-white hover:bg-gray-800 transition-colors"

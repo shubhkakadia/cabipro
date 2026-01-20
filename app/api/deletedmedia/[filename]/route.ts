@@ -7,7 +7,7 @@ import { withLogging } from "@/lib/withLogging";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ filename: string }> }
+  { params }: { params: Promise<{ filename: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -18,7 +18,7 @@ export async function DELETE(
     if (!filename) {
       return NextResponse.json(
         { status: false, message: "Filename is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,7 +68,7 @@ export async function DELETE(
     if (!deletedMedia) {
       return NextResponse.json(
         { status: false, message: "Deleted media not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -82,7 +82,7 @@ export async function DELETE(
       console.error("❌ Error deleting file from disk:", fileError);
       console.error(
         "Attempted path:",
-        path.join(process.cwd(), deletedMedia.url)
+        path.join(process.cwd(), deletedMedia.url),
       );
       // Continue with database deletion even if file deletion fails
     }
@@ -105,19 +105,19 @@ export async function DELETE(
       tableName === "lot_file"
         ? "lot_file"
         : tableName === "media"
-        ? "media"
-        : "supplier_file";
+          ? "media"
+          : "supplier_file";
 
     const logged = await withLogging(
       request,
       entityType,
       deletedMedia.id,
       "DELETE",
-      `${entityType} deleted successfully: ${deletedMedia.filename}`
+      `${entityType} deleted successfully: ${deletedMedia.filename}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log ${entityType} deletion: ${deletedMedia.id} - ${deletedMedia.filename}`
+        `Failed to log ${entityType} deletion: ${deletedMedia.id} - ${deletedMedia.filename}`,
       );
     }
 
@@ -131,13 +131,13 @@ export async function DELETE(
           ? {}
           : { warning: "Note: Deletion succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Delete error:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

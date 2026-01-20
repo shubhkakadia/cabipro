@@ -1,15 +1,9 @@
 "use client";
-import {
-  DollarSign,
-  CreditCard,
-  Receipt,
-  CheckCircle2,
-} from "lucide-react";
+import { DollarSign, CreditCard, Receipt, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Invoicing() {
-  
   const features = [
     {
       title: "Supplier Statements & Payments",
@@ -65,14 +59,16 @@ export default function Invoicing() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-100 drop-shadow-2xl px-2 leading-tight"
             data-aos="fade-up"
           >
-            Financial Management &amp; Invoicing for Cabinet Makers &amp; Joinery Workshops
+            Financial Management &amp; Invoicing for Cabinet Makers &amp;
+            Joinery Workshops
           </h1>
           <p
             className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-200 drop-shadow-2xl px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Track supplier payments, manage invoices, and maintain clear financial records. Keep your cash flow organized and predictable.
+            Track supplier payments, manage invoices, and maintain clear
+            financial records. Keep your cash flow organized and predictable.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
@@ -110,10 +106,11 @@ export default function Invoicing() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              From supplier payments to customer invoicing, manage all your financial transactions in one place.
+              From supplier payments to customer invoicing, manage all your
+              financial transactions in one place.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
@@ -176,7 +173,9 @@ export default function Invoicing() {
                 Clear Financial Overview
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                See all supplier statements, payments, and invoices in one place. Know what&apos;s due and what&apos;s been paid at a glance.
+                See all supplier statements, payments, and invoices in one
+                place. Know what&apos;s due and what&apos;s been paid at a
+                glance.
               </p>
             </div>
             <div
@@ -188,7 +187,8 @@ export default function Invoicing() {
                 Better Cash Flow Management
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Track due dates and payment status. Get reminders so you never miss a payment or forget to invoice a customer.
+                Track due dates and payment status. Get reminders so you never
+                miss a payment or forget to invoice a customer.
               </p>
             </div>
             <div
@@ -200,7 +200,8 @@ export default function Invoicing() {
                 Integrated with Operations
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Financial data is automatically linked to jobs, purchase orders, and materials. Complete visibility from quote to payment.
+                Financial data is automatically linked to jobs, purchase orders,
+                and materials. Complete visibility from quote to payment.
               </p>
             </div>
           </div>
@@ -221,9 +222,14 @@ export default function Invoicing() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join the waitlist to get early access to CabiPro&apos;s invoicing and financial management features.
+            Join the waitlist to get early access to CabiPro&apos;s invoicing
+            and financial management features.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <Link
               href="/waitlist"
               className="inline-block rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors touch-manipulation"

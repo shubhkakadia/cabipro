@@ -6,7 +6,7 @@ import type { LogAction } from "@/generated/prisma/enums";
 
 /**
  * Logs an action to the database
- * 
+ *
  * @param request - Next.js request object
  * @param entityType - Type of entity being logged (e.g., "client", "project")
  * @param entityId - ID of the entity being logged
@@ -61,4 +61,3 @@ export async function withLogging(
     return false;
   }
 }
-

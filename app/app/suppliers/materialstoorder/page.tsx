@@ -30,6 +30,7 @@ import {
   X,
   File,
   AlertTriangle,
+  Check,
 } from "lucide-react";
 import Image from "next/image";
 import PurchaseOrder from "../components/PurchaseOrderForm";
@@ -38,6 +39,7 @@ import DeleteConfirmation from "@/components/DeleteConfirmation";
 import CreateMaterialsToOrderModal from "./components/CreateMaterialsToOrderModal";
 import AppHeader from "@/components/AppHeader";
 import { useExcelExport } from "@/hooks/useExcelExport";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface MediaFile {
@@ -50,6 +52,73 @@ interface MediaFile {
   size?: number;
 }
 
+interface ReservedItemStock {
+  id: string;
+  item_id: string;
+  quantity: number;
+  used_quantity?: number;
+  mto_id: string;
+  user_id?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Individual item in the cumulative list
+interface CumulativeItem {
+  item_id: string;
+  category?: string;
+  description?: string;
+  measurement_unit?: string;
+  image?: {
+    url?: string;
+  };
+  sheet?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    face?: string;
+    dimensions?: string;
+  };
+  handle?: {
+    brand?: string;
+    color?: string;
+    type?: string;
+    material?: string;
+    dimensions?: string;
+  };
+  hardware?: {
+    brand?: string;
+    name?: string;
+    type?: string;
+    sub_category?: string;
+    dimensions?: string;
+  };
+  accessory?: {
+    name?: string;
+  };
+  edging_tape?: {
+    brand?: string;
+    color?: string;
+    finish?: string;
+    dimensions?: string;
+  };
+  stock_on_hand: number;
+  cumulative_quantity: number;
+  mto_sources: Array<{
+    mto_id: string;
+    mto_item_id: string;
+    project_name?: string;
+    quantity: number;
+  }>;
+}
+
+// Supplier with its cumulative items
+interface CumulativeSupplier {
+  supplier_id: string;
+  supplier_name: string;
+  items: CumulativeItem[];
+}
+
 interface MTOItem {
   id: string;
   item_id?: string;
@@ -57,6 +126,14 @@ interface MTOItem {
   quantity_ordered?: number;
   quantity_ordered_po?: number;
   quantity_received?: number;
+  reserve_item_stock?: ReservedItemStock[];
+  ordered_by?: {
+    username?: string;
+    employee?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
   item?: {
     id?: string;
     item_id?: string;
@@ -181,14 +258,16 @@ export default function MaterialsToOrderPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mtos, setMtos] = useState<MTO[]>([]);
-  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
+  const [activeTab, setActiveTab] = useState<
+    "active" | "completed" | "cumulative"
+  >("active");
   const [showCreatePurchaseOrderModal, setShowCreatePurchaseOrderModal] =
     useState(false);
   const [showCreateMTOModal, setShowCreateMTOModal] = useState(false);
   const [selectedSupplierForPO, setSelectedSupplierForPO] =
     useState<Supplier | null>(null);
   const [mtosForSelectedSupplier, setMtosForSelectedSupplier] = useState<MTO[]>(
-    []
+    [],
   );
   const [preSelectedMtoId, setPreSelectedMtoId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -234,7 +313,7 @@ export default function MaterialsToOrderPage() {
   // Media popup state
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [selectedMtoForMedia, setSelectedMtoForMedia] = useState<MTO | null>(
-    null
+    null,
   );
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -258,12 +337,28 @@ export default function MaterialsToOrderPage() {
   const [isSavingQuantityOrderedById, setIsSavingQuantityOrderedById] =
     useState<Record<string, boolean>>({});
   const quantityOrderedTimersRef = useRef<Map<string, NodeJS.Timeout>>(
-    new Map()
+    new Map(),
   );
   // Delete MTO state
   const [showDeleteMTOModal, setShowDeleteMTOModal] = useState(false);
   const [mtoPendingDelete, setMtoPendingDelete] = useState<MTO | null>(null);
   const [deletingMTOId, setDeletingMTOId] = useState<string | null>(null);
+  // Stock reservation state
+  const [reservedItemsMap, setReservedItemsMap] = useState<
+    Record<string, ReservedItemStock>
+  >({});
+  const [reservingItemId, setReservingItemId] = useState<string | null>(null);
+  // Cumulative materials state
+  const [cumulativeData, setCumulativeData] = useState<CumulativeSupplier[]>(
+    [],
+  );
+  const [loadingCumulative, setLoadingCumulative] = useState(false);
+  // Pending changes tracking
+  const [pendingChangesById, setPendingChangesById] = useState<
+    Record<string, boolean>
+  >({});
+  const [originalQuantityOrderedById, setOriginalQuantityOrderedById] =
+    useState<Record<string, string>>({});
 
   const fetchMTOs = useCallback(async () => {
     try {
@@ -283,7 +378,7 @@ export default function MaterialsToOrderPage() {
       console.error("Error fetching MTOs:", err);
       if (axios.isAxiosError(err)) {
         setError(
-          err.response?.data?.message || "Failed to fetch materials to order"
+          err.response?.data?.message || "Failed to fetch materials to order",
         );
       } else {
         setError("Failed to fetch materials to order");
@@ -297,17 +392,233 @@ export default function MaterialsToOrderPage() {
     fetchMTOs();
   }, [fetchMTOs]);
 
+  // Fetch cumulative data when cumulative tab is active
+  useEffect(() => {
+    if (activeTab === "cumulative") {
+      fetchCumulativeData();
+    }
+  }, [activeTab]);
+
+  const processReservationsFromMTOs = useCallback(() => {
+    try {
+      // Build reservations map from the data already included in MTOs
+      const reservationsMap: Record<string, ReservedItemStock> = {};
+      const mtosArray = Array.isArray(mtos) ? mtos : [];
+
+      mtosArray.forEach((mto) => {
+        (mto?.items || []).forEach((item) => {
+          // Check if this item has reservation data
+          if (item.reserve_item_stock && item.reserve_item_stock.length > 0) {
+            // Use the first reservation (should only be one per MTO item)
+            const reservation = item.reserve_item_stock[0];
+            reservationsMap[item.id] = reservation;
+          }
+        });
+      });
+
+      setReservedItemsMap(reservationsMap);
+    } catch (err) {
+      console.error("Error processing reservations:", err);
+    }
+  }, [mtos]);
+
+  // Process reservations from MTO data (already included in the response)
+  useEffect(() => {
+    if (mtos && mtos.length > 0) {
+      processReservationsFromMTOs();
+    }
+  }, [mtos, processReservationsFromMTOs]);
+
+  const handleReserveStock = async (mtoItem: MTOItem) => {
+    setReservingItemId(mtoItem.id);
+    try {
+      const response = await axios.post(
+        "/api/reserve_item_stock/create",
+        {
+          item_id: mtoItem.item?.id,
+          quantity: mtoItem.quantity,
+          mto_id: mtoItem.id,
+        },
+        { withCredentials: true },
+      );
+
+      if (response.data.status) {
+        toast.success("Stock reserved successfully");
+        // Update local state
+        setReservedItemsMap((prev) => ({
+          ...prev,
+          [mtoItem.id]: response.data.data,
+        }));
+        // Update the item quantity in mtos state to reflect the reduced stock
+        // AND add the reservation data to the item's reserve_item_stock array
+        setMtos((prev) =>
+          (prev || []).map((mto) => ({
+            ...mto,
+            items: (mto.items || []).map((it) =>
+              it.id === mtoItem.id
+                ? {
+                    ...it,
+                    reserve_item_stock: [response.data.data],
+                    item: {
+                      ...it.item!,
+                      quantity: Math.max(
+                        0,
+                        Number(it.item?.quantity || 0) - mtoItem.quantity,
+                      ),
+                    },
+                  }
+                : it.item?.item_id === mtoItem.item?.item_id
+                  ? {
+                      ...it,
+                      item: {
+                        ...it.item!,
+                        quantity: Math.max(
+                          0,
+                          Number(it.item?.quantity || 0) - mtoItem.quantity,
+                        ),
+                      },
+                    }
+                  : it,
+            ),
+          })),
+        );
+      } else {
+        toast.error(response.data.message || "Failed to reserve stock");
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.message || "Failed to reserve stock");
+      } else {
+        toast.error("Failed to reserve stock");
+      }
+    } finally {
+      setReservingItemId(null);
+    }
+  };
+
+  const handleDeleteReservation = async (
+    reservationId: string,
+    mtoItemId: string,
+  ) => {
+    setReservingItemId(mtoItemId);
+    try {
+      const response = await axios.delete(
+        `/api/reserve_item_stock/${reservationId}`,
+        { withCredentials: true },
+      );
+
+      if (response.data.status) {
+        toast.success("Stock reservation deleted successfully");
+
+        // Get the reservation quantity before deleting from state
+        const reservation = reservedItemsMap[mtoItemId];
+        const reservedQuantity = reservation?.quantity || 0;
+
+        // Update local state
+        setReservedItemsMap((prev) => {
+          const updated = { ...prev };
+          delete updated[mtoItemId];
+          return updated;
+        });
+
+        // Update the item quantity in mtos state to add back the reserved stock
+        // AND remove the reservation data from the item's reserve_item_stock array
+        if (reservedQuantity > 0) {
+          setMtos((prev) =>
+            (prev || []).map((mto) => ({
+              ...mto,
+              items: (mto.items || []).map((it) =>
+                it.id === mtoItemId
+                  ? {
+                      ...it,
+                      reserve_item_stock: [],
+                      item: {
+                        ...it.item!,
+                        quantity:
+                          Number(it.item?.quantity || 0) + reservedQuantity,
+                      },
+                    }
+                  : it,
+              ),
+            })),
+          );
+        }
+      } else {
+        toast.error(response.data.message || "Failed to delete reservation");
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        toast.error(
+          err.response?.data?.message || "Failed to delete reservation",
+        );
+      } else {
+        toast.error("Failed to delete reservation");
+      }
+    } finally {
+      setReservingItemId(null);
+    }
+  };
+
+  // Fetch cumulative materials data from API
+  const fetchCumulativeData = async () => {
+    try {
+      setLoadingCumulative(true);
+      const response = await axios.get("/api/materials_to_order/cumulative", {
+        withCredentials: true,
+      });
+
+      if (response.data.status) {
+        setCumulativeData(response.data.data || []);
+      } else {
+        toast.error("Failed to fetch cumulative data");
+        setCumulativeData([]);
+      }
+    } catch (err) {
+      console.error("Error fetching cumulative data:", err);
+      toast.error("Failed to fetch cumulative materials");
+      setCumulativeData([]);
+    } finally {
+      setLoadingCumulative(false);
+    }
+  };
+
   // Initialize draft values for the editable Qty Ordered inputs (don't clobber what user is typing)
   useEffect(() => {
     const mtosArray = Array.isArray(mtos) ? mtos : [];
+    const newDraft: Record<string, string> = {};
+    const newOriginal: Record<string, string> = {};
+
+    mtosArray.forEach((mto: MTO) => {
+      (mto?.items || []).forEach((it: MTOItem) => {
+        if (it?.id) {
+          // If quantity_ordered_po > 0, use that value instead of quantity_ordered
+          const qtyOrdered =
+            it.quantity_ordered_po && Number(it.quantity_ordered_po) > 0
+              ? it.quantity_ordered_po
+              : (it.quantity_ordered ?? 0);
+          const originalValue = String(qtyOrdered);
+          newDraft[it.id] = originalValue;
+          newOriginal[it.id] = originalValue;
+        }
+      });
+    });
+
     setQuantityOrderedDraftById((prev) => {
       const next = { ...prev };
-      mtosArray.forEach((mto: MTO) => {
-        (mto?.items || []).forEach((it: MTOItem) => {
-          if (it?.id && next[it.id] === undefined) {
-            next[it.id] = String(it.quantity_ordered ?? 0);
-          }
-        });
+      Object.keys(newDraft).forEach((id) => {
+        if (next[id] === undefined) {
+          next[id] = newDraft[id];
+        }
+      });
+      return next;
+    });
+
+    setOriginalQuantityOrderedById((prev) => {
+      const next = { ...prev };
+      Object.keys(newOriginal).forEach((id) => {
+        if (next[id] === undefined) {
+          next[id] = newOriginal[id];
+        }
       });
       return next;
     });
@@ -337,20 +648,6 @@ export default function MaterialsToOrderPage() {
     };
   }, []);
 
-  const applyQuantityOrderedToLocalState = (
-    mtoItemId: string,
-    value: number
-  ) => {
-    setMtos((prev) =>
-      (prev || []).map((mto) => ({
-        ...mto,
-        items: (mto.items || []).map((it) =>
-          it.id === mtoItemId ? { ...it, quantity_ordered: value } : it
-        ),
-      }))
-    );
-  };
-
   const saveQuantityOrdered = async (mtoItemId: string, rawValue: string) => {
     const parsed =
       rawValue === "" || rawValue === null || rawValue === undefined
@@ -362,25 +659,55 @@ export default function MaterialsToOrderPage() {
       const response = await axios.patch(
         `/api/materials_to_order_item/${mtoItemId}`,
         { quantity_ordered: parsed },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       if (!response?.data?.status) {
         throw new Error(
-          response?.data?.message || "Failed to update quantity ordered"
+          response?.data?.message || "Failed to update quantity ordered",
         );
       }
 
       const saved = response?.data?.data?.quantity_ordered ?? parsed;
+      const orderedBy = response?.data?.data?.ordered_by;
+
       setQuantityOrderedDraftById((prev) => ({
         ...prev,
         [mtoItemId]: String(saved),
       }));
-      applyQuantityOrderedToLocalState(mtoItemId, saved);
+
+      // Update local state with the saved quantity and ordered_by info
+      setMtos((prev) =>
+        (prev || []).map((mto) => ({
+          ...mto,
+          items: (mto.items || []).map((it) =>
+            it.id === mtoItemId
+              ? {
+                  ...it,
+                  quantity_ordered: saved,
+                  ordered_by: orderedBy,
+                }
+              : it,
+          ),
+        })),
+      );
+
+      // Update original value to the saved value
+      setOriginalQuantityOrderedById((prev) => ({
+        ...prev,
+        [mtoItemId]: String(saved),
+      }));
+
+      // Clear pending changes after successful save
+      setPendingChangesById((prev) => {
+        const next = { ...prev };
+        delete next[mtoItemId];
+        return next;
+      });
     } catch (err) {
       console.error("Failed to update quantity_ordered:", err);
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.message || err.message || "Failed to save"
+          err.response?.data?.message || err.message || "Failed to save",
         );
       } else {
         toast.error("Failed to save");
@@ -395,37 +722,74 @@ export default function MaterialsToOrderPage() {
 
   const handleQuantityOrderedChange = (
     mtoItemId: string,
-    nextValue: string
+    nextValue: string,
   ) => {
     setQuantityOrderedDraftById((prev) => ({
       ...prev,
       [mtoItemId]: nextValue,
     }));
 
-    const timers = quantityOrderedTimersRef.current;
-    if (timers.has(mtoItemId)) {
-      clearTimeout(timers.get(mtoItemId));
+    // Check if the value has changed from the original
+    setOriginalQuantityOrderedById((prevOrig) => {
+      const originalValue = prevOrig[mtoItemId];
+      if (nextValue !== originalValue) {
+        setPendingChangesById((prev) => ({ ...prev, [mtoItemId]: true }));
+      } else {
+        setPendingChangesById((prev) => {
+          const next = { ...prev };
+          delete next[mtoItemId];
+          return next;
+        });
+      }
+      return prevOrig;
+    });
+  };
+
+  const handleCancelQuantityOrdered = (mtoItemId: string) => {
+    // Get original value from state, or find it from mtos if not in state
+    let originalValue = originalQuantityOrderedById[mtoItemId];
+    if (!originalValue) {
+      // Fallback: find the item in mtos to get the current quantity_ordered
+      const mtosArray = Array.isArray(mtos) ? mtos : [];
+      for (const mto of mtosArray) {
+        const foundItem = (mto?.items || []).find((it) => it.id === mtoItemId);
+        if (foundItem) {
+          originalValue = String(foundItem.quantity_ordered ?? 0);
+          break;
+        }
+      }
     }
-    timers.set(
-      mtoItemId,
-      setTimeout(() => {
-        saveQuantityOrdered(mtoItemId, nextValue);
-      }, 800)
-    );
+    if (originalValue !== undefined) {
+      setQuantityOrderedDraftById((prev) => ({
+        ...prev,
+        [mtoItemId]: originalValue,
+      }));
+    }
+    setPendingChangesById((prev) => {
+      const next = { ...prev };
+      delete next[mtoItemId];
+      return next;
+    });
+  };
+
+  const handleSaveQuantityOrdered = async (mtoItemId: string) => {
+    const value = quantityOrderedDraftById[mtoItemId];
+    await saveQuantityOrdered(mtoItemId, value);
   };
 
   const openCreatePOForSupplier = (
     supplierName: string,
     supplierId: string,
-    mtoId: string | null = null
+    mtoId: string | null = null,
   ) => {
     // Build materialsToOrder list filtered to only include items from the selected supplier
+    // and exclude items that have stock reserved
     const filteredMTOs = (mtos || [])
       .map((mto: MTO) => {
         const supplierItems = (mto.items || []).filter(
           (it: MTOItem) =>
             (it.item?.supplier?.supplier_id || it.item?.supplier_id || null) ===
-            supplierId
+              supplierId && !reservedItemsMap[it.id], // Exclude items with reserved stock
         );
         return { ...mto, items: supplierItems };
       })
@@ -445,7 +809,7 @@ export default function MaterialsToOrderPage() {
     let list = mtosArray.filter((mto: MTO) =>
       activeTab === "active"
         ? mto.status === "DRAFT" || mto.status === "PARTIALLY_ORDERED"
-        : mto.status === "FULLY_ORDERED" || mto.status === "CLOSED"
+        : mto.status === "FULLY_ORDERED" || mto.status === "CLOSED",
     );
 
     // Search filter (project name, lot name, status)
@@ -466,7 +830,7 @@ export default function MaterialsToOrderPage() {
       const itemsCount = mto.items?.length || 0;
       const itemsRemainingCount =
         mto.items?.filter(
-          (it: MTOItem) => (it.quantity_ordered_po || 0) < (it.quantity || 0)
+          (it: MTOItem) => (it.quantity_ordered_po || 0) < (it.quantity || 0),
         ).length || 0;
       return {
         ...mto,
@@ -568,7 +932,7 @@ export default function MaterialsToOrderPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -584,7 +948,7 @@ export default function MaterialsToOrderPage() {
       const itemsRemaining =
         mto.__itemsRemaining ||
         mto.items?.filter(
-          (it: MTOItem) => (it.quantity_ordered_po || 0) < (it.quantity || 0)
+          (it: MTOItem) => (it.quantity_ordered_po || 0) < (it.quantity || 0),
         ).length ||
         0;
       const createdAtStr = mto.createdAt
@@ -619,7 +983,7 @@ export default function MaterialsToOrderPage() {
         const actualQuantityOrdered = (it.ordered_items || []).reduce(
           (sum: number, poItem: { quantity?: number }) =>
             sum + (poItem.quantity || 0),
-          0
+          0,
         );
 
         return {
@@ -750,7 +1114,7 @@ export default function MaterialsToOrderPage() {
       "Created By": 22,
       Notes: 30,
     }),
-    []
+    [],
   );
 
   // Initialize Excel export hook
@@ -814,7 +1178,7 @@ export default function MaterialsToOrderPage() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -869,7 +1233,7 @@ export default function MaterialsToOrderPage() {
         `/api/uploads/materials-to-order/${selectedMtoForMedia.id}?mediaId=${pendingDeleteMediaId}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -879,7 +1243,7 @@ export default function MaterialsToOrderPage() {
         });
         // Remove from local state
         setMediaFiles((prev) =>
-          prev.filter((f: MediaFile) => f.id !== pendingDeleteMediaId)
+          prev.filter((f: MediaFile) => f.id !== pendingDeleteMediaId),
         );
         // Refresh MTO list
         fetchMTOs();
@@ -931,7 +1295,7 @@ export default function MaterialsToOrderPage() {
         `/api/materials_to_order/${mtoPendingDelete.id}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -953,7 +1317,7 @@ export default function MaterialsToOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       }
     } catch (err) {
@@ -964,7 +1328,7 @@ export default function MaterialsToOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Failed to delete materials to order", {
@@ -1040,13 +1404,16 @@ export default function MaterialsToOrderPage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Materials to Order
                     </h1>
-                    <button
-                      onClick={() => setShowCreateMTOModal(true)}
-                      className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-primary/80 hover:bg-primary text-white rounded-lg transition-all duration-200 text-xs font-medium"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Create Materials to Order</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() => setShowCreateMTOModal(true)}
+                        className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-primary/80 hover:bg-primary text-white rounded-lg transition-all duration-200 text-xs font-medium"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Create Materials to Order</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1181,7 +1548,7 @@ export default function MaterialsToOrderPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -1201,6 +1568,16 @@ export default function MaterialsToOrderPage() {
                     {/* Tabs Section */}
                     <div className="px-4 shrink-0 border-b border-slate-200">
                       <nav className="flex space-x-6">
+                        <button
+                          onClick={() => setActiveTab("cumulative")}
+                          className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === "cumulative"
+                              ? "border-primary text-primary"
+                              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          }`}
+                        >
+                          Cumulative List
+                        </button>
                         <button
                           onClick={() => setActiveTab("active")}
                           className={`cursor-pointer py-2 px-1 border-b-2 font-medium text-sm ${
@@ -1226,226 +1603,530 @@ export default function MaterialsToOrderPage() {
 
                     {/* Scrollable Content Section */}
                     <div className="flex-1 overflow-auto">
-                      <table className="min-w-full divide-y divide-slate-200">
-                        <thead className="bg-slate-50 sticky top-0 z-10">
-                          <tr>
-                            <th
-                              className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
-                              onClick={() => handleSort("project")}
-                            >
-                              <div className="flex items-center gap-2">
-                                Project / Lots
-                                {getSortIcon("project")}
+                      {activeTab === "cumulative" && (
+                        <div className="p-6">
+                          {loadingCumulative ? (
+                            <div className="flex items-center justify-center h-64">
+                              <div className="text-center">
+                                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+                                <p className="text-sm text-slate-600">
+                                  Loading cumulative data...
+                                </p>
                               </div>
-                            </th>
-                            <th
-                              className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
-                              onClick={() => handleSort("items")}
-                            >
-                              <div className="flex items-center gap-2">
-                                Items
-                                {getSortIcon("items")}
-                              </div>
-                            </th>
-                            <th
-                              className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
-                              onClick={() => handleSort("remaining")}
-                            >
-                              <div className="flex items-center gap-2">
-                                Items Remaining
-                                {getSortIcon("remaining")}
-                              </div>
-                            </th>
-                            <th
-                              className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
-                              onClick={() => handleSort("status")}
-                            >
-                              <div className="flex items-center gap-2">
-                                Status
-                                {getSortIcon("status")}
-                              </div>
-                            </th>
-                            <th className="px-4 py-2 text-right text-sm font-semibold text-slate-600 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                          {paginatedMTOs.length === 0 ? (
-                            <tr>
-                              <td
-                                className="px-4 py-10 text-sm text-slate-500 text-center"
-                                colSpan={5}
-                              >
-                                No materials to order found
-                              </td>
-                            </tr>
+                            </div>
+                          ) : cumulativeData.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64">
+                              <Package className="w-16 h-16 text-slate-300 mb-4" />
+                              <p className="text-slate-600 text-lg font-medium mb-2">
+                                No materials to order
+                              </p>
+                              <p className="text-slate-500 text-sm">
+                                Create a new materials to order to get started
+                              </p>
+                            </div>
                           ) : (
-                            paginatedMTOs.map((mto: MTO) => {
-                              return (
-                                <React.Fragment key={mto.id}>
-                                  <tr
-                                    onClick={() => {
-                                      if (openAccordionId === mto.id) {
-                                        setOpenAccordionId(null);
-                                      } else {
-                                        setOpenAccordionId(mto.id);
-                                      }
-                                    }}
-                                    className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
-                                  >
-                                    <td className="px-4 py-3">
-                                      <div className="flex flex-row items-center gap-3">
-                                        <span className="text-sm font-semibold text-gray-800 truncate">
-                                          {mto.project?.name || "Project"}
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1 md:mt-0">
-                                          {mto.lots?.map((lot: Lot) => (
-                                            <span
-                                              key={lot.lot_id || lot.id}
-                                              className="text-[10px] px-2 py-1 bg-purple-100 text-purple-800 rounded"
-                                            >
-                                              {lot.name}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-700">
-                                      {mto.__itemsCount ??
-                                        (mto.items?.length || 0)}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-700">
-                                      {mto.__itemsRemaining ??
-                                        (mto.items?.filter(
-                                          (it) =>
-                                            (it.quantity_ordered_po || 0) <
-                                            (it.quantity || 0)
-                                        ).length ||
-                                          0)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span
-                                        className={`px-2 py-1 text-xs font-medium rounded ${
-                                          mto.status === "DRAFT"
-                                            ? "bg-yellow-100 text-yellow-800"
-                                            : mto.status === "PARTIALLY_ORDERED"
-                                            ? "bg-blue-100 text-blue-800"
-                                            : mto.status === "FULLY_ORDERED"
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-gray-100 text-gray-800"
-                                        }`}
+                            <div className="space-y-6">
+                              {cumulativeData.map((supplier) => (
+                                <div
+                                  key={supplier.supplier_id}
+                                  className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden"
+                                >
+                                  <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                                    <div>
+                                      <h3 className="text-sm font-semibold text-slate-800">
+                                        {supplier.supplier_name}
+                                      </h3>
+                                      <p className="text-xs text-slate-500 mt-0.5">
+                                        {supplier.items.length} unique item(s)
+                                      </p>
+                                    </div>
+                                    {supplier.supplier_id !== "unassigned" && (
+                                      <button
+                                        onClick={() => {
+                                          openCreatePOForSupplier(
+                                            supplier.supplier_name,
+                                            supplier.supplier_id,
+                                          );
+                                        }}
+                                        className="cursor-pointer px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
                                       >
-                                        {mto.status}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                      <ChevronDown
-                                        className={`w-4 h-4 text-slate-500 inline-block transition-transform duration-200 ${
-                                          openAccordionId === mto.id
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
-                                      />
-                                    </td>
-                                  </tr>
-
-                                  {/* Accordion content */}
-                                  {openAccordionId === mto.id && (
-                                    <tr>
-                                      <td
-                                        colSpan={5}
-                                        className="px-4 pb-4 border-t border-slate-200 bg-slate-50"
-                                      >
-                                        <div
-                                          id={`mto-${mto.id}`}
-                                          className="mt-2"
-                                        >
-                                          <div className="mb-2 p-2 bg-slate-50 rounded-lg">
-                                            <div className="flex items-center justify-between">
-                                              <div className="flex items-center gap-4 text-xs text-gray-600">
-                                                <div className="flex items-center gap-1.5">
-                                                  <Calendar className="w-4 h-4" />
-                                                  <span>
-                                                    <span className="font-medium">
-                                                      Created:
-                                                    </span>{" "}
-                                                    {mto.createdAt
-                                                      ? new Date(
-                                                          mto.createdAt
-                                                        ).toLocaleString()
-                                                      : "No date"}
-                                                  </span>
-                                                </div>
-                                                {mto.notes && (
-                                                  <div className="flex items-center gap-1.5">
-                                                    <FileText className="w-4 h-4" />
-                                                    <span>
-                                                      <span className="font-medium">
-                                                        Notes:
-                                                      </span>{" "}
-                                                      {mto.notes}
-                                                    </span>
+                                        Create Purchase Order
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                      <thead className="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Image
+                                          </th>
+                                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Category
+                                          </th>
+                                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Details
+                                          </th>
+                                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Stock On Hand
+                                          </th>
+                                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Cumulative Qty
+                                          </th>
+                                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            MTO Sources
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="bg-white divide-y divide-slate-200">
+                                        {supplier.items.map((item) => (
+                                          <tr
+                                            key={item.item_id}
+                                            className="hover:bg-slate-50"
+                                          >
+                                            <td className="px-3 py-2 whitespace-nowrap">
+                                              <div className="flex items-center">
+                                                {item.image?.url ? (
+                                                  <Image
+                                                    loading="lazy"
+                                                    src={`/${item.image.url}`}
+                                                    alt={
+                                                      item.category || "Item"
+                                                    }
+                                                    className="w-10 h-10 object-cover rounded border border-slate-200"
+                                                    width={40}
+                                                    height={40}
+                                                  />
+                                                ) : (
+                                                  <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 flex items-center justify-center">
+                                                    <Package className="w-5 h-5 text-slate-400" />
                                                   </div>
                                                 )}
-                                                <div className="flex items-center gap-1.5">
-                                                  <FileText className="w-4 h-4" />
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleOpenMediaModal(mto);
-                                                    }}
-                                                    className="cursor-pointer text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                                                  >
-                                                    <span>Media Files:</span>
-                                                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded">
-                                                      {(mto.media || []).length}
-                                                    </span>
-                                                  </button>
-                                                </div>
                                               </div>
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  handleMTODelete(mto.id);
-                                                }}
-                                                disabled={
-                                                  deletingMTOId === mto.id
-                                                }
-                                                className={`cursor-pointer px-2 py-1 border border-red-300 rounded-lg hover:bg-red-50 text-xs text-red-700 flex items-center gap-1.5 ${
-                                                  deletingMTOId === mto.id
-                                                    ? "opacity-50 cursor-not-allowed"
-                                                    : ""
-                                                }`}
-                                              >
-                                                {deletingMTOId === mto.id ? (
+                                            </td>
+                                            <td className="px-3 py-2 whitespace-nowrap">
+                                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                                                {item.category}
+                                              </span>
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              <div className="text-xs text-slate-600 space-y-1">
+                                                {item.sheet && (
                                                   <>
-                                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-red-600"></div>
-                                                    <span>Deleting...</span>
-                                                  </>
-                                                ) : (
-                                                  <>
-                                                    <Trash2 className="w-3 h-3" />
-                                                    <span>Delete MTO</span>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Brand:
+                                                      </span>{" "}
+                                                      {item.sheet.brand || "-"}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Color:
+                                                      </span>{" "}
+                                                      {item.sheet.color}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Finish:
+                                                      </span>{" "}
+                                                      {item.sheet.finish}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Face:
+                                                      </span>{" "}
+                                                      {item.sheet.face || "-"}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Dimensions:
+                                                      </span>{" "}
+                                                      {item.sheet.dimensions}
+                                                    </div>
                                                   </>
                                                 )}
-                                              </button>
-                                            </div>
+                                                {item.handle && (
+                                                  <>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Brand:
+                                                      </span>{" "}
+                                                      {item.handle.brand || "-"}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Color:
+                                                      </span>{" "}
+                                                      {item.handle.color}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Type:
+                                                      </span>{" "}
+                                                      {item.handle.type}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Dimensions:
+                                                      </span>{" "}
+                                                      {item.handle.dimensions}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Material:
+                                                      </span>{" "}
+                                                      {item.handle.material ||
+                                                        "-"}
+                                                    </div>
+                                                  </>
+                                                )}
+                                                {item.hardware && (
+                                                  <>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Brand:
+                                                      </span>{" "}
+                                                      {item.hardware.brand ||
+                                                        "-"}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Name:
+                                                      </span>{" "}
+                                                      {item.hardware.name}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Type:
+                                                      </span>{" "}
+                                                      {item.hardware.type}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Dimensions:
+                                                      </span>{" "}
+                                                      {item.hardware.dimensions}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Sub Category:
+                                                      </span>{" "}
+                                                      {
+                                                        item.hardware
+                                                          .sub_category
+                                                      }
+                                                    </div>
+                                                  </>
+                                                )}
+                                                {item.accessory && (
+                                                  <div>
+                                                    <span className="font-medium">
+                                                      Name:
+                                                    </span>{" "}
+                                                    {item.accessory.name}
+                                                  </div>
+                                                )}
+                                                {item.edging_tape && (
+                                                  <>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Brand:
+                                                      </span>{" "}
+                                                      {item.edging_tape.brand ||
+                                                        "-"}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Color:
+                                                      </span>{" "}
+                                                      {item.edging_tape.color ||
+                                                        "-"}
+                                                    </div>
+                                                    <div>
+                                                      <span className="font-medium">
+                                                        Finish:
+                                                      </span>{" "}
+                                                      {item.edging_tape
+                                                        .finish || "-"}
+                                                    </div>
+                                                  </>
+                                                )}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-2 whitespace-nowrap">
+                                              <div className="text-xs">
+                                                <div
+                                                  className={`font-medium ${
+                                                    item.stock_on_hand <= 0
+                                                      ? "text-red-600"
+                                                      : item.stock_on_hand < 10
+                                                        ? "text-yellow-600"
+                                                        : "text-green-600"
+                                                  }`}
+                                                >
+                                                  {item.stock_on_hand}{" "}
+                                                  {item.measurement_unit}
+                                                </div>
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-2 whitespace-nowrap">
+                                              <div className="text-sm font-semibold text-primary">
+                                                {item.cumulative_quantity}{" "}
+                                                {item.measurement_unit}
+                                              </div>
+                                            </td>
+                                            <td className="px-3 py-2">
+                                              <div className="text-xs text-slate-600 space-y-1">
+                                                {item.mto_sources.map(
+                                                  (source, idx) => (
+                                                    <div key={idx}>
+                                                      <span className="font-medium">
+                                                        {source.project_name ||
+                                                          "Manually Added MTO"}{" "}
+                                                        :
+                                                      </span>{" "}
+                                                      {source.quantity}{" "}
+                                                      {item.measurement_unit}
+                                                    </div>
+                                                  ),
+                                                )}
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {(activeTab === "active" ||
+                        activeTab === "completed") && (
+                        <table className="min-w-full divide-y divide-slate-200">
+                          <thead className="bg-slate-50 sticky top-0 z-10">
+                            <tr>
+                              <th
+                                className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
+                                onClick={() => handleSort("project")}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Project / Lots
+                                  {getSortIcon("project")}
+                                </div>
+                              </th>
+                              <th
+                                className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
+                                onClick={() => handleSort("items")}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Items
+                                  {getSortIcon("items")}
+                                </div>
+                              </th>
+                              <th
+                                className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
+                                onClick={() => handleSort("remaining")}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Items Remaining
+                                  {getSortIcon("remaining")}
+                                </div>
+                              </th>
+                              <th
+                                className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-200"
+                                onClick={() => handleSort("status")}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Status
+                                  {getSortIcon("status")}
+                                </div>
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-slate-600 uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-slate-200">
+                            {paginatedMTOs.length === 0 ? (
+                              <tr>
+                                <td
+                                  className="px-4 py-10 text-sm text-slate-500 text-center"
+                                  colSpan={5}
+                                >
+                                  No materials to order found
+                                </td>
+                              </tr>
+                            ) : (
+                              paginatedMTOs.map((mto) => {
+                                return (
+                                  <React.Fragment key={mto.id}>
+                                    <tr
+                                      onClick={() => {
+                                        if (openAccordionId === mto.id) {
+                                          setOpenAccordionId(null);
+                                        } else {
+                                          setOpenAccordionId(mto.id);
+                                        }
+                                      }}
+                                      className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
+                                    >
+                                      <td className="px-4 py-3">
+                                        <div className="flex flex-row items-center gap-3">
+                                          <span className="text-sm font-semibold text-gray-800 truncate">
+                                            {mto.project?.name || "Project"}
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1 md:mt-0">
+                                            {mto.lots?.map((lot) => (
+                                              <span
+                                                key={lot.lot_id || lot.id}
+                                                className="text-[10px] px-2 py-1 bg-purple-100 text-purple-800 rounded"
+                                              >
+                                                {lot.name}
+                                              </span>
+                                            ))}
                                           </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-sm text-slate-700">
+                                        {mto.__itemsCount ??
+                                          (mto.items?.length || 0)}
+                                      </td>
+                                      <td className="px-4 py-3 text-sm text-slate-700">
+                                        {mto.__itemsRemaining ??
+                                          (mto.items?.filter(
+                                            (it) =>
+                                              (it.quantity_ordered_po || 0) <
+                                              (it.quantity || 0),
+                                          ).length ||
+                                            0)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <span
+                                          className={`px-2 py-1 text-xs font-medium rounded ${
+                                            mto.status === "DRAFT"
+                                              ? "bg-yellow-100 text-yellow-800"
+                                              : mto.status ===
+                                                  "PARTIALLY_ORDERED"
+                                                ? "bg-blue-100 text-blue-800"
+                                                : mto.status === "FULLY_ORDERED"
+                                                  ? "bg-green-100 text-green-800"
+                                                  : "bg-gray-100 text-gray-800"
+                                          }`}
+                                        >
+                                          {mto.status}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3 text-right">
+                                        <ChevronDown
+                                          className={`w-4 h-4 text-slate-500 inline-block transition-transform duration-200 ${
+                                            openAccordionId === mto.id
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
+                                        />
+                                      </td>
+                                    </tr>
 
-                                          {/* Items grouped by supplier */}
-                                          {!!(
-                                            mto.items && mto.items.length
-                                          ) && (
-                                            <div className="space-y-2">
-                                              {(() => {
-                                                // Group items by supplier name (Unassigned last)
-                                                const groups = new Map<
-                                                  string,
-                                                  MTOItem[]
-                                                >();
-                                                mto.items.forEach(
-                                                  (it: MTOItem) => {
+                                    {/* Accordion content */}
+                                    {openAccordionId === mto.id && (
+                                      <tr>
+                                        <td
+                                          colSpan={5}
+                                          className="px-4 pb-4 border-t border-slate-200 bg-slate-50"
+                                        >
+                                          <div
+                                            id={`mto-${mto.id}`}
+                                            className="mt-2"
+                                          >
+                                            <div className="mb-2 p-2 bg-slate-50 rounded-lg">
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4 text-xs text-gray-600">
+                                                  <div className="flex items-center gap-1.5">
+                                                    <Calendar className="w-4 h-4" />
+                                                    <span>
+                                                      <span className="font-medium">
+                                                        Created:
+                                                      </span>{" "}
+                                                      {mto.createdAt
+                                                        ? new Date(
+                                                            mto.createdAt,
+                                                          ).toLocaleString()
+                                                        : "No date"}
+                                                    </span>
+                                                  </div>
+                                                  {mto.notes && (
+                                                    <div className="flex items-center gap-1.5">
+                                                      <FileText className="w-4 h-4" />
+                                                      <span>
+                                                        <span className="font-medium">
+                                                          Notes:
+                                                        </span>{" "}
+                                                        {mto.notes}
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                  <div className="flex items-center gap-1.5">
+                                                    <FileText className="w-4 h-4" />
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenMediaModal(
+                                                          mto,
+                                                        );
+                                                      }}
+                                                      className="cursor-pointer text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                                                    >
+                                                      <span>Media Files:</span>
+                                                      <span className="px-2 py-0.5 bg-primary/10 text-primary rounded">
+                                                        {
+                                                          (mto.media || [])
+                                                            .length
+                                                        }
+                                                      </span>
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                                <button
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleMTODelete(mto.id);
+                                                  }}
+                                                  disabled={
+                                                    deletingMTOId === mto.id
+                                                  }
+                                                  className={`cursor-pointer px-2 py-1 border border-red-300 rounded-lg hover:bg-red-50 text-xs text-red-700 flex items-center gap-1.5 ${
+                                                    deletingMTOId === mto.id
+                                                      ? "opacity-50 cursor-not-allowed"
+                                                      : ""
+                                                  }`}
+                                                >
+                                                  {deletingMTOId === mto.id ? (
+                                                    <>
+                                                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-red-600"></div>
+                                                      <span>Deleting...</span>
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <Trash2 className="w-3 h-3" />
+                                                      <span>Delete MTO</span>
+                                                    </>
+                                                  )}
+                                                </button>
+                                              </div>
+                                            </div>
+
+                                            {/* Items grouped by supplier */}
+                                            {!!(
+                                              mto.items && mto.items.length
+                                            ) && (
+                                              <div className="space-y-2">
+                                                {(() => {
+                                                  // Group items by supplier name (Unassigned last)
+                                                  const groups = new Map();
+                                                  mto.items.forEach((it) => {
                                                     const supplierName =
                                                       it.item?.supplier?.name ||
                                                       "Unassigned";
@@ -1454,18 +2135,16 @@ export default function MaterialsToOrderPage() {
                                                     )
                                                       groups.set(
                                                         supplierName,
-                                                        []
+                                                        [],
                                                       );
                                                     groups
-                                                      .get(supplierName)!
+                                                      .get(supplierName)
                                                       .push(it);
-                                                  }
-                                                );
-                                                const orderedGroupNames =
-                                                  Array.from(
-                                                    groups.keys()
-                                                  ).sort(
-                                                    (a: string, b: string) => {
+                                                  });
+                                                  const orderedGroupNames =
+                                                    Array.from(
+                                                      groups.keys(),
+                                                    ).sort((a, b) => {
                                                       if (
                                                         a === "Unassigned" &&
                                                         b !== "Unassigned"
@@ -1477,595 +2156,726 @@ export default function MaterialsToOrderPage() {
                                                       )
                                                         return -1;
                                                       return a.localeCompare(b);
-                                                    }
-                                                  );
-                                                return orderedGroupNames.map(
-                                                  (name: string) => (
-                                                    <div key={name}>
-                                                      <div className="flex items-center justify-between mb-2">
-                                                        <div className="text-xs font-semibold text-slate-700">
-                                                          {name}
-                                                        </div>
-                                                        {activeTab ===
-                                                          "active" &&
-                                                          name !==
-                                                            "Unassigned" && (
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => {
-                                                                const firstItem =
-                                                                  groups.get(
-                                                                    name
-                                                                  )?.[0];
-                                                                const supplierId =
-                                                                  firstItem
-                                                                    ?.item
-                                                                    ?.supplier
-                                                                    ?.supplier_id ||
-                                                                  firstItem
-                                                                    ?.item
-                                                                    ?.supplier_id ||
-                                                                  null;
-                                                                if (!supplierId)
-                                                                  return;
-                                                                openCreatePOForSupplier(
-                                                                  name,
-                                                                  supplierId,
-                                                                  mto.id
-                                                                );
-                                                              }}
-                                                              className="cursor-pointer px-2 py-1 text-xs border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors"
-                                                            >
-                                                              <Plus className="inline w-3 h-3 mr-1" />{" "}
-                                                              Create Purchase
-                                                              Order
-                                                            </button>
-                                                          )}
-                                                      </div>
-                                                      <div className="overflow-x-auto">
-                                                        <table className="w-full border border-slate-200 rounded-lg table-fixed">
-                                                          <colgroup>
-                                                            <col className="w-40" />
-                                                            <col className="w-60" />
-                                                            <col className="w-80" />
-                                                            <col className="w-32" />
-                                                            <col className="w-40" />
-                                                            <col className="w-32" />
-                                                            <col className="w-40" />
-                                                          </colgroup>
-                                                          <thead className="bg-slate-50">
-                                                            <tr>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Image
-                                                              </th>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Category
-                                                              </th>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Details
-                                                              </th>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                In Stock
-                                                              </th>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Quantity
-                                                              </th>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Qty Ordered
-                                                              </th>
-                                                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Status
-                                                              </th>
-                                                            </tr>
-                                                          </thead>
-                                                          <tbody className="bg-white divide-y divide-slate-200">
-                                                            {groups
-                                                              .get(name)!
-                                                              .map(
-                                                                (
-                                                                  item: MTOItem
-                                                                ) => {
-                                                                  const stockOnHand =
-                                                                    Number(
-                                                                      item.item
-                                                                        ?.quantity ??
-                                                                        0
-                                                                    );
-                                                                  const measurementUnit =
-                                                                    item.item
-                                                                      ?.measurement_unit ||
-                                                                    "";
+                                                    });
+                                                  return orderedGroupNames.map(
+                                                    (name) => {
+                                                      // Check if all items in this group have been fully ordered
+                                                      const groupItems =
+                                                        groups.get(name) || [];
 
-                                                                  return (
-                                                                    <tr
-                                                                      key={
-                                                                        item.id
-                                                                      }
-                                                                      className="hover:bg-slate-50"
-                                                                    >
-                                                                      <td className="px-3 py-2 whitespace-nowrap">
-                                                                        <div className="flex items-center">
-                                                                          {item
+                                                      // Show button only if there are items to order (not reserved and not fully ordered)
+                                                      const hasItemsToOrder =
+                                                        groupItems.some(
+                                                          (it: MTOItem) =>
+                                                            !reservedItemsMap[
+                                                              it.id
+                                                            ] &&
+                                                            Number(
+                                                              it.quantity_ordered_po ||
+                                                                0,
+                                                            ) <
+                                                              Number(
+                                                                it.quantity ||
+                                                                  0,
+                                                              ),
+                                                        );
+
+                                                      return (
+                                                        <div key={name}>
+                                                          <div className="flex items-center justify-between mb-2">
+                                                            <div className="text-xs font-semibold text-slate-700">
+                                                              {name}
+                                                            </div>
+                                                            {activeTab ===
+                                                              "active" &&
+                                                              name !==
+                                                                "Unassigned" &&
+                                                              hasItemsToOrder && (
+                                                                <button
+                                                                  type="button"
+                                                                  onClick={() => {
+                                                                    const firstItem =
+                                                                      groups.get(
+                                                                        name,
+                                                                      )?.[0];
+                                                                    const supplierId =
+                                                                      firstItem
+                                                                        ?.item
+                                                                        ?.supplier
+                                                                        ?.supplier_id ||
+                                                                      firstItem
+                                                                        ?.item
+                                                                        ?.supplier_id ||
+                                                                      null;
+                                                                    if (
+                                                                      !supplierId
+                                                                    )
+                                                                      return;
+                                                                    openCreatePOForSupplier(
+                                                                      name,
+                                                                      supplierId,
+                                                                      mto.id,
+                                                                    );
+                                                                  }}
+                                                                  className="cursor-pointer px-2 py-1 text-xs border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors"
+                                                                >
+                                                                  <Plus className="inline w-3 h-3 mr-1" />{" "}
+                                                                  Create
+                                                                  Purchase Order
+                                                                </button>
+                                                              )}
+                                                          </div>
+                                                          <div className="overflow-x-auto">
+                                                            <table className="w-full border border-slate-200 rounded-lg table-fixed">
+                                                              <colgroup>
+                                                                <col className="w-40" />
+                                                                <col className="w-30" />
+                                                                <col className="w-60" />
+                                                                <col className="w-32" />
+                                                                <col className="w-40" />
+                                                                <col className="w-60" />
+                                                                <col className="w-40" />
+                                                              </colgroup>
+                                                              <thead className="bg-slate-50">
+                                                                <tr>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    Image
+                                                                  </th>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    Category
+                                                                  </th>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    Details
+                                                                  </th>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    In Stock
+                                                                  </th>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    Quantity
+                                                                  </th>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    Qty Ordered
+                                                                  </th>
+                                                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                    Status
+                                                                  </th>
+                                                                </tr>
+                                                              </thead>
+                                                              <tbody className="bg-white divide-y divide-slate-200">
+                                                                {groups
+                                                                  .get(name)
+                                                                  .map(
+                                                                    (
+                                                                      item: MTOItem,
+                                                                    ) => {
+                                                                      const stockOnHand =
+                                                                        Number(
+                                                                          item
                                                                             .item
-                                                                            ?.image
-                                                                            ?.url ? (
-                                                                            <Image
-                                                                              loading="lazy"
-                                                                              src={`/${item.item.image.url}`}
-                                                                              alt={
+                                                                            ?.quantity ??
+                                                                            0,
+                                                                        );
+                                                                      const measurementUnit =
+                                                                        item
+                                                                          .item
+                                                                          ?.measurement_unit ||
+                                                                        "";
+
+                                                                      // Check if this item has a reservation
+                                                                      const reservation =
+                                                                        reservedItemsMap[
+                                                                          item
+                                                                            .id
+                                                                        ];
+                                                                      const isReserved =
+                                                                        !!reservation;
+
+                                                                      // Check if item has been ordered via PO
+                                                                      const isOrdered =
+                                                                        Number(
+                                                                          item.quantity_ordered_po ||
+                                                                            0,
+                                                                        ) > 0;
+
+                                                                      return (
+                                                                        <tr
+                                                                          key={
+                                                                            item.id
+                                                                          }
+                                                                          className={`${
+                                                                            isReserved ||
+                                                                            isOrdered
+                                                                              ? "bg-slate-200 opacity-60"
+                                                                              : "hover:bg-slate-50"
+                                                                          }`}
+                                                                        >
+                                                                          <td className="px-3 py-2 whitespace-nowrap">
+                                                                            <div className="flex items-center">
+                                                                              {item
+                                                                                .item
+                                                                                ?.image
+                                                                                ?.url ? (
+                                                                                <Image
+                                                                                  loading="lazy"
+                                                                                  src={`/${item.item.image.url}`}
+                                                                                  alt={
+                                                                                    item
+                                                                                      .item
+                                                                                      ?.category
+                                                                                      ? `${item.item.category} item image`
+                                                                                      : item.item_id
+                                                                                        ? `Item ${item.item_id} image`
+                                                                                        : "Item image"
+                                                                                  }
+                                                                                  className="w-10 h-10 object-cover rounded border border-slate-200"
+                                                                                  width={
+                                                                                    40
+                                                                                  }
+                                                                                  height={
+                                                                                    40
+                                                                                  }
+                                                                                />
+                                                                              ) : (
+                                                                                <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 flex items-center justify-center">
+                                                                                  <Package className="w-5 h-5 text-slate-400" />
+                                                                                </div>
+                                                                              )}
+                                                                            </div>
+                                                                          </td>
+                                                                          <td className="px-3 py-2 whitespace-nowrap">
+                                                                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                                                                              {
                                                                                 item
                                                                                   .item
                                                                                   ?.category
-                                                                                  ? `${item.item.category} item image`
-                                                                                  : item.item_id
-                                                                                  ? `Item ${item.item_id} image`
-                                                                                  : "Item image"
-                                                                              }
-                                                                              className="w-10 h-10 object-cover rounded border border-slate-200"
-                                                                              width={
-                                                                                40
-                                                                              }
-                                                                              height={
-                                                                                40
-                                                                              }
-                                                                            />
-                                                                          ) : (
-                                                                            <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 flex items-center justify-center">
-                                                                              <Package className="w-5 h-5 text-slate-400" />
-                                                                            </div>
-                                                                          )}
-                                                                        </div>
-                                                                      </td>
-                                                                      <td className="px-3 py-2 whitespace-nowrap">
-                                                                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                                                                          {
-                                                                            item
-                                                                              .item
-                                                                              ?.category
-                                                                          }
-                                                                        </span>
-                                                                      </td>
-                                                                      <td className="px-3 py-2">
-                                                                        <div className="text-xs text-gray-600 space-y-1">
-                                                                          {item
-                                                                            .item
-                                                                            ?.sheet && (
-                                                                            <>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Brand:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .sheet
-                                                                                  .brand ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Color:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .sheet
-                                                                                    .color
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Finish:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .sheet
-                                                                                    .finish
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Face:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .sheet
-                                                                                  .face ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Dimensions:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .sheet
-                                                                                    .dimensions
-                                                                                }
-                                                                              </div>
-                                                                            </>
-                                                                          )}
-                                                                          {item
-                                                                            .item
-                                                                            ?.handle && (
-                                                                            <>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Brand:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .handle
-                                                                                  .brand ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Color:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .handle
-                                                                                    .color
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Type:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .handle
-                                                                                    .type
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Dimensions:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .handle
-                                                                                    .dimensions
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Material:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .handle
-                                                                                  .material ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                            </>
-                                                                          )}
-                                                                          {item
-                                                                            .item
-                                                                            ?.hardware && (
-                                                                            <>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Brand:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .hardware
-                                                                                  .brand ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Name:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .hardware
-                                                                                    .name
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Type:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .hardware
-                                                                                    .type
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Dimensions:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .hardware
-                                                                                    .dimensions
-                                                                                }
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Sub
-                                                                                  Category:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .hardware
-                                                                                    .sub_category
-                                                                                }
-                                                                              </div>
-                                                                            </>
-                                                                          )}
-                                                                          {item
-                                                                            .item
-                                                                            ?.accessory && (
-                                                                            <>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Name:
-                                                                                </span>{" "}
-                                                                                {
-                                                                                  item
-                                                                                    .item
-                                                                                    .accessory
-                                                                                    .name
-                                                                                }
-                                                                              </div>
-                                                                            </>
-                                                                          )}
-                                                                          {item
-                                                                            .item
-                                                                            ?.edging_tape && (
-                                                                            <>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Brand:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .edging_tape
-                                                                                  .brand ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Color:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .edging_tape
-                                                                                  .color ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Finish:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .edging_tape
-                                                                                  .finish ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                              <div>
-                                                                                <span className="font-medium">
-                                                                                  Dimensions:
-                                                                                </span>{" "}
-                                                                                {item
-                                                                                  .item
-                                                                                  .edging_tape
-                                                                                  .dimensions ||
-                                                                                  "-"}
-                                                                              </div>
-                                                                            </>
-                                                                          )}
-                                                                        </div>
-                                                                      </td>
-                                                                      <td className="px-3 py-2 whitespace-nowrap">
-                                                                        <div className="text-xs">
-                                                                          <div className="font-semibold text-green-600">
-                                                                            {
-                                                                              stockOnHand
-                                                                            }{" "}
-                                                                            {
-                                                                              measurementUnit
-                                                                            }
-                                                                          </div>
-                                                                          <div className="text-[11px] text-slate-500">
-                                                                            in
-                                                                            stock
-                                                                          </div>
-                                                                        </div>
-                                                                      </td>
-                                                                      <td className="px-3 py-2 whitespace-nowrap">
-                                                                        <div className="text-xs text-gray-600">
-                                                                          <div className="flex items-center gap-1.5 mb-1">
-                                                                            <Package className="w-4 h-4 text-gray-500" />
-                                                                            <span>
-                                                                              <span className="font-medium">
-                                                                                Qty:
-                                                                              </span>{" "}
-                                                                              {
-                                                                                item.quantity
-                                                                              }{" "}
-                                                                              {
-                                                                                item
-                                                                                  .item
-                                                                                  ?.measurement_unit
                                                                               }
                                                                             </span>
-                                                                          </div>
-                                                                          {(() => {
-                                                                            const actualQuantityOrdered =
-                                                                              (
-                                                                                item.ordered_items ||
-                                                                                []
-                                                                              ).reduce(
-                                                                                (
-                                                                                  sum: number,
-                                                                                  poItem: {
-                                                                                    quantity?: number;
-                                                                                  }
-                                                                                ) =>
-                                                                                  sum +
-                                                                                  (poItem.quantity ||
-                                                                                    0),
-                                                                                0
-                                                                              );
-                                                                            return (
-                                                                              actualQuantityOrdered >
-                                                                                0 && (
-                                                                                <div className="flex items-center gap-1.5 text-blue-600 text-xs">
-                                                                                  <span>
-                                                                                    Ordered:{" "}
+                                                                          </td>
+                                                                          <td className="px-3 py-2">
+                                                                            <div className="text-xs text-gray-600 space-y-1">
+                                                                              {item
+                                                                                .item
+                                                                                ?.sheet && (
+                                                                                <>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Brand:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .sheet
+                                                                                      .brand ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Color:
+                                                                                    </span>{" "}
                                                                                     {
-                                                                                      actualQuantityOrdered
+                                                                                      item
+                                                                                        .item
+                                                                                        .sheet
+                                                                                        .color
                                                                                     }
-                                                                                  </span>
-                                                                                </div>
-                                                                              )
-                                                                            );
-                                                                          })()}
-                                                                          {item.quantity_received &&
-                                                                            item.quantity_received >
-                                                                              0 && (
-                                                                              <div className="flex items-center gap-1.5 text-green-600 text-xs">
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Finish:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .sheet
+                                                                                        .finish
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Face:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .sheet
+                                                                                      .face ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Dimensions:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .sheet
+                                                                                        .dimensions
+                                                                                    }
+                                                                                  </div>
+                                                                                </>
+                                                                              )}
+                                                                              {item
+                                                                                .item
+                                                                                ?.handle && (
+                                                                                <>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Brand:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .handle
+                                                                                      .brand ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Color:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .handle
+                                                                                        .color
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Type:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .handle
+                                                                                        .type
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Dimensions:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .handle
+                                                                                        .dimensions
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Material:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .handle
+                                                                                      .material ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                </>
+                                                                              )}
+                                                                              {item
+                                                                                .item
+                                                                                ?.hardware && (
+                                                                                <>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Brand:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .hardware
+                                                                                      .brand ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Name:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .hardware
+                                                                                        .name
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Type:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .hardware
+                                                                                        .type
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Dimensions:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .hardware
+                                                                                        .dimensions
+                                                                                    }
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Sub
+                                                                                      Category:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .hardware
+                                                                                        .sub_category
+                                                                                    }
+                                                                                  </div>
+                                                                                </>
+                                                                              )}
+                                                                              {item
+                                                                                .item
+                                                                                ?.accessory && (
+                                                                                <>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Name:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .item
+                                                                                        .accessory
+                                                                                        .name
+                                                                                    }
+                                                                                  </div>
+                                                                                </>
+                                                                              )}
+                                                                              {item
+                                                                                .item
+                                                                                ?.edging_tape && (
+                                                                                <>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Brand:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .edging_tape
+                                                                                      .brand ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Color:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .edging_tape
+                                                                                      .color ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Finish:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .edging_tape
+                                                                                      .finish ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                  <div>
+                                                                                    <span className="font-medium">
+                                                                                      Dimensions:
+                                                                                    </span>{" "}
+                                                                                    {item
+                                                                                      .item
+                                                                                      .edging_tape
+                                                                                      .dimensions ||
+                                                                                      "-"}
+                                                                                  </div>
+                                                                                </>
+                                                                              )}
+                                                                            </div>
+                                                                          </td>
+                                                                          <td className="px-3 py-2 whitespace-nowrap">
+                                                                            <div className="text-xs">
+                                                                              <div className="font-semibold text-green-600">
+                                                                                {
+                                                                                  stockOnHand
+                                                                                }{" "}
+                                                                                {
+                                                                                  measurementUnit
+                                                                                }
+                                                                              </div>
+                                                                              <div className="text-[11px] text-slate-500">
+                                                                                in
+                                                                                stock
+                                                                              </div>
+                                                                            </div>
+                                                                          </td>
+                                                                          <td className="px-3 py-2 whitespace-nowrap">
+                                                                            <div className="text-xs text-gray-600">
+                                                                              <div className="flex items-center gap-1.5 mb-1">
+                                                                                <Package className="w-4 h-4 text-gray-500" />
                                                                                 <span>
-                                                                                  Received:{" "}
+                                                                                  <span className="font-medium">
+                                                                                    Qty:
+                                                                                  </span>{" "}
                                                                                   {
-                                                                                    item.quantity_received
+                                                                                    item.quantity
+                                                                                  }{" "}
+                                                                                  {
+                                                                                    item
+                                                                                      .item
+                                                                                      ?.measurement_unit
                                                                                   }
                                                                                 </span>
                                                                               </div>
-                                                                            )}
-                                                                        </div>
-                                                                      </td>
-                                                                      <td className="px-3 py-2 whitespace-nowrap">
-                                                                        <input
-                                                                          type="number"
-                                                                          min="0"
-                                                                          value={
-                                                                            quantityOrderedDraftById[
-                                                                              item
-                                                                                .id
-                                                                            ] ??
-                                                                            String(
-                                                                              item.quantity_ordered ??
-                                                                                0
-                                                                            )
-                                                                          }
-                                                                          onChange={(
-                                                                            e
-                                                                          ) =>
-                                                                            handleQuantityOrderedChange(
-                                                                              item.id,
-                                                                              e
-                                                                                .target
-                                                                                .value
-                                                                            )
-                                                                          }
-                                                                          onBlur={() => {
-                                                                            const timers =
-                                                                              quantityOrderedTimersRef.current;
-                                                                            if (
-                                                                              timers.has(
-                                                                                item.id
-                                                                              )
-                                                                            ) {
-                                                                              clearTimeout(
-                                                                                timers.get(
-                                                                                  item.id
-                                                                                )
-                                                                              );
-                                                                              timers.delete(
-                                                                                item.id
-                                                                              );
-                                                                            }
-                                                                            const v =
-                                                                              quantityOrderedDraftById[
-                                                                                item
-                                                                                  .id
-                                                                              ] ??
-                                                                              String(
-                                                                                item.quantity_ordered ??
-                                                                                  0
-                                                                              );
-                                                                            saveQuantityOrdered(
-                                                                              item.id,
-                                                                              v
-                                                                            );
-                                                                          }}
-                                                                          disabled={
-                                                                            !!isSavingQuantityOrderedById[
-                                                                              item
-                                                                                .id
-                                                                            ]
-                                                                          }
-                                                                          className="w-24 text-xs text-slate-800 px-2 py-1 border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none disabled:opacity-60"
-                                                                        />
-                                                                      </td>
-                                                                      <td className="px-3 py-2 whitespace-nowrap">
-                                                                        {Number(
-                                                                          item.quantity_ordered_po ||
-                                                                            0
-                                                                        ) >
-                                                                          0 && (
-                                                                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                                                                            Ordered
-                                                                          </span>
-                                                                        )}
-                                                                        {item.quantity_received &&
-                                                                          item.quantity_received >
-                                                                            0 && (
-                                                                            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
-                                                                              Received
-                                                                            </span>
-                                                                          )}
-                                                                        {Number(
-                                                                          item.quantity_ordered_po ||
-                                                                            0
-                                                                        ) ===
-                                                                          0 &&
-                                                                          item.quantity_received ===
-                                                                            0 && (
-                                                                            <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">
-                                                                              Pending
-                                                                            </span>
-                                                                          )}
-                                                                      </td>
-                                                                    </tr>
-                                                                  );
-                                                                }
-                                                              )}
-                                                          </tbody>
-                                                        </table>
-                                                      </div>
-                                                    </div>
-                                                  )
-                                                );
-                                              })()}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  )}
-                                </React.Fragment>
-                              );
-                            })
-                          )}
-                        </tbody>
-                      </table>
+                                                                              {(() => {
+                                                                                const actualQuantityOrdered =
+                                                                                  (
+                                                                                    item.ordered_items ||
+                                                                                    []
+                                                                                  ).reduce(
+                                                                                    (
+                                                                                      sum,
+                                                                                      poItem,
+                                                                                    ) =>
+                                                                                      sum +
+                                                                                      (poItem.quantity ||
+                                                                                        0),
+                                                                                    0,
+                                                                                  );
+                                                                                return (
+                                                                                  actualQuantityOrdered >
+                                                                                    0 && (
+                                                                                    <div className="flex items-center gap-1.5 text-blue-600 text-xs">
+                                                                                      <span>
+                                                                                        Ordered:{" "}
+                                                                                        {
+                                                                                          actualQuantityOrdered
+                                                                                        }
+                                                                                      </span>
+                                                                                    </div>
+                                                                                  )
+                                                                                );
+                                                                              })()}
+                                                                              {item.quantity_received
+                                                                                ? item.quantity_received
+                                                                                : 0 >
+                                                                                    0 && (
+                                                                                    <div className="flex items-center gap-1.5 text-green-600 text-xs">
+                                                                                      <span>
+                                                                                        Received:{" "}
+                                                                                        {
+                                                                                          item.quantity_received
+                                                                                        }
+                                                                                      </span>
+                                                                                    </div>
+                                                                                  )}
+                                                                            </div>
+                                                                          </td>
+                                                                          <td className="px-3 py-2 whitespace-nowrap">
+                                                                            <div className="flex flex-col gap-1">
+                                                                              <div className="flex items-center gap-1">
+                                                                                <input
+                                                                                  type="number"
+                                                                                  min="0"
+                                                                                  value={
+                                                                                    quantityOrderedDraftById[
+                                                                                      item
+                                                                                        .id
+                                                                                    ] ??
+                                                                                    String(
+                                                                                      // If quantity_ordered_po > 0, use that value instead of quantity_ordered
+                                                                                      item.quantity_ordered_po &&
+                                                                                        Number(
+                                                                                          item.quantity_ordered_po,
+                                                                                        )
+                                                                                        ? item.quantity_ordered_po
+                                                                                        : (item.quantity_ordered ??
+                                                                                            0),
+                                                                                    )
+                                                                                  }
+                                                                                  onChange={(
+                                                                                    e,
+                                                                                  ) =>
+                                                                                    handleQuantityOrderedChange(
+                                                                                      item.id,
+                                                                                      e
+                                                                                        .target
+                                                                                        .value,
+                                                                                    )
+                                                                                  }
+                                                                                  disabled={
+                                                                                    !!isSavingQuantityOrderedById[
+                                                                                      item
+                                                                                        .id
+                                                                                    ] ||
+                                                                                    Number(
+                                                                                      item.quantity_ordered_po ||
+                                                                                        0,
+                                                                                    ) >
+                                                                                      0 ||
+                                                                                    isReserved
+                                                                                  }
+                                                                                  className="w-24 text-xs text-slate-800 px-2 py-1 border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none disabled:opacity-60"
+                                                                                />
+                                                                                {pendingChangesById[
+                                                                                  item
+                                                                                    .id
+                                                                                ] && (
+                                                                                  <div className="flex items-center gap-1">
+                                                                                    <button
+                                                                                      onClick={() =>
+                                                                                        handleSaveQuantityOrdered(
+                                                                                          item.id,
+                                                                                        )
+                                                                                      }
+                                                                                      disabled={
+                                                                                        !!isSavingQuantityOrderedById[
+                                                                                          item
+                                                                                            .id
+                                                                                        ]
+                                                                                      }
+                                                                                      className="cursor-pointer p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                      title="Save"
+                                                                                    >
+                                                                                      <Check className="w-4 h-4" />
+                                                                                    </button>
+                                                                                    <button
+                                                                                      onClick={() =>
+                                                                                        handleCancelQuantityOrdered(
+                                                                                          item.id,
+                                                                                        )
+                                                                                      }
+                                                                                      disabled={
+                                                                                        !!isSavingQuantityOrderedById[
+                                                                                          item
+                                                                                            .id
+                                                                                        ]
+                                                                                      }
+                                                                                      className="cursor-pointer p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                                      title="Cancel"
+                                                                                    >
+                                                                                      <X className="w-4 h-4" />
+                                                                                    </button>
+                                                                                  </div>
+                                                                                )}
+                                                                              </div>
+                                                                              {item
+                                                                                .ordered_by
+                                                                                ?.username &&
+                                                                                !pendingChangesById[
+                                                                                  item
+                                                                                    .id
+                                                                                ] && (
+                                                                                  <div className="text-[12px] text-slate-500">
+                                                                                    Ordered
+                                                                                    by:{" "}
+                                                                                    {
+                                                                                      item
+                                                                                        .ordered_by
+                                                                                        .username
+                                                                                    }
+                                                                                  </div>
+                                                                                )}
+                                                                            </div>
+                                                                          </td>
+                                                                          <td className="px-3 py-2">
+                                                                            <div className="flex flex-col gap-2">
+                                                                              {Number(
+                                                                                item.quantity_ordered_po ||
+                                                                                  0,
+                                                                              ) >
+                                                                                0 && (
+                                                                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                                                                                  Ordered
+                                                                                </span>
+                                                                              )}
+                                                                              {item.quantity_received
+                                                                                ? item.quantity_received
+                                                                                : 0 >
+                                                                                    0 && (
+                                                                                    <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
+                                                                                      Received
+                                                                                    </span>
+                                                                                  )}
+                                                                              {Number(
+                                                                                item.quantity_ordered_po ||
+                                                                                  0,
+                                                                              ) ===
+                                                                                0 &&
+                                                                                item.quantity_received ===
+                                                                                  0 && (
+                                                                                  <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">
+                                                                                    Pending
+                                                                                  </span>
+                                                                                )}
+                                                                              {/* Reserve Stock Button */}
+                                                                              {!isOrdered &&
+                                                                                (stockOnHand >
+                                                                                  0 ||
+                                                                                  isReserved) && (
+                                                                                  <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                      !isReserved
+                                                                                        ? handleReserveStock(
+                                                                                            item,
+                                                                                          )
+                                                                                        : handleDeleteReservation(
+                                                                                            reservation.id,
+                                                                                            item.id,
+                                                                                          )
+                                                                                    }
+                                                                                    disabled={
+                                                                                      reservingItemId ===
+                                                                                      item.id
+                                                                                    }
+                                                                                    className={`cursor-pointer px-2 py-1 text-xs border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                                                      !isReserved
+                                                                                        ? "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                                                                                        : "border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                                                                    }`}
+                                                                                  >
+                                                                                    {reservingItemId ===
+                                                                                    item.id
+                                                                                      ? !isReserved
+                                                                                        ? "Reserving..."
+                                                                                        : "Deleting..."
+                                                                                      : !isReserved
+                                                                                        ? "Reserve Stock"
+                                                                                        : "Unreserve"}
+                                                                                  </button>
+                                                                                )}
+                                                                            </div>
+                                                                          </td>
+                                                                        </tr>
+                                                                      );
+                                                                    },
+                                                                  )}
+                                                              </tbody>
+                                                            </table>
+                                                          </div>
+                                                        </div>
+                                                      );
+                                                    },
+                                                  );
+                                                })()}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
 
                     {/* Fixed Pagination Footer */}

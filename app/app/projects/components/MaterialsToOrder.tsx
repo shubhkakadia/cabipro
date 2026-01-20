@@ -200,7 +200,7 @@ export default function MaterialsToOrder({
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
-      fileCount: number
+      fileCount: number,
     ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
@@ -230,7 +230,7 @@ export default function MaterialsToOrder({
   const [itemCache, setItemCache] = useState<Record<string, Item[]>>({});
   const [selectedLots, setSelectedLots] = useState<Lot[]>([]);
   const [materialsToOrderData, setMaterialsToOrderData] = useState<MTO | null>(
-    null
+    null,
   );
   const [notes, setNotes] = useState("");
   const [currentMtoId, setCurrentMtoId] = useState<string | null>(null);
@@ -261,7 +261,7 @@ export default function MaterialsToOrder({
   const [locallyFreedLotIds, setLocallyFreedLotIds] = useState<string[]>([]);
   const locallyFreedLotIdsSet = useMemo(
     () => new Set(locallyFreedLotIds),
-    [locallyFreedLotIds]
+    [locallyFreedLotIds],
   );
   // Snapshot of the last saved/loaded state to compare against for changes
   const dataSnapshotRef = useRef<DataSnapshot>({
@@ -276,7 +276,7 @@ export default function MaterialsToOrder({
     selectedLots: [],
   });
   // State to track loading and initialization status
-  const [_loadingState, setLoadingState] = useState<LoadingState>({
+  const [, setLoadingState] = useState<LoadingState>({
     isUpdatingFromApi: false,
     isInitialized: false,
   });
@@ -287,7 +287,7 @@ export default function MaterialsToOrder({
   const createSnapshot = (
     categoryItemsData: CategoryItems,
     notesData: string,
-    selectedLotsData: Lot[]
+    selectedLotsData: Lot[],
   ): DataSnapshot => {
     // Normalize categoryItems - only include items with data, sorted by item_id for comparison
     const normalizedCategoryItems: Record<
@@ -320,56 +320,6 @@ export default function MaterialsToOrder({
   };
 
   // Helper function to compare two snapshots (currently unused but kept for potential future use)
-  const _hasDataChanged = (
-    snapshot1: DataSnapshot,
-    snapshot2: DataSnapshot
-  ): boolean => {
-    // Compare notes
-    if (snapshot1.notes !== snapshot2.notes) {
-      return true;
-    }
-
-    // Compare selectedLots
-    if (
-      JSON.stringify(snapshot1.selectedLots) !==
-      JSON.stringify(snapshot2.selectedLots)
-    ) {
-      return true;
-    }
-
-    // Compare categoryItems
-    const categories = [
-      "sheet",
-      "handle",
-      "hardware",
-      "accessory",
-      "edging_tape",
-    ];
-    for (const category of categories) {
-      const items1 = snapshot1.categoryItems[category] || [];
-      const items2 = snapshot2.categoryItems[category] || [];
-
-      if (items1.length !== items2.length) {
-        return true;
-      }
-
-      // Compare each item
-      for (let i = 0; i < items1.length; i++) {
-        const item1 = items1[i];
-        const item2 = items2[i];
-
-        if (
-          item1.item_id !== item2.item_id ||
-          item1.quantity !== item2.quantity ||
-          (item1.notes || "") !== (item2.notes || "")
-        ) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
 
   // Memoize: Get all lots that have MTOs created (from all MTOs in the project)
   const lotsWithExistingMto = useMemo(() => {
@@ -413,7 +363,7 @@ export default function MaterialsToOrder({
         {
           numeric: true,
           sensitivity: "base",
-        }
+        },
       );
     });
   }, [project?.lots, lotsWithExistingMto]);
@@ -433,7 +383,7 @@ export default function MaterialsToOrder({
 
     const currentMtoId = materialsToOrderData.id;
     const mtoWithSameId = project.materials_to_order.find(
-      (mto) => mto.id === currentMtoId
+      (mto) => mto.id === currentMtoId,
     );
 
     return mtoWithSameId?.lots || [];
@@ -458,7 +408,7 @@ export default function MaterialsToOrder({
         {
           numeric: true,
           sensitivity: "base",
-        }
+        },
       );
     });
   }, [lotsWithSameMtoId]);
@@ -479,10 +429,10 @@ export default function MaterialsToOrder({
 
     // Check if any selected lot has existing MTO
     const selectedLotIds = new Set(
-      (selectedLots || []).map((lot) => lot.lot_id)
+      (selectedLots || []).map((lot) => lot.lot_id),
     );
     const mtoLotIds = new Set(
-      (materialsToOrderData.lots || []).map((lot) => lot.lot_id)
+      (materialsToOrderData.lots || []).map((lot) => lot.lot_id),
     );
 
     const anySelectedLotHasMto =
@@ -500,7 +450,7 @@ export default function MaterialsToOrder({
   // Helper to build category items based on MTO data and selected lots
   const buildCategoryItemsFromMto = (
     mtoData: MTO,
-    lots: Lot[]
+    lots: Lot[],
   ): CategoryItems => {
     const allowedLotIds = new Set((lots || []).map((l) => l.lot_id));
 
@@ -532,7 +482,7 @@ export default function MaterialsToOrder({
           ) {
             const currentItems = newCategoryItems[category];
             const emptyRowIndex = currentItems.findIndex(
-              (row: CategoryRow) => !row.item
+              (row: CategoryRow) => !row.item,
             );
 
             const itemData = {
@@ -554,7 +504,7 @@ export default function MaterialsToOrder({
         Object.keys(newCategoryItems).forEach((category) => {
           if (
             !newCategoryItems[category as keyof CategoryItems].some(
-              (row: CategoryRow) => !row.item
+              (row: CategoryRow) => !row.item,
             )
           ) {
             newCategoryItems[category as keyof CategoryItems].push({});
@@ -586,7 +536,7 @@ export default function MaterialsToOrder({
             edging_tape: [{}],
           },
           "",
-          selectedLots || []
+          selectedLots || [],
         );
         // Reset flag after initialization
         setTimeout(() => {
@@ -603,8 +553,8 @@ export default function MaterialsToOrder({
           mto.lots.some(
             (lot) =>
               selectedLotIds.has(lot.lot_id) &&
-              !locallyFreedLotIdsSet.has(lot.lot_id)
-          )
+              !locallyFreedLotIdsSet.has(lot.lot_id),
+          ),
       );
 
       if (!relevantMto) {
@@ -619,7 +569,7 @@ export default function MaterialsToOrder({
             edging_tape: [{}],
           },
           "",
-          selectedLots
+          selectedLots,
         );
         // Reset flag after initialization
         setTimeout(() => {
@@ -633,14 +583,14 @@ export default function MaterialsToOrder({
           `/api/materials_to_order/${relevantMto.id}`,
           {
             withCredentials: true,
-          }
+          },
         );
 
         if (response.data.status) {
           const mtoData = response.data.data;
           const loadedCategoryItems = buildCategoryItemsFromMto(
             mtoData,
-            selectedLots
+            selectedLots,
           );
 
           // Set flag to prevent auto-save during API update
@@ -650,7 +600,7 @@ export default function MaterialsToOrder({
           dataSnapshotRef.current = createSnapshot(
             loadedCategoryItems,
             mtoData?.notes || "",
-            selectedLots
+            selectedLots,
           );
 
           // Then update state
@@ -674,7 +624,7 @@ export default function MaterialsToOrder({
             {
               position: "top-right",
               autoClose: 3000,
-            }
+            },
           );
         } else {
           toast.error("Failed to load existing materials to order", {
@@ -700,7 +650,7 @@ export default function MaterialsToOrder({
       // Always filter by selected lots, even for existing MTO
       const filteredCategoryItems = buildCategoryItemsFromMto(
         materialsToOrderData,
-        selectedLots
+        selectedLots,
       );
 
       // Only update snapshot when data is loaded from API (to prevent auto-save)
@@ -710,7 +660,7 @@ export default function MaterialsToOrder({
         dataSnapshotRef.current = createSnapshot(
           filteredCategoryItems,
           materialsToOrderData?.notes || "",
-          selectedLots
+          selectedLots,
         );
       }
 
@@ -741,7 +691,7 @@ export default function MaterialsToOrder({
   const searchItems = async (
     category: string,
     searchTerm: string,
-    rowIndex: number
+    rowIndex: number,
   ) => {
     if (!searchTerm || searchTerm.trim() === "") {
       setSearchResults((prev) => ({
@@ -832,7 +782,7 @@ export default function MaterialsToOrder({
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       }
       setSearchResults((prev) => ({
@@ -849,7 +799,7 @@ export default function MaterialsToOrder({
   const handleSearchChange = (
     category: string,
     rowIndex: number,
-    value: string
+    value: string,
   ) => {
     const key = getSearchTermKey(category, rowIndex);
     setSearchTerms((prev) => ({
@@ -862,7 +812,7 @@ export default function MaterialsToOrder({
   const handleItemSelect = (
     category: keyof CategoryItems,
     rowIndex: number,
-    item: Item
+    item: Item,
   ) => {
     setCategoryItems((prev) => {
       const updatedItems = [...prev[category]];
@@ -893,7 +843,7 @@ export default function MaterialsToOrder({
   const handleQuantityChange = (
     category: keyof CategoryItems,
     rowIndex: number,
-    quantity: string
+    quantity: string,
   ) => {
     setCategoryItems((prev) => ({
       ...prev,
@@ -903,7 +853,7 @@ export default function MaterialsToOrder({
               ...row,
               quantity: quantity === "" ? "" : parseInt(quantity) || "",
             }
-          : row
+          : row,
       ),
     }));
   };
@@ -917,7 +867,7 @@ export default function MaterialsToOrder({
           rows.filter((row: CategoryRow) => row.item && row.quantity).length
         );
       },
-      0
+      0,
     );
 
     // If this is the last item and we have an existing MTO, show confirmation
@@ -933,7 +883,7 @@ export default function MaterialsToOrder({
 
   const performItemDeletion = (
     category: keyof CategoryItems,
-    rowIndex: number
+    rowIndex: number,
   ) => {
     setCategoryItems((prev) => {
       const updatedItems = prev[category].filter((_, idx) => idx !== rowIndex);
@@ -975,23 +925,26 @@ export default function MaterialsToOrder({
     setShowSearchDropdown((prev) => ({
       ...prev,
       [category]: Object.keys(
-        prev[category as keyof ShowSearchDropdown]
-      ).reduce((acc: Record<number, boolean>, key: string) => {
-        const numKey = parseInt(key);
-        if (numKey !== rowIndex && !isNaN(numKey)) {
-          acc[numKey] = prev[category as keyof ShowSearchDropdown][numKey];
-        }
-        return acc;
-      }, {} as Record<number, boolean>),
+        prev[category as keyof ShowSearchDropdown],
+      ).reduce(
+        (acc: Record<number, boolean>, key: string) => {
+          const numKey = parseInt(key);
+          if (numKey !== rowIndex && !isNaN(numKey)) {
+            acc[numKey] = prev[category as keyof ShowSearchDropdown][numKey];
+          }
+          return acc;
+        },
+        {} as Record<number, boolean>,
+      ),
     }));
   };
 
   const hasItems = useMemo(
     () =>
       Object.values(categoryItems).some((rows) =>
-        rows.some((row: CategoryRow) => row.item && row.quantity)
+        rows.some((row: CategoryRow) => row.item && row.quantity),
       ),
-    [categoryItems]
+    [categoryItems],
   );
 
   // Allow saving even when only notes/files changed (no line items yet)
@@ -1021,16 +974,16 @@ export default function MaterialsToOrder({
         return itemId === searchItemId;
       });
     },
-    [categoryItems]
+    [categoryItems],
   );
 
   const getFilteredSearchResults = useCallback(
     (category: keyof CategoryItems): Item[] => {
       return searchResults[category].filter(
-        (item: Item) => !isItemAlreadySelected(category, item)
+        (item: Item) => !isItemAlreadySelected(category, item),
       );
     },
-    [searchResults, isItemAlreadySelected]
+    [searchResults, isItemAlreadySelected],
   );
 
   // Convert categoryItems to export rows
@@ -1137,7 +1090,7 @@ export default function MaterialsToOrder({
       Unit: 10,
       Quantity: 12,
     }),
-    []
+    [],
   );
 
   // Initialize Excel export hook
@@ -1162,7 +1115,7 @@ export default function MaterialsToOrder({
       if (pendingDeleteRow) {
         performItemDeletion(
           pendingDeleteRow.category as keyof CategoryItems,
-          pendingDeleteRow.rowIndex
+          pendingDeleteRow.rowIndex,
         );
       }
 
@@ -1170,7 +1123,7 @@ export default function MaterialsToOrder({
         `/api/materials_to_order/${currentMtoId}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1186,7 +1139,7 @@ export default function MaterialsToOrder({
           .filter(Boolean);
         if (lotsToFree.length > 0) {
           setLocallyFreedLotIds((prev) =>
-            Array.from(new Set([...(prev || []), ...lotsToFree]))
+            Array.from(new Set([...(prev || []), ...lotsToFree])),
           );
         }
 
@@ -1217,14 +1170,14 @@ export default function MaterialsToOrder({
             edging_tape: [{}],
           },
           "",
-          resetSelectedLots
+          resetSelectedLots,
         );
         setTimeout(() => {
           setLoadingState((prev) => ({ ...prev, isUpdatingFromApi: false }));
         }, 50);
       } else {
         toast.error(
-          response.data.message || "Failed to delete materials to order."
+          response.data.message || "Failed to delete materials to order.",
         );
       }
     } catch (err) {
@@ -1280,7 +1233,7 @@ export default function MaterialsToOrder({
                     row.item.name || row.item.item_id
                   }" in ${category} (row ${
                     rowIndex + 1
-                  }) has an empty quantity. Please enter a quantity.`
+                  }) has an empty quantity. Please enter a quantity.`,
                 );
               }
               // Check for zero or negative quantity
@@ -1290,11 +1243,11 @@ export default function MaterialsToOrder({
                     row.item.name || row.item.item_id
                   }" in ${category} (row ${rowIndex + 1}) has a quantity of ${
                     row.quantity
-                  }. Quantity must be greater than 0.`
+                  }. Quantity must be greater than 0.`,
                 );
               }
             }
-          }
+          },
         );
       });
 
@@ -1331,7 +1284,7 @@ export default function MaterialsToOrder({
                 });
               }
             }
-          }
+          },
         );
       });
 
@@ -1351,7 +1304,7 @@ export default function MaterialsToOrder({
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.data.status) {
@@ -1367,7 +1320,7 @@ export default function MaterialsToOrder({
           dataSnapshotRef.current = createSnapshot(
             categoryItems,
             notes,
-            selectedLots
+            selectedLots,
           );
           setTimeout(() => {
             setLoadingState((prev) => ({ ...prev, isUpdatingFromApi: false }));
@@ -1383,7 +1336,7 @@ export default function MaterialsToOrder({
           setSaveStatus("error");
           if (!silent) {
             toast.error(
-              response.data.message || "Failed to update materials to order."
+              response.data.message || "Failed to update materials to order.",
             );
           }
           setTimeout(() => {
@@ -1407,7 +1360,7 @@ export default function MaterialsToOrder({
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.data.status) {
@@ -1423,7 +1376,7 @@ export default function MaterialsToOrder({
           dataSnapshotRef.current = createSnapshot(
             categoryItems,
             notes,
-            selectedLots
+            selectedLots,
           );
           setTimeout(() => {
             setLoadingState((prev) => ({ ...prev, isUpdatingFromApi: false }));
@@ -1439,7 +1392,7 @@ export default function MaterialsToOrder({
           setSaveStatus("error");
           if (!silent) {
             toast.error(
-              response.data.message || "Failed to create materials to order."
+              response.data.message || "Failed to create materials to order.",
             );
           }
           setTimeout(() => {
@@ -1509,7 +1462,7 @@ export default function MaterialsToOrder({
         }
         if (!selectedLots || selectedLots.length === 0) {
           toast.warning(
-            "Please select at least one lot before uploading files."
+            "Please select at least one lot before uploading files.",
           );
           return;
         }
@@ -1529,13 +1482,13 @@ export default function MaterialsToOrder({
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!draftResponse.data.status) {
           toast.error(
             draftResponse.data.message ||
-              "Failed to create draft materials to order."
+              "Failed to create draft materials to order.",
           );
           return;
         }
@@ -1564,7 +1517,7 @@ export default function MaterialsToOrder({
             "Content-Type": "multipart/form-data",
           },
           onUploadProgress: getUploadProgressHandler(files.length),
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1574,7 +1527,7 @@ export default function MaterialsToOrder({
           `/api/materials_to_order/${mtoId}`,
           {
             withCredentials: true,
-          }
+          },
         );
         if (mtoResponse.data.status) {
           setMediaFiles(mtoResponse.data.data?.media || []);
@@ -1615,7 +1568,7 @@ export default function MaterialsToOrder({
         `/api/uploads/materials-to-order/${currentMtoId}?mediaId=${mediaId}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1627,7 +1580,7 @@ export default function MaterialsToOrder({
           `/api/materials_to_order/${currentMtoId}`,
           {
             withCredentials: true,
-          }
+          },
         );
         if (mtoResponse.data.status) {
           setMaterialsToOrderData(mtoResponse.data.data);
@@ -1739,7 +1692,7 @@ export default function MaterialsToOrder({
                     <input
                       type="checkbox"
                       checked={selectedLots.some(
-                        (l) => l.lot_id === lot.lot_id
+                        (l) => l.lot_id === lot.lot_id,
                       )}
                       onChange={() => handleLotToggle(lot)}
                       className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-secondary"
@@ -1810,7 +1763,7 @@ export default function MaterialsToOrder({
                 <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
                   {
                     categoryItems.sheet.filter(
-                      (row) => row.item && row.quantity
+                      (row) => row.item && row.quantity,
                     ).length
                   }
                 </span>
@@ -1898,7 +1851,7 @@ export default function MaterialsToOrder({
                                   handleQuantityChange(
                                     "sheet",
                                     rowIndex,
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
@@ -1913,7 +1866,7 @@ export default function MaterialsToOrder({
                               </button>
                             </td>
                           </tr>
-                        )
+                        ),
                     )}
                   </tbody>
                 </table>
@@ -1939,7 +1892,7 @@ export default function MaterialsToOrder({
                             "sheet",
                             searchTerms[getSearchTermKey("sheet", rowIndex)] ||
                               "",
-                            rowIndex
+                            rowIndex,
                           )
                         }
                         placeholder="Search for sheet items..."
@@ -2006,7 +1959,7 @@ export default function MaterialsToOrder({
                         </div>
                       )}
                     </div>
-                  )
+                  ),
               )}
             </div>
           </div>
@@ -2020,12 +1973,12 @@ export default function MaterialsToOrder({
                 Edging Tape
               </span>
               {categoryItems.edging_tape.filter(
-                (row) => row.item && row.quantity
+                (row) => row.item && row.quantity,
               ).length > 0 && (
                 <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
                   {
                     categoryItems.edging_tape.filter(
-                      (row) => row.item && row.quantity
+                      (row) => row.item && row.quantity,
                     ).length
                   }
                 </span>
@@ -2113,7 +2066,7 @@ export default function MaterialsToOrder({
                                   handleQuantityChange(
                                     "edging_tape",
                                     rowIndex,
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
@@ -2130,7 +2083,7 @@ export default function MaterialsToOrder({
                               </button>
                             </td>
                           </tr>
-                        )
+                        ),
                     )}
                   </tbody>
                 </table>
@@ -2154,7 +2107,7 @@ export default function MaterialsToOrder({
                           handleSearchChange(
                             "edging_tape",
                             rowIndex,
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         onFocus={() =>
@@ -2163,7 +2116,7 @@ export default function MaterialsToOrder({
                             searchTerms[
                               getSearchTermKey("edging_tape", rowIndex)
                             ] || "",
-                            rowIndex
+                            rowIndex,
                           )
                         }
                         placeholder="Search for edging tape items..."
@@ -2181,7 +2134,7 @@ export default function MaterialsToOrder({
                                     handleItemSelect(
                                       "edging_tape",
                                       rowIndex,
-                                      item
+                                      item,
                                     )
                                   }
                                   className="cursor-pointer w-full text-left p-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
@@ -2211,7 +2164,7 @@ export default function MaterialsToOrder({
                                     </div>
                                   </div>
                                 </button>
-                              )
+                              ),
                             )
                           ) : (
                             <div className="p-4 text-center space-y-3">
@@ -2237,7 +2190,7 @@ export default function MaterialsToOrder({
                         </div>
                       )}
                     </div>
-                  )
+                  ),
               )}
             </div>
           </div>
@@ -2255,7 +2208,7 @@ export default function MaterialsToOrder({
                 <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
                   {
                     categoryItems.handle.filter(
-                      (row) => row.item && row.quantity
+                      (row) => row.item && row.quantity,
                     ).length
                   }
                 </span>
@@ -2349,7 +2302,7 @@ export default function MaterialsToOrder({
                                   handleQuantityChange(
                                     "handle",
                                     rowIndex,
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
@@ -2366,7 +2319,7 @@ export default function MaterialsToOrder({
                               </button>
                             </td>
                           </tr>
-                        )
+                        ),
                     )}
                   </tbody>
                 </table>
@@ -2393,7 +2346,7 @@ export default function MaterialsToOrder({
                             "handle",
                             searchTerms[getSearchTermKey("handle", rowIndex)] ||
                               "",
-                            rowIndex
+                            rowIndex,
                           )
                         }
                         placeholder="Search for handle items..."
@@ -2460,7 +2413,7 @@ export default function MaterialsToOrder({
                         </div>
                       )}
                     </div>
-                  )
+                  ),
               )}
             </div>
           </div>
@@ -2478,7 +2431,7 @@ export default function MaterialsToOrder({
                 <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
                   {
                     categoryItems.hardware.filter(
-                      (row) => row.item && row.quantity
+                      (row) => row.item && row.quantity,
                     ).length
                   }
                 </span>
@@ -2566,7 +2519,7 @@ export default function MaterialsToOrder({
                                   handleQuantityChange(
                                     "hardware",
                                     rowIndex,
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
@@ -2583,7 +2536,7 @@ export default function MaterialsToOrder({
                               </button>
                             </td>
                           </tr>
-                        )
+                        ),
                     )}
                   </tbody>
                 </table>
@@ -2606,7 +2559,7 @@ export default function MaterialsToOrder({
                           handleSearchChange(
                             "hardware",
                             rowIndex,
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         onFocus={() =>
@@ -2615,7 +2568,7 @@ export default function MaterialsToOrder({
                             searchTerms[
                               getSearchTermKey("hardware", rowIndex)
                             ] || "",
-                            rowIndex
+                            rowIndex,
                           )
                         }
                         placeholder="Search for hardware items..."
@@ -2682,7 +2635,7 @@ export default function MaterialsToOrder({
                         </div>
                       )}
                     </div>
-                  )
+                  ),
               )}
             </div>
           </div>
@@ -2700,7 +2653,7 @@ export default function MaterialsToOrder({
                 <span className="px-2 py-1 text-xs font-medium text-secondary bg-secondary/10 rounded-full">
                   {
                     categoryItems.accessory.filter(
-                      (row) => row.item && row.quantity
+                      (row) => row.item && row.quantity,
                     ).length
                   }
                 </span>
@@ -2770,7 +2723,7 @@ export default function MaterialsToOrder({
                                   handleQuantityChange(
                                     "accessory",
                                     rowIndex,
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-20 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-secondary"
@@ -2787,7 +2740,7 @@ export default function MaterialsToOrder({
                               </button>
                             </td>
                           </tr>
-                        )
+                        ),
                     )}
                   </tbody>
                 </table>
@@ -2811,7 +2764,7 @@ export default function MaterialsToOrder({
                           handleSearchChange(
                             "accessory",
                             rowIndex,
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         onFocus={() =>
@@ -2820,7 +2773,7 @@ export default function MaterialsToOrder({
                             searchTerms[
                               getSearchTermKey("accessory", rowIndex)
                             ] || "",
-                            rowIndex
+                            rowIndex,
                           )
                         }
                         placeholder="Search for accessory items..."
@@ -2837,7 +2790,7 @@ export default function MaterialsToOrder({
                                     handleItemSelect(
                                       "accessory",
                                       rowIndex,
-                                      item
+                                      item,
                                     )
                                   }
                                   className="cursor-pointer w-full text-left p-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
@@ -2864,7 +2817,7 @@ export default function MaterialsToOrder({
                                     </div>
                                   </div>
                                 </button>
-                              )
+                              ),
                             )
                           ) : (
                             <div className="p-4 text-center space-y-3">
@@ -2890,7 +2843,7 @@ export default function MaterialsToOrder({
                         </div>
                       )}
                     </div>
-                  )
+                  ),
               )}
             </div>
           </div>
@@ -2905,7 +2858,7 @@ export default function MaterialsToOrder({
           onItemAdded={() => {
             // Clear cache and refresh search for the category after item is added
             const cacheKeys = Object.keys(itemCache).filter((key) =>
-              key.startsWith(addItemModalCategory)
+              key.startsWith(addItemModalCategory),
             );
             const updatedCache = { ...itemCache };
             cacheKeys.forEach((key) => {
@@ -2923,7 +2876,7 @@ export default function MaterialsToOrder({
 
               // If there's an active search term, trigger a new search
               const activeSearchKeys = Object.keys(searchTerms).filter((key) =>
-                key.startsWith(addItemModalCategory)
+                key.startsWith(addItemModalCategory),
               );
               if (activeSearchKeys.length > 0) {
                 activeSearchKeys.forEach((key) => {

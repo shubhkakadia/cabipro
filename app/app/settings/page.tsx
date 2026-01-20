@@ -182,7 +182,7 @@ export default function SettingsPage() {
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "Failed to load user details. Please try again."
+            "Failed to load user details. Please try again.",
         );
       } else {
         setError("Failed to load user details. Please try again.");
@@ -220,7 +220,7 @@ export default function SettingsPage() {
 
   const handlePasswordInputChange = (
     field: keyof PasswordData,
-    value: string
+    value: string,
   ) => {
     setPasswordData((prev) => ({
       ...prev,
@@ -313,7 +313,7 @@ export default function SettingsPage() {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error(
@@ -322,7 +322,7 @@ export default function SettingsPage() {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
-          }
+          },
         );
       }
     } finally {
@@ -345,7 +345,7 @@ export default function SettingsPage() {
   };
 
   const calculateDaysSinceStart = (
-    startDate: string | undefined | null
+    startDate: string | undefined | null,
   ): string | null => {
     if (!startDate) return null;
     try {
@@ -364,7 +364,7 @@ export default function SettingsPage() {
         const lastDayOfPrevMonth = new Date(
           today.getFullYear(),
           today.getMonth(),
-          0
+          0,
         );
         days += lastDayOfPrevMonth.getDate();
       }
@@ -551,7 +551,7 @@ export default function SettingsPage() {
                                     {formatDate(employee.join_date)}
                                   </p>
                                   {calculateDaysSinceStart(
-                                    employee.join_date
+                                    employee.join_date,
                                   ) && (
                                     <span
                                       className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
@@ -570,7 +570,7 @@ export default function SettingsPage() {
                                       }
                                     >
                                       {calculateDaysSinceStart(
-                                        employee.join_date
+                                        employee.join_date,
                                       )}
                                     </span>
                                   )}
@@ -826,7 +826,7 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             handlePasswordInputChange(
                               "oldPassword",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="Enter your current password"
@@ -860,7 +860,7 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             handlePasswordInputChange(
                               "newPassword",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="Enter your new password"

@@ -13,7 +13,7 @@ function useIsMounted() {
   return useSyncExternalStore(
     emptySubscribe,
     () => true, // Client returns true
-    () => false // Server returns false
+    () => false, // Server returns false
   );
 }
 
@@ -31,7 +31,7 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
 
   // Normalize logo path - remove /public prefix if present (Next.js serves public folder from root)
   const normalizeLogoPath = (
-    path: string | null | undefined
+    path: string | null | undefined,
   ): string | null => {
     if (!path) return null;
     // Remove /public prefix if it exists, since Next.js serves public folder from root
@@ -136,8 +136,8 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
               {variant === "admin"
                 ? "Admin"
                 : mounted
-                ? user.organizationName || "Dashboard"
-                : "Dashboard"}
+                  ? user.organizationName || "Dashboard"
+                  : "Dashboard"}
             </span>
           </Link>
         </div>

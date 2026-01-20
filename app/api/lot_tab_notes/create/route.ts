@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (!lot) {
       return NextResponse.json(
         { status: false, message: "Lot not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
         "lot_tab",
         existingLotTab.id,
         "UPDATE",
-        `Lot tab notes updated successfully`
+        `Lot tab notes updated successfully`,
       );
 
       if (!logged) {
         console.error(
-          `Failed to log lot tab notes update: ${existingLotTab.id}`
+          `Failed to log lot tab notes update: ${existingLotTab.id}`,
         );
       }
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
             ? {}
             : { warning: "Note: Update succeeded but logging failed" }),
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       "lot_tab",
       lotTab.id,
       "CREATE",
-      `Lot tab notes saved successfully`
+      `Lot tab notes saved successfully`,
     );
 
     if (!logged) {
@@ -99,19 +99,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Creation succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/lot_tab_notes/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

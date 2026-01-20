@@ -209,8 +209,13 @@ export default function CreateMaterialsToOrderModal({
   const [isDragging, setIsDragging] = useState(false);
 
   const handleAddItem = (item: Item) => {
-    // Check if already added
-    if (selectedItems.some((i: SelectedItem) => i.item_id === item.item_id)) {
+    // Check if already added (use id for comparison since that's what the API returns)
+    const itemIdentifier = item.id || item.item_id;
+    if (
+      selectedItems.some(
+        (i: SelectedItem) => (i.id || i.item_id) === itemIdentifier,
+      )
+    ) {
       toast.info("Item already added");
       return;
     }
@@ -219,7 +224,7 @@ export default function CreateMaterialsToOrderModal({
       ...prev,
       {
         ...item,
-        item_id: item.item_id,
+        item_id: item.id || item.item_id, // Use id from API as item_id
         stock_quantity: item.quantity, // Preserve original stock quantity
         quantity: 1, // Default order quantity
       } as SelectedItem,
@@ -231,7 +236,7 @@ export default function CreateMaterialsToOrderModal({
   const handleUpdateItem = (
     itemId: string,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
     setSelectedItems((prev: SelectedItem[]) =>
       prev.map((item: SelectedItem) => {
@@ -239,13 +244,13 @@ export default function CreateMaterialsToOrderModal({
           return { ...item, [field]: value };
         }
         return item;
-      })
+      }),
     );
   };
 
   const handleRemoveItem = (itemId: string) => {
     setSelectedItems((prev: SelectedItem[]) =>
-      prev.filter((item: SelectedItem) => item.item_id !== itemId)
+      prev.filter((item: SelectedItem) => item.item_id !== itemId),
     );
   };
 
@@ -297,7 +302,7 @@ export default function CreateMaterialsToOrderModal({
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles((prev: File[]) =>
-      prev.filter((_, i: number) => i !== index)
+      prev.filter((_, i: number) => i !== index),
     );
   };
 
@@ -326,7 +331,7 @@ export default function CreateMaterialsToOrderModal({
 
     // Validate quantities
     const invalidItems = selectedItems.some(
-      (item: SelectedItem) => !item.quantity || item.quantity <= 0
+      (item: SelectedItem) => !item.quantity || item.quantity <= 0,
     );
     if (invalidItems) {
       toast.error("All items must have a quantity greater than 0");
@@ -367,7 +372,7 @@ export default function CreateMaterialsToOrderModal({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -388,7 +393,7 @@ export default function CreateMaterialsToOrderModal({
               headers: {
                 "Content-Type": "multipart/form-data",
               },
-            }
+            },
           );
         }
 
@@ -397,14 +402,14 @@ export default function CreateMaterialsToOrderModal({
         setShowModal(false);
       } else {
         toast.error(
-          response.data.message || "Failed to create Materials to Order"
+          response.data.message || "Failed to create Materials to Order",
         );
       }
     } catch (err) {
       console.error(err);
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.message || "Failed to create Materials to Order"
+          err.response?.data?.message || "Failed to create Materials to Order",
         );
       } else {
         toast.error("Failed to create Materials to Order");
@@ -526,9 +531,9 @@ export default function CreateMaterialsToOrderModal({
                         </button>
                       </div>
                     ) : (
-                      filteredItems.map((item: Item) => (
+                      filteredItems.map((item: Item, index: number) => (
                         <div
-                          key={item.item_id}
+                          key={`${item.item_id}-${index}`}
                           onClick={() => handleAddItem(item)}
                           className="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3"
                         >
@@ -590,7 +595,7 @@ export default function CreateMaterialsToOrderModal({
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {selectedItems.length === 0 ? (
-                    <tr>
+                    <tr key="empty-row">
                       <td
                         colSpan={6}
                         className="px-4 py-8 text-center text-slate-500 text-sm"
@@ -752,7 +757,7 @@ export default function CreateMaterialsToOrderModal({
                               handleUpdateItem(
                                 item.item_id,
                                 "quantity",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-20 p-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-primary outline-none"

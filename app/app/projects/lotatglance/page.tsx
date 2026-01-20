@@ -22,6 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 import { useExcelExport } from "@/hooks/useExcelExport";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Stage {
@@ -36,8 +37,8 @@ interface Stage {
 }
 
 interface Client {
-  client_id?: string;
-  client_name?: string;
+  id?: string;
+  name?: string;
   [key: string]: unknown;
 }
 
@@ -82,12 +83,12 @@ export default function LotAtGlancePage() {
     Record<string, boolean>
   >({});
   const [dropdownPositions, setDropdownPositions] = useState<DropdownPositions>(
-    {}
+    {},
   );
   const filterButtonRefs = useRef<FilterButtonRefs>({});
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<string | null>(
-    null
+    null,
   ); // Format: "lot_id-stage_name"
   const [statusDropdownPositions, setStatusDropdownPositions] =
     useState<DropdownPositions>({});
@@ -146,7 +147,7 @@ export default function LotAtGlancePage() {
   const getStageStatus = (lot: Lot, stageName: string): string => {
     // Stage names are stored in lowercase in the database, so we need case-insensitive comparison
     const stage = lot.stages?.find(
-      (s: Stage) => s.name.toLowerCase() === stageName.toLowerCase()
+      (s: Stage) => s.name.toLowerCase() === stageName.toLowerCase(),
     );
     if (!stage) {
       return "NOT_STARTED";
@@ -160,7 +161,7 @@ export default function LotAtGlancePage() {
       return 0;
     }
     const doneCount = lot.stages.filter(
-      (stage: Stage) => stage.status === "DONE"
+      (stage: Stage) => stage.status === "DONE",
     ).length;
     return Math.round((doneCount / stages.length) * 100);
   };
@@ -205,9 +206,7 @@ export default function LotAtGlancePage() {
         const searchLower = search.toLowerCase();
         const projectName = (lot.project?.name || "").toLowerCase();
         const lotId = (lot.lot_id || "").toLowerCase();
-        const clientName = (
-          lot.project?.client?.client_name || ""
-        ).toLowerCase();
+        const clientName = (lot.project?.client?.name || "").toLowerCase();
         if (
           !projectName.includes(searchLower) &&
           !lotId.includes(searchLower) &&
@@ -222,7 +221,7 @@ export default function LotAtGlancePage() {
         if (filterStatus && filterStatus !== "ALL") {
           // Get stage status inline to avoid dependency issues
           const stage = lot.stages?.find(
-            (s: Stage) => s.name.toLowerCase() === stageName.toLowerCase()
+            (s: Stage) => s.name.toLowerCase() === stageName.toLowerCase(),
           );
           const lotStageStatus = stage ? stage.status : "NOT_STARTED";
 
@@ -237,8 +236,8 @@ export default function LotAtGlancePage() {
     // Sort by client name > project name > lot number
     return filtered.sort((a: Lot, b: Lot) => {
       // 1. Sort by client name
-      const clientNameA = (a.project?.client?.client_name || "").toLowerCase();
-      const clientNameB = (b.project?.client?.client_name || "").toLowerCase();
+      const clientNameA = (a.project?.client?.name || "").toLowerCase();
+      const clientNameB = (b.project?.client?.name || "").toLowerCase();
       if (clientNameA !== clientNameB) {
         return clientNameA.localeCompare(clientNameB);
       }
@@ -298,7 +297,7 @@ export default function LotAtGlancePage() {
   // Handle filter button click - calculate position
   const handleFilterButtonClick = (
     stage: string,
-    event: React.MouseEvent<HTMLButtonElement>
+    event: React.MouseEvent<HTMLButtonElement>,
   ) => {
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
@@ -337,7 +336,7 @@ export default function LotAtGlancePage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -348,7 +347,7 @@ export default function LotAtGlancePage() {
   // Column mapping for Excel export
   const columnMap = useMemo(() => {
     const map: Record<string, (lot: Lot) => string> = {
-      "Client Name": (lot: Lot) => lot.project?.client?.client_name || "N/A",
+      "Client Name": (lot: Lot) => lot.project?.client?.name || "N/A",
       "Project Name": (lot: Lot) => lot.project?.name || "N/A",
       "Lot ID": (lot: Lot) => lot.lot_id || "",
       "Percentage Completed": (lot: Lot) => `${getPercentageCompleted(lot)}%`,
@@ -404,14 +403,14 @@ export default function LotAtGlancePage() {
       return;
     }
 
-    const projectHref = `/app/projects/${lot.project.project_id}`;
+    const projectHref = `/app/projects/${lot.project.id}`;
     router.push(projectHref);
   };
 
   // Handle client name click - navigate to client page
   const handleClientNameClick = (lot: Lot, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (!lot.project?.client?.client_id) {
+    if (!lot.project?.client?.id) {
       toast.error("Client ID not found", {
         position: "top-right",
         autoClose: 3000,
@@ -420,7 +419,7 @@ export default function LotAtGlancePage() {
       return;
     }
 
-    const clientHref = `/app/clients/${lot.project.client.client_id}`;
+    const clientHref = `/app/clients/${lot.project.client.id}`;
     router.push(clientHref);
   };
 
@@ -428,7 +427,7 @@ export default function LotAtGlancePage() {
   const handleStatusSquareClick = (
     lot: Lot,
     stage: string,
-    event: React.MouseEvent<HTMLButtonElement>
+    event: React.MouseEvent<HTMLButtonElement>,
   ) => {
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
@@ -443,7 +442,7 @@ export default function LotAtGlancePage() {
     }));
 
     setStatusDropdownOpen(
-      statusDropdownOpen === dropdownKey ? null : dropdownKey
+      statusDropdownOpen === dropdownKey ? null : dropdownKey,
     );
   };
 
@@ -451,14 +450,14 @@ export default function LotAtGlancePage() {
   const handleStageStatusUpdate = async (
     lot: Lot,
     stage: string,
-    newStatus: string
+    newStatus: string,
   ) => {
     try {
       setIsUpdatingStatus(true);
 
       // Find the stage object for this lot and stage name
       const stageObj = lot.stages?.find(
-        (s: Stage) => s.name.toLowerCase() === stage.toLowerCase()
+        (s: Stage) => s.name.toLowerCase() === stage.toLowerCase(),
       );
 
       if (!stageObj || !stageObj.stage_id) {
@@ -466,7 +465,7 @@ export default function LotAtGlancePage() {
         const createResponse = await axios.post(
           "/api/stage/create",
           {
-            lot_id: lot.lot_id,
+            lot_id: lot.id,
             name: stage.toLowerCase(),
             status: newStatus,
             notes: "",
@@ -479,7 +478,7 @@ export default function LotAtGlancePage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (createResponse.data.status) {
@@ -492,7 +491,7 @@ export default function LotAtGlancePage() {
           fetchActiveLots();
         } else {
           toast.error(
-            createResponse.data.message || "Failed to update stage status"
+            createResponse.data.message || "Failed to update stage status",
           );
         }
       } else {
@@ -508,7 +507,7 @@ export default function LotAtGlancePage() {
             assigned_to:
               stageObj.assigned_to?.map(
                 (a: string | { employee_id?: string }) =>
-                  typeof a === "string" ? a : a.employee_id || String(a)
+                  typeof a === "string" ? a : a.employee_id || String(a),
               ) || [],
           },
           {
@@ -516,7 +515,7 @@ export default function LotAtGlancePage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.data.status) {
@@ -541,7 +540,7 @@ export default function LotAtGlancePage() {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error("Failed to update stage status. Please try again.", {
@@ -614,6 +613,7 @@ export default function LotAtGlancePage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Lots at a Glance
                     </h1>
+                    <SearchBar />
                   </div>
                 </div>
 
@@ -737,7 +737,7 @@ export default function LotAtGlancePage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -857,13 +857,13 @@ export default function LotAtGlancePage() {
                           <table className="min-w-full divide-y divide-slate-200 table-fixed">
                             <thead className="bg-slate-50 sticky top-0 z-20">
                               <tr>
-                                <th className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider h-[300px] border-r border-slate-200 sticky top-0 left-0 z-30 bg-slate-50 w-[250px] min-w-[250px] max-w-[250px]">
+                                <th className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider h-75 border-r border-slate-200 sticky top-0 left-0 z-30 bg-slate-50 w-62.5 min-w-62.5 max-w-62.5">
                                   Client Name
                                 </th>
-                                <th className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider h-[300px] border-r border-slate-200 sticky top-0 left-[200px] z-30 bg-slate-50 w-[500px] min-w-[500px] max-w-[500px]">
+                                <th className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider h-75 border-r border-slate-200 sticky top-0 left-50 z-30 bg-slate-50 w-125 min-w-125 max-w-125">
                                   Project Name - Lot Number
                                 </th>
-                                <th className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider w-[50px] h-[300px] border-r border-slate-200 sticky top-0 left-[700px] z-30 bg-slate-50">
+                                <th className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider w-12.5 h-75 border-r border-slate-200 sticky top-0 left-175 z-30 bg-slate-50">
                                   <div className="flex flex-col items-center justify-end gap-2 h-full">
                                     <span
                                       className="whitespace-nowrap"
@@ -885,7 +885,7 @@ export default function LotAtGlancePage() {
                                   return (
                                     <th
                                       key={stage}
-                                      className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider w-[50px] h-[300px]"
+                                      className="px-2 py-4 text-center text-sm font-semibold text-slate-600 uppercase tracking-wider w-12.5 h-75"
                                     >
                                       <div className="flex flex-col items-center justify-end gap-2 h-full">
                                         <span
@@ -902,13 +902,13 @@ export default function LotAtGlancePage() {
                                         <div className="relative filter-dropdown-container shrink-0">
                                           <button
                                             ref={(
-                                              el: HTMLButtonElement | null
+                                              el: HTMLButtonElement | null,
                                             ) => {
                                               filterButtonRefs.current[stage] =
                                                 el;
                                             }}
                                             onClick={(
-                                              e: React.MouseEvent<HTMLButtonElement>
+                                              e: React.MouseEvent<HTMLButtonElement>,
                                             ) =>
                                               handleFilterButtonClick(stage, e)
                                             }
@@ -966,25 +966,24 @@ export default function LotAtGlancePage() {
                                       onClick={(e) =>
                                         handleClientNameClick(lot, e)
                                       }
-                                      className="px-4 py-3 text-sm text-slate-700 font-medium sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 whitespace-nowrap cursor-pointer hover:bg-blue-50 w-[250px] min-w-[250px] max-w-[250px]"
+                                      className="px-4 py-3 text-sm text-slate-700 font-medium sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 whitespace-nowrap cursor-pointer hover:bg-blue-50 w-62.5 min-w-62.5 max-w-62.5"
                                       title="Click to open client"
                                     >
                                       <span>
-                                        {lot.project?.client?.client_name ||
-                                          "N/A"}
+                                        {lot.project?.client?.name || "N/A"}
                                       </span>
                                     </td>
                                     <td
                                       onClick={(e) =>
                                         handleProjectNameClick(lot, e)
                                       }
-                                      className="px-4 py-3 text-sm text-slate-700 font-medium sticky left-[200px] bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 whitespace-nowrap cursor-pointer hover:bg-blue-50 w-[500px] min-w-[500px] max-w-[500px]"
+                                      className="px-4 py-3 text-sm text-slate-700 font-medium sticky left-50 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 whitespace-nowrap cursor-pointer hover:bg-blue-50 w-125 min-w-125 max-w-125"
                                       title="Click to open project"
                                     >
                                       {lot.project?.name || "N/A"} -{" "}
                                       {lot.lot_id}
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-slate-700 font-medium text-center sticky left-[700px] bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 whitespace-nowrap w-[50px] min-w-[50px] max-w-[50px]">
+                                    <td className="px-4 py-3 text-sm text-slate-700 font-medium text-center sticky left-43 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 whitespace-nowrap w-12.5 min-w-12.5 max-w-12.5">
                                       {getPercentageCompleted(lot)}%
                                     </td>
                                     {stages.map((stage: string) => {
@@ -1005,18 +1004,18 @@ export default function LotAtGlancePage() {
                                           <div className="relative inline-block">
                                             <button
                                               onClick={(
-                                                e: React.MouseEvent<HTMLButtonElement>
+                                                e: React.MouseEvent<HTMLButtonElement>,
                                               ) =>
                                                 handleStatusSquareClick(
                                                   lot,
                                                   stage,
-                                                  e
+                                                  e,
                                                 )
                                               }
                                               disabled={isUpdatingStatus}
                                               className={`inline-block w-6 h-6 rounded ${boxColor} cursor-pointer hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed`}
                                               title={`${formatStatus(
-                                                status
+                                                status,
                                               )} - Click to change`}
                                             ></button>
 
@@ -1035,7 +1034,7 @@ export default function LotAtGlancePage() {
                                                         handleStageStatusUpdate(
                                                           lot,
                                                           stage,
-                                                          "NOT_STARTED"
+                                                          "NOT_STARTED",
                                                         )
                                                       }
                                                       disabled={
@@ -1054,7 +1053,7 @@ export default function LotAtGlancePage() {
                                                         handleStageStatusUpdate(
                                                           lot,
                                                           stage,
-                                                          "IN_PROGRESS"
+                                                          "IN_PROGRESS",
                                                         )
                                                       }
                                                       disabled={
@@ -1073,7 +1072,7 @@ export default function LotAtGlancePage() {
                                                         handleStageStatusUpdate(
                                                           lot,
                                                           stage,
-                                                          "DONE"
+                                                          "DONE",
                                                         )
                                                       }
                                                       disabled={

@@ -122,7 +122,7 @@ export default function AddEmployeePage() {
 
   const [formData, setFormData] = useState<FormData>(formDataInitialState);
   const [availability, setAvailability] = useState<Availability>(
-    availabilityInitialState
+    availabilityInitialState,
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,7 +137,7 @@ export default function AddEmployeePage() {
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
-      fileCount: number
+      fileCount: number,
     ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
@@ -165,13 +165,13 @@ export default function AddEmployeePage() {
         { category: "role" },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
         const roles = response.data.data.map(
-          (item: { value: string }) => item.value
+          (item: { value: string }) => item.value,
         );
         setRoleOptions(roles);
       }
@@ -190,7 +190,7 @@ export default function AddEmployeePage() {
 
   // Filter role options based on search term
   const filteredRoleOptions = roleOptions.filter((role: string) =>
-    role.toLowerCase().includes(roleSearchTerm.toLowerCase())
+    role.toLowerCase().includes(roleSearchTerm.toLowerCase()),
   );
 
   // Add this inside the component
@@ -257,7 +257,7 @@ export default function AddEmployeePage() {
         },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -291,7 +291,7 @@ export default function AddEmployeePage() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -303,7 +303,7 @@ export default function AddEmployeePage() {
   const handleAvailabilityChange = (
     day: DayOfWeek,
     field: "start" | "end",
-    value: string
+    value: string,
   ) => {
     setAvailability((prev) => ({
       ...prev,
@@ -417,7 +417,7 @@ export default function AddEmployeePage() {
           ...(hasImageFile && {
             onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
           }),
-        }
+        },
       );
       if (response.data.status) {
         if (hasImageFile) {
@@ -469,7 +469,7 @@ export default function AddEmployeePage() {
   };
 
   const isFormValid = requiredFields.every(
-    (field) => String(formData[field]).trim() !== ""
+    (field) => String(formData[field]).trim() !== "",
   );
 
   return (
@@ -482,7 +482,7 @@ export default function AddEmployeePage() {
             <div className="px-4 py-2">
               {/* Header */}
               <div className="flex items-center gap-2 mb-4">
-              <button
+                <button
                   onClick={() => router.back()}
                   className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
                 >
@@ -670,7 +670,7 @@ export default function AddEmployeePage() {
                                     !filteredRoleOptions.some(
                                       (r: string) =>
                                         r.toLowerCase() ===
-                                        roleSearchTerm.toLowerCase()
+                                        roleSearchTerm.toLowerCase(),
                                     ) && (
                                       <div className="border-t border-slate-200">
                                         <button
@@ -1023,12 +1023,12 @@ export default function AddEmployeePage() {
                                     type="time"
                                     value={times.start}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleAvailabilityChange(
                                         day,
                                         "start",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
@@ -1042,12 +1042,12 @@ export default function AddEmployeePage() {
                                     type="time"
                                     value={times.end}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleAvailabilityChange(
                                         day,
                                         "end",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"

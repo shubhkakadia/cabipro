@@ -6,7 +6,7 @@ import { formatPhoneToNational } from "@/components/validators";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -41,32 +41,32 @@ export async function GET(
     if (!client) {
       return NextResponse.json(
         { status: false, message: "Client not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "Client fetched successfully", data: client },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/client/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -112,7 +112,7 @@ export async function PATCH(
     if (!clientWithRelations) {
       return NextResponse.json(
         { status: false, message: "Client not found after update" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -121,12 +121,12 @@ export async function PATCH(
       "client",
       id,
       "UPDATE",
-      `Client updated successfully: ${clientWithRelations.name}`
+      `Client updated successfully: ${clientWithRelations.name}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log client update: ${id} - ${clientWithRelations.name}`
+        `Failed to log client update: ${id} - ${clientWithRelations.name}`,
       );
     }
 
@@ -139,26 +139,26 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/client/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -172,14 +172,14 @@ export async function DELETE(
     if (!existingClient) {
       return NextResponse.json(
         { status: false, message: "Client not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (existingClient.is_deleted) {
       return NextResponse.json(
         { status: false, message: "Client already deleted" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -194,7 +194,7 @@ export async function DELETE(
       "client",
       id,
       "DELETE",
-      `Client deleted successfully: ${client.name}`
+      `Client deleted successfully: ${client.name}`,
     );
 
     if (!logged) {
@@ -206,25 +206,25 @@ export async function DELETE(
           data: client,
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "Client deleted successfully", data: client },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/client/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

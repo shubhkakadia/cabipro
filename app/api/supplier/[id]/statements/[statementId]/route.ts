@@ -11,7 +11,7 @@ import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; statementId: string }> }
+  { params }: { params: Promise<{ id: string; statementId: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -28,7 +28,7 @@ export async function PATCH(
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function PATCH(
     if (!existingStatement) {
       return NextResponse.json(
         { status: false, message: "Statement not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -85,7 +85,7 @@ export async function PATCH(
     if (payment_status && !["PENDING", "PAID"].includes(payment_status)) {
       return NextResponse.json(
         { status: false, message: "Payment status must be PENDING or PAID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -215,11 +215,11 @@ export async function PATCH(
       "supplier_statement",
       statementId,
       "UPDATE",
-      `Statement updated successfully: ${updatedStatement.month_year} for supplier: ${updatedStatement.supplier.name}`
+      `Statement updated successfully: ${updatedStatement.month_year} for supplier: ${updatedStatement.supplier.name}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log statement update: ${statementId} - ${updatedStatement.month_year}`
+        `Failed to log statement update: ${statementId} - ${updatedStatement.month_year}`,
       );
     }
     return NextResponse.json(
@@ -231,13 +231,13 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error updating statement:", error);
@@ -246,14 +246,14 @@ export async function PATCH(
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; statementId: string }> }
+  { params }: { params: Promise<{ id: string; statementId: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -270,7 +270,7 @@ export async function DELETE(
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -296,7 +296,7 @@ export async function DELETE(
     if (!statement) {
       return NextResponse.json(
         { status: false, message: "Statement not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -318,11 +318,11 @@ export async function DELETE(
       "supplier_statement",
       statementId,
       "DELETE",
-      `Statement deleted successfully: ${statement.month_year} for supplier: ${statement.supplier.name}`
+      `Statement deleted successfully: ${statement.month_year} for supplier: ${statement.supplier.name}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log statement deletion: ${statementId} - ${statement.month_year}`
+        `Failed to log statement deletion: ${statementId} - ${statement.month_year}`,
       );
       return NextResponse.json(
         {
@@ -330,7 +330,7 @@ export async function DELETE(
           message: "Statement deleted successfully",
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
     return NextResponse.json(
@@ -338,13 +338,13 @@ export async function DELETE(
         status: true,
         message: "Statement deleted successfully",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error deleting statement:", error);
@@ -353,7 +353,7 @@ export async function DELETE(
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

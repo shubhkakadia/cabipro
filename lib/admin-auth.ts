@@ -3,8 +3,6 @@ import { hashPassword, verifyPassword } from "./auth";
 import { prisma } from "./db";
 import { SESSION_TTL_DAYS, getSessionExpiryDate } from "./cookies";
 
-
-
 /**
  * JWT Payload structure for admin users
  * Note: No organizationId - admins can access all organizations
@@ -40,7 +38,7 @@ export interface AdminAuthResult {
  * @returns Promise resolving to the JWT token string
  */
 export const generateAdminToken = async (
-  payload: AdminJWTPayload
+  payload: AdminJWTPayload,
 ): Promise<string> => {
   const secret = process.env.JWT_SECRET;
 
@@ -65,7 +63,7 @@ export const generateAdminToken = async (
  * @returns Promise resolving to the decoded payload, or null if invalid
  */
 export const verifyAdminToken = async (
-  token: string
+  token: string,
 ): Promise<AdminJWTPayload | null> => {
   const secret = process.env.JWT_SECRET;
 
@@ -98,7 +96,7 @@ export const verifyAdminToken = async (
  */
 export const authenticateAdmin = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<AdminAuthResult | null> => {
   try {
     // Find admin by email

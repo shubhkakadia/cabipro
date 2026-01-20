@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth-middleware";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -22,7 +22,7 @@ export async function GET(
 
     const uniqueCategories = [
       ...new Set(
-        itemsWithCategories.map((item) => item.category.toLowerCase())
+        itemsWithCategories.map((item) => item.category.toLowerCase()),
       ),
     ];
 
@@ -60,13 +60,13 @@ export async function GET(
 
     return NextResponse.json(
       { status: true, message: "Items fetched successfully", data: items },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/item/by-supplier/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -17,7 +17,7 @@ import { toast } from "react-toastify";
 // Note: CSS imports removed to avoid TypeScript errors - PDF functionality works without them
 const Document = dynamic(
   () => import("react-pdf").then((mod) => mod.Document),
-  { ssr: false }
+  { ssr: false },
 );
 const Page = dynamic(() => import("react-pdf").then((mod) => mod.Page), {
   ssr: false,
@@ -131,10 +131,10 @@ export default function ViewMedia({
         (file.filename?.endsWith(".pdf")
           ? "application/pdf"
           : file.filename?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
-          ? "image"
-          : file.filename?.match(/\.(mp4|webm|ogg|mov)$/i)
-          ? "video"
-          : "");
+            ? "image"
+            : file.filename?.match(/\.(mp4|webm|ogg|mov)$/i)
+              ? "video"
+              : "");
 
       return {
         name: file.filename || file.name || "Unknown file",
@@ -147,7 +147,7 @@ export default function ViewMedia({
         currentIndex: currentFileIndexRef.current,
       };
     },
-    []
+    [],
   );
 
   // Navigate to previous file
@@ -387,10 +387,10 @@ export default function ViewMedia({
             {selectedFile.type?.includes("image")
               ? "Image"
               : selectedFile.type?.includes("pdf")
-              ? "PDF"
-              : selectedFile.type?.includes("video")
-              ? "Video"
-              : "Unknown file type"}
+                ? "PDF"
+                : selectedFile.type?.includes("video")
+                  ? "Video"
+                  : "Unknown file type"}
           </div>
 
           {/* Image Zoom Controls */}
@@ -406,7 +406,7 @@ export default function ViewMedia({
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
-              <span className="text-sm font-medium text-slate-700 min-w-[50px] text-center">
+              <span className="text-sm font-medium text-slate-700 min-w-12.5 text-center">
                 {Math.round(imageScale * 100)}%
               </span>
               <button
@@ -436,7 +436,7 @@ export default function ViewMedia({
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
-              <span className="text-sm font-medium text-slate-700 min-w-[50px] text-center">
+              <span className="text-sm font-medium text-slate-700 min-w-12.5 text-center">
                 {Math.round(pdfScale * 100)}%
               </span>
               <button

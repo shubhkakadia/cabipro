@@ -13,7 +13,7 @@ function processDateTimeField(value: string | null | undefined): Date | null {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -78,38 +78,44 @@ export async function GET(
     if (!lot) {
       return NextResponse.json(
         { status: false, message: "Lot not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "Lot fetched successfully", data: lot },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/lot/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;
-    const { name, startDate, installationDueDate, notes, status, installer_id } =
-      await request.json();
+    const {
+      name,
+      startDate,
+      installationDueDate,
+      notes,
+      status,
+      installer_id,
+    } = await request.json();
 
     // Check if lot exists and belongs to this organization
     const existingLot = await prisma.lot.findFirst({
@@ -125,7 +131,7 @@ export async function PATCH(
     if (!existingLot) {
       return NextResponse.json(
         { status: false, message: "Lot not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -159,7 +165,7 @@ export async function PATCH(
             status: false,
             message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       updateData.status = status;
@@ -180,7 +186,7 @@ export async function PATCH(
         if (!installerExists) {
           return NextResponse.json(
             { status: false, message: "Invalid installer selected" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         // Use the UUID id, not the employee_id string
@@ -192,7 +198,7 @@ export async function PATCH(
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { status: false, message: "No fields to update" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -220,7 +226,7 @@ export async function PATCH(
       "lot",
       id,
       "UPDATE",
-      `Lot updated successfully: ${lot.name} for project: ${lot.project.name}`
+      `Lot updated successfully: ${lot.name} for project: ${lot.project.name}`,
     );
 
     if (!logged) {
@@ -236,26 +242,26 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/lot/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -275,14 +281,14 @@ export async function DELETE(
     if (!lotToDelete) {
       return NextResponse.json(
         { status: false, message: "Lot not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (lotToDelete.is_deleted) {
       return NextResponse.json(
         { status: false, message: "Lot already deleted" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -297,7 +303,7 @@ export async function DELETE(
       "lot",
       id,
       "DELETE",
-      `Lot deleted successfully: ${lotToDelete.name} for project: ${lotToDelete.project.name}`
+      `Lot deleted successfully: ${lotToDelete.name} for project: ${lotToDelete.project.name}`,
     );
 
     if (!logged) {
@@ -309,25 +315,25 @@ export async function DELETE(
           data: lot,
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "Lot deleted successfully", data: lot },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/lot/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -30,20 +30,20 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-    
+
     return NextResponse.json(
       {
         status: true,
         message: "Clients fetched successfully",
         data: clients,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/client/all:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

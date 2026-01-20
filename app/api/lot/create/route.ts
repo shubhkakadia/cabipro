@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "Lot already exists by this lot id: " + lot_id.toLowerCase(),
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "Project not found",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       "lot",
       lot.id,
       "CREATE",
-      `Lot created successfully: ${lot.name} for project: ${lot.project.name}`
+      `Lot created successfully: ${lot.name} for project: ${lot.project.name}`,
     );
 
     if (!logged) {
@@ -91,19 +91,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Creation succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/lot/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

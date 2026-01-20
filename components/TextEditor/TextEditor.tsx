@@ -73,8 +73,12 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const [currentHighlightColor, setCurrentHighlightColor] = useState("#d1d5db");
   const [currentTextColor, setCurrentTextColor] = useState("#000000");
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-  const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+  const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const [buttonStates, setButtonStates] = useState({
     bold: false,
@@ -446,7 +450,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
                   setShowHighlightDropdown(false);
                   setShowTextColorDropdown(false);
                 }}
-                className={`cursor-pointer px-3 py-2 rounded-md transition-all duration-200 flex items-center gap-2 min-w-[130px] justify-between border ${
+                className={`cursor-pointer px-3 py-2 rounded-md transition-all duration-200 flex items-center gap-2 min-w-33 justify-between border ${
                   buttonStates.heading
                     ? "bg-blue-500 border-blue-500 text-white shadow-md"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
@@ -464,7 +468,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
               </button>
 
               {showHeadingDropdown && (
-                <div className="absolute top-full left-0 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl z-20 min-w-[180px] overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl z-20 min-w-33 overflow-hidden">
                   <button
                     type="button"
                     onClick={(e) => {

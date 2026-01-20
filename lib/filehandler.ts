@@ -14,7 +14,7 @@ export async function fileExists(filePath: string): Promise<boolean> {
 
 export async function writeFileToDisk(
   targetPath: string,
-  file: File
+  file: File,
 ): Promise<void> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -28,10 +28,7 @@ export async function writeFileToDisk(
  * @param mimeType - The MIME type of the original image
  * @returns The converted WebP buffer
  */
-export async function convertImageToWebP(
-  imageBuffer: Buffer,
-  _mimeType: string
-): Promise<Buffer> {
+export async function convertImageToWebP(imageBuffer: Buffer): Promise<Buffer> {
   try {
     // Convert to WebP with quality optimization
     const webpBuffer = await sharp(imageBuffer)
@@ -41,7 +38,7 @@ export async function convertImageToWebP(
   } catch (error) {
     console.error("Error converting image to WebP:", error);
     throw new Error(
-      `Failed to convert image to WebP: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to convert image to WebP: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -59,7 +56,7 @@ export function isImageFile(mimeType: string | null | undefined): boolean {
 export async function getUniqueFilename(
   targetDir: string,
   baseName: string,
-  extension: string
+  extension: string,
 ): Promise<string> {
   let filename = `${baseName}${extension}`;
   let counter = 1;
@@ -85,7 +82,7 @@ export async function deleteFileFromDisk(filePath: string): Promise<boolean> {
 
 export async function getFileMetadata(
   filePath: string,
-  file: File | null = null
+  file: File | null = null,
 ): Promise<{
   size: number;
   mimeType: string;
@@ -119,7 +116,9 @@ export async function getFileMetadata(
 }
 
 export function getRelativePath(absolutePath: string): string {
-  const relative = path.relative(process.cwd(), absolutePath).replaceAll("\\", "/");
+  const relative = path
+    .relative(process.cwd(), absolutePath)
+    .replaceAll("\\", "/");
   // Remove "public/" prefix if present, so database stores paths starting from "uploads/"
   if (relative.startsWith("public/")) {
     return relative.substring("public/".length);
@@ -158,7 +157,7 @@ export interface UploadFileResult {
 
 export async function uploadFile(
   file: File,
-  options: UploadFileOptions = {}
+  options: UploadFileOptions = {},
 ): Promise<UploadFileResult> {
   const {
     uploadDir = "public/uploads",
@@ -184,7 +183,7 @@ export async function uploadFile(
   // Validate file size
   if (maxSize && file.size > maxSize) {
     throw new Error(
-      `File size exceeds maximum allowed size of ${maxSize} bytes`
+      `File size exceeds maximum allowed size of ${maxSize} bytes`,
     );
   }
 
@@ -239,7 +238,7 @@ export async function uploadFile(
     try {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      const webpBuffer = await convertImageToWebP(buffer, file.type);
+      const webpBuffer = await convertImageToWebP(buffer);
 
       // Write WebP file to disk
       await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
@@ -260,7 +259,7 @@ export async function uploadFile(
     if (!scanResult.clean) {
       // File is infected and has been deleted by scanFile
       throw new Error(
-        `File contains malware: ${scanResult.viruses?.join(", ") || "unknown threat"}`
+        `File contains malware: ${scanResult.viruses?.join(", ") || "unknown threat"}`,
       );
     }
   } catch (error) {
@@ -311,7 +310,7 @@ export interface UploadMultipleFilesResult {
 
 export async function uploadMultipleFiles(
   files: File[] | File,
-  options: UploadFileOptions = {}
+  options: UploadFileOptions = {},
 ): Promise<UploadMultipleFilesResult> {
   const filesArray = Array.isArray(files) ? files : [files];
   const results: UploadMultipleFilesResult = {
@@ -338,14 +337,14 @@ export async function uploadMultipleFiles(
 }
 
 export async function deleteFileByRelativePath(
-  relativePath: string
+  relativePath: string,
 ): Promise<boolean> {
   const absolutePath = path.join(process.cwd(), relativePath);
   return await deleteFileFromDisk(absolutePath);
 }
 
 export async function validateMultipartRequest(
-  request: Request
+  request: Request,
 ): Promise<FormData> {
   const contentType = request.headers.get("content-type");
   if (!contentType || !contentType.includes("multipart/form-data")) {
@@ -356,7 +355,7 @@ export async function validateMultipartRequest(
     return await request.formData();
   } catch (error) {
     throw new Error(
-      `Failed to parse form data: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to parse form data: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -364,7 +363,7 @@ export async function validateMultipartRequest(
 export function getFileFromFormData(
   formData: FormData,
   fieldName: string,
-  getAll = false
+  getAll = false,
 ): File | File[] | null | "" {
   if (getAll) {
     const files = formData.getAll(fieldName);

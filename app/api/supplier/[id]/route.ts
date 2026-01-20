@@ -6,7 +6,7 @@ import { formatPhoneToNational } from "@/components/validators";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -29,7 +29,7 @@ export async function GET(
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(
@@ -38,33 +38,33 @@ export async function GET(
         message: "Supplier fetched successfully",
         data: supplier,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/supplier/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
     const { id } = await params;
     const { name, email, phone, address, notes, website, abn_number } =
       await request.json();
-    
+
     // Check if supplier exists and belongs to this organization
     const existingSupplier = await prisma.supplier.findFirst({
       where: {
@@ -76,7 +76,7 @@ export async function PATCH(
     if (!existingSupplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -86,7 +86,15 @@ export async function PATCH(
 
     const supplier = await prisma.supplier.update({
       where: { id: id },
-      data: { name, email, phone: formatPhone(phone), address, notes, website, abn_number },
+      data: {
+        name,
+        email,
+        phone: formatPhone(phone),
+        address,
+        notes,
+        website,
+        abn_number,
+      },
     });
 
     const logged = await withLogging(
@@ -94,7 +102,7 @@ export async function PATCH(
       "supplier",
       id,
       "UPDATE",
-      `Supplier updated successfully: ${supplier.name}`
+      `Supplier updated successfully: ${supplier.name}`,
     );
     if (!logged) {
       console.error(`Failed to log supplier update: ${id} - ${supplier.name}`);
@@ -104,28 +112,30 @@ export async function PATCH(
         status: true,
         message: "Supplier updated successfully",
         data: supplier,
-        ...(logged ? {} : { warning: "Note: Update succeeded but logging failed" })
+        ...(logged
+          ? {}
+          : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/supplier/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -142,14 +152,14 @@ export async function DELETE(
     if (!existingSupplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (existingSupplier.is_deleted) {
       return NextResponse.json(
         { status: false, message: "Supplier already deleted" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -164,18 +174,20 @@ export async function DELETE(
       "supplier",
       id,
       "DELETE",
-      `Supplier deleted successfully: ${supplier.name}`
+      `Supplier deleted successfully: ${supplier.name}`,
     );
     if (!logged) {
-      console.error(`Failed to log supplier deletion: ${id} - ${supplier.name}`);
+      console.error(
+        `Failed to log supplier deletion: ${id} - ${supplier.name}`,
+      );
       return NextResponse.json(
         {
           status: true,
           message: "Supplier deleted successfully",
           data: supplier,
-          warning: "Note: Deletion succeeded but logging failed"
+          warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
     return NextResponse.json(
@@ -184,19 +196,19 @@ export async function DELETE(
         message: "Supplier deleted successfully",
         data: supplier,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/supplier/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

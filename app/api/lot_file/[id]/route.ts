@@ -5,7 +5,7 @@ import { withLogging } from "@/lib/withLogging";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -23,7 +23,7 @@ export async function PATCH(
     if (!existingLotFile) {
       return NextResponse.json(
         { status: false, message: "Lot file not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -37,7 +37,7 @@ export async function PATCH(
       "lot_file",
       id,
       "UPDATE",
-      `Lot file updated successfully: ${lotFile.filename}`
+      `Lot file updated successfully: ${lotFile.filename}`,
     );
 
     if (!logged) {
@@ -53,19 +53,19 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/lot_file/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -5,7 +5,7 @@ import { withLogging } from "@/lib/withLogging";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -21,7 +21,7 @@ export async function GET(
     if (!lotTab) {
       return NextResponse.json(
         { status: false, message: "Lot tab not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -31,26 +31,26 @@ export async function GET(
         message: "Lot tab notes fetched successfully",
         data: lotTab,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/lot_tab_notes/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -68,7 +68,7 @@ export async function PATCH(
     if (!existingLotTab) {
       return NextResponse.json(
         { status: false, message: "Lot tab not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -82,7 +82,7 @@ export async function PATCH(
       "lot_tab",
       id,
       "UPDATE",
-      `Lot tab notes updated successfully`
+      `Lot tab notes updated successfully`,
     );
 
     if (!logged) {
@@ -98,19 +98,19 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/lot_tab_notes/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

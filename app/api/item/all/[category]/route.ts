@@ -7,7 +7,7 @@ const CATEGORIES = ["sheet", "handle", "hardware", "accessory", "edging_tape"];
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ category: string }> }
+  { params }: { params: Promise<{ category: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -17,7 +17,7 @@ export async function GET(
     if (!CATEGORIES.includes(normalizedCategory)) {
       return NextResponse.json(
         { status: false, message: "Invalid category" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,13 +51,13 @@ export async function GET(
 
     return NextResponse.json(
       { status: true, message: "Items fetched successfully", data: items },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/item/all/[category]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

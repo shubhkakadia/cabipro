@@ -44,7 +44,10 @@ function buildCookieOptions(expiresAt?: Date, secure?: boolean) {
       secure: secure ?? process.env.NODE_ENV === "production",
       expires: expiresAt,
       // Keep maxAge aligned too; some clients use one or the other.
-      maxAge: Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)),
+      maxAge: Math.max(
+        0,
+        Math.floor((expiresAt.getTime() - Date.now()) / 1000),
+      ),
     };
   }
 
@@ -78,7 +81,7 @@ export function setAuthCookie(
   response: NextResponse,
   cookieName: string = COOKIE_NAMES.AUTH_TOKEN,
   expiresAt?: Date,
-  secure?: boolean
+  secure?: boolean,
 ): void {
   response.cookies.set(cookieName, token, {
     ...buildCookieOptions(expiresAt, secure),
@@ -106,9 +109,15 @@ export function setAdminAuthCookie(
   token: string,
   response: NextResponse,
   expiresAt?: Date,
-  secure?: boolean
+  secure?: boolean,
 ): void {
-  setAuthCookie(token, response, COOKIE_NAMES.ADMIN_AUTH_TOKEN, expiresAt, secure);
+  setAuthCookie(
+    token,
+    response,
+    COOKIE_NAMES.ADMIN_AUTH_TOKEN,
+    expiresAt,
+    secure,
+  );
 }
 
 /**
@@ -119,7 +128,7 @@ export function setOrganizationSlugCookie(
   slug: string,
   response: NextResponse,
   expiresAt?: Date,
-  secure?: boolean
+  secure?: boolean,
 ): void {
   response.cookies.set(COOKIE_NAMES.ORG_SLUG, slug, {
     ...buildCookieOptions(expiresAt, secure),
@@ -152,7 +161,7 @@ export function getOrganizationSlugCookie(request: NextRequest): string | null {
  */
 export function getAuthCookie(
   request: NextRequest,
-  cookieName: string = COOKIE_NAMES.AUTH_TOKEN
+  cookieName: string = COOKIE_NAMES.AUTH_TOKEN,
 ): string | null {
   const cookie = request.cookies.get(cookieName);
   return cookie?.value || null;
@@ -187,7 +196,7 @@ export function getAdminAuthCookie(request: NextRequest): string | null {
  */
 export function deleteAuthCookie(
   response: NextResponse,
-  cookieName: string = COOKIE_NAMES.AUTH_TOKEN
+  cookieName: string = COOKIE_NAMES.AUTH_TOKEN,
 ): void {
   response.cookies.set(cookieName, "", {
     ...COOKIE_OPTIONS,

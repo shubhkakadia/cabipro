@@ -13,7 +13,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function ProjectManagement() {
-  
   const features = [
     {
       title: "Projects & Job Tracking",
@@ -117,14 +116,17 @@ export default function ProjectManagement() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-100 drop-shadow-2xl px-2 leading-tight"
             data-aos="fade-up"
           >
-            Complete Project Management for Cabinet Makers &amp; Joinery Workshops
+            Complete Project Management for Cabinet Makers &amp; Joinery
+            Workshops
           </h1>
           <p
             className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-200 drop-shadow-2xl px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Track every project from start to finish. Manage jobs, schedule production, assign teams, and keep everything organized throughout the manufacturing process.
+            Track every project from start to finish. Manage jobs, schedule
+            production, assign teams, and keep everything organized throughout
+            the manufacturing process.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
@@ -162,10 +164,11 @@ export default function ProjectManagement() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Everything you need to manage projects, track progress, and coordinate your team.
+              Everything you need to manage projects, track progress, and
+              coordinate your team.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
@@ -228,7 +231,9 @@ export default function ProjectManagement() {
                 Real-Time Visibility
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                See the status of every job at every stage. Know what&apos;s in production, what&apos;s delayed, and what&apos;s ready to install.
+                See the status of every job at every stage. Know what&apos;s in
+                production, what&apos;s delayed, and what&apos;s ready to
+                install.
               </p>
             </div>
             <div
@@ -240,7 +245,8 @@ export default function ProjectManagement() {
                 Team Coordination
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Assign jobs to teams and individuals. Track who&apos;s working on what and balance workloads effectively.
+                Assign jobs to teams and individuals. Track who&apos;s working
+                on what and balance workloads effectively.
               </p>
             </div>
             <div
@@ -252,7 +258,8 @@ export default function ProjectManagement() {
                 Complete Audit Trail
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Full activity history shows who did what and when. Perfect for accountability and identifying issues quickly.
+                Full activity history shows who did what and when. Perfect for
+                accountability and identifying issues quickly.
               </p>
             </div>
           </div>
@@ -273,9 +280,14 @@ export default function ProjectManagement() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join the waitlist to get early access to CabiPro&apos;s project management features.
+            Join the waitlist to get early access to CabiPro&apos;s project
+            management features.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <Link
               href="/waitlist"
               className="inline-block rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors touch-manipulation"

@@ -10,18 +10,18 @@ export default function ConditionalLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  
+
   // Routes where we don't want header and footer
-  const hideHeaderFooter = 
-    pathname === "/app" || 
-    pathname?.startsWith("/app/") || 
-    pathname === "/admin" || 
-    pathname?.startsWith("/admin/")
-  
+  const hideHeaderFooter =
+    pathname === "/app" ||
+    pathname?.startsWith("/app/") ||
+    pathname === "/admin" ||
+    pathname?.startsWith("/admin/");
+
   if (hideHeaderFooter) {
     return <>{children}</>;
   }
-  
+
   return (
     <>
       <Header />
@@ -30,4 +30,3 @@ export default function ConditionalLayout({
     </>
   );
 }
-

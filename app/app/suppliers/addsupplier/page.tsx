@@ -92,11 +92,11 @@ export default function AddSupplierPage() {
   });
   const [isSavingContact, setIsSavingContact] = useState(false);
   const [editingContactIndex, setEditingContactIndex] = useState<number | null>(
-    null
+    null,
   );
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({
       ...formData,
@@ -356,7 +356,7 @@ export default function AddSupplierPage() {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
-        }
+        },
       );
     } finally {
       setIsSavingContact(false);
@@ -868,8 +868,8 @@ export default function AddSupplierPage() {
                     ? "Updating..."
                     : "Adding..."
                   : editingContactIndex !== null
-                  ? "Update Contact"
-                  : "Add Contact"}
+                    ? "Update Contact"
+                    : "Add Contact"}
               </button>
             </div>
           </div>

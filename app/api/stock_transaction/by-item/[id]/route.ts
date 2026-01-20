@@ -4,7 +4,7 @@ import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -22,7 +22,7 @@ export async function GET(
     if (!item) {
       return NextResponse.json(
         { status: false, message: "Item not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -44,19 +44,19 @@ export async function GET(
         message: "Stock transactions fetched successfully",
         data: stockTransactions,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error fetching stock transactions by item:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

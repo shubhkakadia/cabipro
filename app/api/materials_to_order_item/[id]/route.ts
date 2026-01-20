@@ -5,7 +5,7 @@ import { withLogging } from "@/lib/withLogging";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -15,7 +15,7 @@ export async function PATCH(
     if (!data || data.quantity_ordered === undefined) {
       return NextResponse.json(
         { status: false, message: "quantity_ordered is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +23,7 @@ export async function PATCH(
     if (!Number.isFinite(raw) || raw < 0) {
       return NextResponse.json(
         { status: false, message: "quantity_ordered must be a number >= 0" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +45,7 @@ export async function PATCH(
     if (!mtoItem) {
       return NextResponse.json(
         { status: false, message: "Materials to order item not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -61,7 +61,7 @@ export async function PATCH(
       "materials_to_order_item",
       id,
       "UPDATE",
-      `Updated quantity_ordered=${quantityOrdered} for mto_item=${id} (mto_id=${mtoItem.mto_id}, item_id=${mtoItem.item_id})`
+      `Updated quantity_ordered=${quantityOrdered} for mto_item=${id} (mto_id=${mtoItem.mto_id}, item_id=${mtoItem.item_id})`,
     );
 
     if (!logged) {
@@ -77,19 +77,19 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/materials_to_order_item/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

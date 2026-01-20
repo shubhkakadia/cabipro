@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { ChevronDown, FileText, FileUp, Trash, File } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -87,7 +87,6 @@ export default function SiteMeasurementsSection({
   getCurrentTabFiles,
 }: SiteMeasurementsSectionProps) {
   const { id } = useParams<{ id: string }>();
-  // const { getToken } = useAuth();
   // Upload progress hook
   const {
     showProgressToast,
@@ -99,14 +98,14 @@ export default function SiteMeasurementsSection({
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
-      fileCount: number
-    ) => (progressEvent: { loaded: number; total?: number }) => void;
+      fileCount: number,
+    ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   // State for site measurements specific uploads
   const [sitePhotosFiles, setSitePhotosFiles] = useState<File[]>([]);
   const [measurementPhotosFiles, setMeasurementPhotosFiles] = useState<File[]>(
-    []
+    [],
   );
   const [isUploadingSitePhotos, setIsUploadingSitePhotos] = useState(false);
   const [isUploadingMeasurementPhotos, setIsUploadingMeasurementPhotos] =
@@ -123,7 +122,7 @@ export default function SiteMeasurementsSection({
 
   // Handle file selection for site photos - upload immediately
   const handleSitePhotosFileSelect = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
@@ -137,7 +136,7 @@ export default function SiteMeasurementsSection({
 
   // Handle file selection for measurement photos - upload immediately
   const handleMeasurementPhotosFileSelect = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
@@ -204,7 +203,8 @@ export default function SiteMeasurementsSection({
       } else {
         dismissProgressToast();
         toast.error(
-          response.data.message || `Failed to upload ${groupName.toLowerCase()}`
+          response.data.message ||
+            `Failed to upload ${groupName.toLowerCase()}`,
         );
       }
     } catch (err) {
@@ -213,11 +213,11 @@ export default function SiteMeasurementsSection({
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            `Failed to upload ${groupName.toLowerCase()}. Please try again.`
+            `Failed to upload ${groupName.toLowerCase()}. Please try again.`,
         );
       } else {
         toast.error(
-          `Failed to upload ${groupName.toLowerCase()}. Please try again.`
+          `Failed to upload ${groupName.toLowerCase()}. Please try again.`,
         );
       }
     } finally {
@@ -227,7 +227,7 @@ export default function SiteMeasurementsSection({
 
   // Upload site photos
   const handleUploadSitePhotos = async (
-    filesToUpload: File[] | null = null
+    filesToUpload: File[] | null = null,
   ) => {
     await uploadFiles({
       filesToUpload,
@@ -241,7 +241,7 @@ export default function SiteMeasurementsSection({
 
   // Upload measurement photos
   const handleUploadMeasurementPhotos = async (
-    filesToUpload: File[] | null = null
+    filesToUpload: File[] | null = null,
   ) => {
     await uploadFiles({
       filesToUpload,
@@ -593,7 +593,7 @@ export default function SiteMeasurementsSection({
         <TextEditor
           initialContent={
             selectedLotData?.tabs?.find(
-              (tab: Tab) => tab.tab.toLowerCase() === activeTab.toLowerCase()
+              (tab: Tab) => tab.tab.toLowerCase() === activeTab.toLowerCase(),
             )?.notes || ""
           }
           onSave={(content: string) => {

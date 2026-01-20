@@ -77,28 +77,28 @@ const FileItemWithNotes = ({
 }) => {
   const [notes, setNotes] = useState(file.notes || "");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
-    "idle"
+    "idle",
   );
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Checkbox states for maintenance checklist
   const [preparedByOffice, setPreparedByOffice] = useState(
     (file.maintenance_checklist as MaintenanceChecklist)?.prepared_by_office ||
-      false
+      false,
   );
   const [preparedByProduction, setPreparedByProduction] = useState(
     (file.maintenance_checklist as MaintenanceChecklist)
-      ?.prepared_by_production || false
+      ?.prepared_by_production || false,
   );
   const [deliveredToSite, setDeliveredToSite] = useState(
     (file.maintenance_checklist as MaintenanceChecklist)?.delivered_to_site ||
-      false
+      false,
   );
   const [installed, setInstalled] = useState(
-    (file.maintenance_checklist as MaintenanceChecklist)?.installed || false
+    (file.maintenance_checklist as MaintenanceChecklist)?.installed || false,
   );
   const checklistDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
 
   // Refs to track current checkbox values for debounced save
@@ -163,7 +163,7 @@ const FileItemWithNotes = ({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -180,7 +180,7 @@ const FileItemWithNotes = ({
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to save file notes. Please try again."
+            "Failed to save file notes. Please try again.",
         );
       } else {
         toast.error("Failed to save file notes. Please try again.");
@@ -228,7 +228,7 @@ const FileItemWithNotes = ({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
@@ -236,7 +236,7 @@ const FileItemWithNotes = ({
         const updatedChecklist = response.data.data;
         setPreparedByOffice(updatedChecklist.prepared_by_office || false);
         setPreparedByProduction(
-          updatedChecklist.prepared_by_production || false
+          updatedChecklist.prepared_by_production || false,
         );
         setDeliveredToSite(updatedChecklist.delivered_to_site || false);
         setInstalled(updatedChecklist.installed || false);
@@ -257,7 +257,7 @@ const FileItemWithNotes = ({
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to save checklist. Please try again."
+            "Failed to save checklist. Please try again.",
         );
       } else {
         toast.error("Failed to save checklist. Please try again.");
@@ -272,7 +272,7 @@ const FileItemWithNotes = ({
       | "preparedByProduction"
       | "deliveredToSite"
       | "installed",
-    value: boolean
+    value: boolean,
   ) => {
     let newPreparedByOffice = preparedByOffice;
     let newPreparedByProduction = preparedByProduction;
@@ -475,7 +475,7 @@ const FileItemWithNotes = ({
                 onChange={(e) =>
                   handleChecklistChange(
                     "preparedByProduction",
-                    e.target.checked
+                    e.target.checked,
                   )
                 }
                 className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary cursor-pointer"
@@ -572,7 +572,7 @@ export default function FileUploadSection({
     const filteredFiles = getFilteredFiles();
     const sortedFiles = sortFilesByType(filteredFiles);
     const currentIndex = sortedFiles.findIndex(
-      (f) => f.id === file.id || f.filename === file.filename
+      (f) => f.id === file.id || f.filename === file.filename,
     );
 
     setSelectedFile({
@@ -670,7 +670,7 @@ export default function FileUploadSection({
     title: string,
     files: FileData[],
     isSmall: boolean,
-    sectionKey: string
+    sectionKey: string,
   ) => {
     if (files.length === 0) return null;
 
@@ -725,7 +725,7 @@ export default function FileUploadSection({
   const renderFinishedSitePhotosCarousel = () => {
     // Only show images in the carousel
     const imageFiles = filteredFiles.filter((file: FileData) =>
-      file.mime_type.includes("image")
+      file.mime_type.includes("image"),
     );
 
     if (imageFiles.length === 0) {
@@ -741,13 +741,13 @@ export default function FileUploadSection({
 
     const goToPrevious = () => {
       setCurrentImageIndex((prevIndex) =>
-        prevIndex === 0 ? imageFiles.length - 1 : prevIndex - 1
+        prevIndex === 0 ? imageFiles.length - 1 : prevIndex - 1,
       );
     };
 
     const goToNext = () => {
       setCurrentImageIndex((prevIndex) =>
-        prevIndex === imageFiles.length - 1 ? 0 : prevIndex + 1
+        prevIndex === imageFiles.length - 1 ? 0 : prevIndex + 1,
       );
     };
 
@@ -759,7 +759,7 @@ export default function FileUploadSection({
       <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
         {/* Main Carousel Display */}
         <div className="relative w-full mb-6">
-          <div className="relative w-full h-[600px] bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
+          <div className="relative w-full h-150 bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
             {/* Previous Button */}
             {imageFiles.length > 1 && (
               <button
@@ -875,7 +875,7 @@ export default function FileUploadSection({
     const tabEnum = getTabEnum(activeTab);
     const tab = selectedLotData.tabs.find(
       (tabItem: { tab: string; notes?: string; [key: string]: unknown }) =>
-        tabItem.tab.toLowerCase() === tabEnum.toLowerCase()
+        tabItem.tab.toLowerCase() === tabEnum.toLowerCase(),
     );
     return tab?.notes || "";
   };

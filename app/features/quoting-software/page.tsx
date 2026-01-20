@@ -10,7 +10,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function QuotingSoftware() {
-  
   const features = [
     {
       title: "Quotes & Orders",
@@ -78,14 +77,17 @@ export default function QuotingSoftware() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-100 drop-shadow-2xl px-2 leading-tight"
             data-aos="fade-up"
           >
-            Professional Quoting Software for Cabinet Makers &amp; Joinery Workshops
+            Professional Quoting Software for Cabinet Makers &amp; Joinery
+            Workshops
           </h1>
           <p
             className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-200 drop-shadow-2xl px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Create accurate quotes, manage client relationships, and turn quotes into jobs seamlessly. Everything you need to win more business and stay organized.
+            Create accurate quotes, manage client relationships, and turn quotes
+            into jobs seamlessly. Everything you need to win more business and
+            stay organized.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
@@ -116,17 +118,19 @@ export default function QuotingSoftware() {
               className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 px-2"
               data-aos="fade-up"
             >
-              Powerful quoting features built for cabinet makers and joinery workshops
+              Powerful quoting features built for cabinet makers and joinery
+              workshops
             </h2>
             <p
               className="mx-auto mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg text-gray-600 px-2"
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              From initial enquiry to final invoice, manage your entire sales process in one place.
+              From initial enquiry to final invoice, manage your entire sales
+              process in one place.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
@@ -189,7 +193,8 @@ export default function QuotingSoftware() {
                 Accurate Quotes
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Material selection and specifications are tracked with each quote, ensuring accuracy from the start.
+                Material selection and specifications are tracked with each
+                quote, ensuring accuracy from the start.
               </p>
             </div>
             <div
@@ -201,7 +206,8 @@ export default function QuotingSoftware() {
                 Seamless Conversion
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Approved quotes automatically convert to jobs with all details, materials, and documents already attached.
+                Approved quotes automatically convert to jobs with all details,
+                materials, and documents already attached.
               </p>
             </div>
             <div
@@ -213,7 +219,8 @@ export default function QuotingSoftware() {
                 Client Management
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                All client information, contacts, and communication history in one place for better relationship management.
+                All client information, contacts, and communication history in
+                one place for better relationship management.
               </p>
             </div>
           </div>
@@ -234,9 +241,14 @@ export default function QuotingSoftware() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join the waitlist to get early access to CabiPro&apos;s powerful quoting features.
+            Join the waitlist to get early access to CabiPro&apos;s powerful
+            quoting features.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <Link
               href="/waitlist"
               className="inline-block rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors touch-manipulation"

@@ -50,13 +50,13 @@ export async function GET(request: NextRequest) {
         message: "Deleted media fetched successfully",
         data: deletedMedia,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/deletedmedia/all:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -73,7 +73,7 @@ export async function DELETE(request: NextRequest) {
     if (!filenames || !Array.isArray(filenames) || filenames.length === 0) {
       return NextResponse.json(
         { status: false, message: "Filenames array is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -140,11 +140,11 @@ export async function DELETE(request: NextRequest) {
         } catch (fileError) {
           console.error(
             `❌ Error deleting file from disk: ${decodedFilename}`,
-            fileError
+            fileError,
           );
           console.error(
             "Attempted path:",
-            path.join(process.cwd(), deletedMedia.url)
+            path.join(process.cwd(), deletedMedia.url),
           );
           // Continue with database deletion even if file deletion fails
         }
@@ -168,8 +168,8 @@ export async function DELETE(request: NextRequest) {
           tableName === "lot_file"
             ? "lot_file"
             : tableName === "media"
-            ? "media"
-            : "supplier_file";
+              ? "media"
+              : "supplier_file";
 
         // Log the deletion
         const logged = await withLogging(
@@ -177,12 +177,12 @@ export async function DELETE(request: NextRequest) {
           entityType,
           deletedMedia.id,
           "DELETE",
-          `${entityType} deleted successfully: ${deletedMedia.filename}`
+          `${entityType} deleted successfully: ${deletedMedia.filename}`,
         );
 
         if (!logged) {
           console.error(
-            `Failed to log ${entityType} deletion: ${deletedMedia.id} - ${deletedMedia.filename}`
+            `Failed to log ${entityType} deletion: ${deletedMedia.id} - ${deletedMedia.filename}`,
           );
         }
 
@@ -209,7 +209,7 @@ export async function DELETE(request: NextRequest) {
 
     // Process all files in parallel using Promise.all
     const deletionResults = await Promise.all(
-      filenames.map((filename: string) => processFileDeletion(filename))
+      filenames.map((filename: string) => processFileDeletion(filename)),
     );
 
     // Separate successful and failed results
@@ -236,13 +236,13 @@ export async function DELETE(request: NextRequest) {
           failedCount: results.failed.length,
         },
       },
-      { status: hasSuccess ? 200 : hasFailures ? 207 : 200 } // 207 Multi-Status if partial success
+      { status: hasSuccess ? 200 : hasFailures ? 207 : 200 }, // 207 Multi-Status if partial success
     );
   } catch (error) {
     console.error("Error in DELETE /api/deletedmedia/all:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

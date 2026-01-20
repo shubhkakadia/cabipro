@@ -92,10 +92,10 @@ export default function LoginPage() {
       setError(
         error instanceof Error
           ? error.message
-          : "Login failed. Please try again."
+          : "Login failed. Please try again.",
       );
     } finally {
-      setIsSubmitting(false);   
+      setIsSubmitting(false);
     }
   };
 

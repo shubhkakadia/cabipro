@@ -13,28 +13,26 @@ interface UploadProgressBarProps {
   closeToast?: () => void;
 }
 
-const UploadProgressBar: React.FC<UploadProgressBarProps> = ({ 
-  progress, 
-  isPaused, 
-  fileCount, 
-  closeToast: _closeToast 
+const UploadProgressBar: React.FC<UploadProgressBarProps> = ({
+  progress,
+  isPaused,
+  fileCount,
 }) => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-slate-700">
-          Uploading {fileCount} file{fileCount > 1 ? 's' : ''}... {Math.round(progress)}%
+          Uploading {fileCount} file{fileCount > 1 ? "s" : ""}...{" "}
+          {Math.round(progress)}%
         </span>
-        {isPaused && (
-          <span className="text-xs text-slate-500">Paused</span>
-        )}
+        {isPaused && <span className="text-xs text-slate-500">Paused</span>}
       </div>
       <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
         <div
           className="h-full bg-primary transition-all duration-300 ease-out"
           style={{
             width: `${progress}%`,
-            transition: isPaused ? 'none' : 'width 0.3s ease-out'
+            transition: isPaused ? "none" : "width 0.3s ease-out",
           }}
         />
       </div>
@@ -49,4 +47,3 @@ const UploadProgressBar: React.FC<UploadProgressBarProps> = ({
 };
 
 export default UploadProgressBar;
-

@@ -1,0 +1,64 @@
+
+> cabipro@0.1.0 lint
+> eslint
+
+
+D:\cabipro\app\api\materials_to_order\cumulative\route.ts
+    3:23  warning  'AuthenticationError' is defined but never used  @typescript-eslint/no-unused-vars
+  164:19  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+D:\cabipro\app\api\materials_to_order\used_material_list\route.ts
+  169:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\cabipro\app\api\module_access\[id]\route.ts
+  3:23  warning  'AuthenticationError' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\api\reserve_item_stock\[id]\route.ts
+   13:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  138:27  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  170:25  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+D:\cabipro\app\api\reserve_item_stock\item\[id]\route.ts
+  11:11  warning  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\api\stage\[id]\route.ts
+  97:11  warning  'stage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\api\uploads\lots\[...path]\route.ts
+  459:14  warning  'projectId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\app\inventory\[id]\page.tsx
+  245:10  warning  'selectedSupplier' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\app\layout.tsx
+  4:8  warning  'AppHeader' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\app\projects\components\MaterialsToOrder.tsx
+  279:10  warning  '_loadingState' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  323:9   warning  '_hasDataChanged' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\app\app\suppliers\[id]\page.tsx
+  1285:0  error  Parsing error: ')' expected
+
+D:\cabipro\app\app\suppliers\materialstoorder\page.tsx
+   407:6   warning  React Hook useEffect has a missing dependency: 'processReservationsFromMTOs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   434:5   warning  'stockAvailable' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+   654:9   warning  'applyQuantityOrderedToLocalState' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+  2182:61  warning  'allItemsOrdered' is assigned a value but never used                                                                            @typescript-eslint/no-unused-vars
+  2196:61  warning  'allItemsReserved' is assigned a value but never used                                                                           @typescript-eslint/no-unused-vars
+
+D:\cabipro\components\SearchBar.tsx
+  14:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\cabipro\components\UploadProgressBar.tsx
+  20:15  warning  '_closeToast' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\lib\filehandler.ts
+  33:3  warning  '_mimeType' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\cabipro\lib\scanFile.ts
+  6:32  warning  '_filePath' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 25 problems (7 errors, 18 warnings)
+

@@ -6,7 +6,7 @@ import { formatPhoneToNational } from "@/components/validators";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -22,26 +22,26 @@ export async function GET(
     if (!contact) {
       return NextResponse.json(
         { status: false, message: "Contact not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "Contact fetched successfully", data: contact },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/contact/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -69,7 +69,7 @@ export async function PATCH(
     if (!existingContact) {
       return NextResponse.json(
         { status: false, message: "Contact not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -98,12 +98,12 @@ export async function PATCH(
       "contact",
       id,
       "UPDATE",
-      `Contact updated successfully: ${contact.first_name} ${contact.last_name}`
+      `Contact updated successfully: ${contact.first_name} ${contact.last_name}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log contact update: ${id} - ${contact.first_name} ${contact.last_name}`
+        `Failed to log contact update: ${id} - ${contact.first_name} ${contact.last_name}`,
       );
     }
 
@@ -116,20 +116,20 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in PATCH /api/contact/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -146,7 +146,7 @@ export async function DELETE(
     if (!existingContact) {
       return NextResponse.json(
         { status: false, message: "Contact not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -159,12 +159,12 @@ export async function DELETE(
       "contact",
       id,
       "DELETE",
-      `Contact deleted successfully: ${contact.first_name} ${contact.last_name}`
+      `Contact deleted successfully: ${contact.first_name} ${contact.last_name}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log contact deletion: ${id} - ${contact.first_name} ${contact.last_name}`
+        `Failed to log contact deletion: ${id} - ${contact.first_name} ${contact.last_name}`,
       );
     }
 
@@ -177,13 +177,13 @@ export async function DELETE(
           ? {}
           : { warning: "Note: Deletion succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in DELETE /api/contact/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

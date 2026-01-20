@@ -38,6 +38,7 @@ import {
 import { Doughnut } from "react-chartjs-2";
 import Sidebar from "@/components/sidebar";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Register Chart.js components
 ChartJS.register(
@@ -49,7 +50,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 // Color palette for charts
@@ -141,15 +142,6 @@ interface StorageUsage {
 interface EmployeeData {
   first_name?: string;
   last_name?: string;
-}
-
-interface SearchResults {
-  clients?: Array<{ client_id: string; [key: string]: unknown }>;
-  employees?: Array<{ employee_id: string; [key: string]: unknown }>;
-  projects?: Array<{ project_id: string; [key: string]: unknown }>;
-  suppliers?: Array<{ supplier_id: string; [key: string]: unknown }>;
-  items?: Array<{ item_id: string; [key: string]: unknown }>;
-  [key: string]: Array<Record<string, unknown>> | undefined;
 }
 
 // KPI Card Component
@@ -249,7 +241,7 @@ const getDaysLeft = (endDate: string | undefined): number | null => {
 
 // Get days left badge color and text
 const getDaysLeftBadge = (
-  daysLeft: number | null | undefined
+  daysLeft: number | null | undefined,
 ): { color: string; text: string } => {
   if (daysLeft === null || daysLeft === undefined) {
     return { color: "bg-slate-100 text-slate-600", text: "No due date" };
@@ -294,7 +286,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
+    null,
   );
   const [logsData, setLogsData] = useState<Log[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
@@ -306,13 +298,6 @@ export default function DashboardPage() {
     useState(false);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [storageLoading, setStorageLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(
-    null
-  );
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [employeeData] = useState<EmployeeData | null>(null);
 
@@ -334,7 +319,7 @@ export default function DashboardPage() {
         },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -347,7 +332,7 @@ export default function DashboardPage() {
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching dashboard data"
+            "An error occurred while fetching dashboard data",
         );
       } else {
         setError("An error occurred while fetching dashboard data");
@@ -369,7 +354,7 @@ export default function DashboardPage() {
         const sortedLogs = (response.data.data || [])
           .sort(
             (a: Log, b: Log) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
           )
           .slice(0, 10) as Log[];
         setLogsData(sortedLogs);
@@ -454,9 +439,6 @@ export default function DashboardPage() {
       if (!target.closest(".dashboard-month-dropdown-container")) {
         setDashboardMonthDropdownOpen(false);
       }
-      if (!target.closest(".global-search-container")) {
-        setShowSearchDropdown(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -468,191 +450,6 @@ export default function DashboardPage() {
       setDashboardMonthFilter("all");
     }
   }, [dashboardYearFilter]);
-
-  // Debounce search input
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchTerm.trim());
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
-
-  // Fetch search results when debounced term changes
-  useEffect(() => {
-    const runSearch = async () => {
-      if (!debouncedSearch) {
-        setSearchResults(null);
-        return;
-      }
-      try {
-        setSearchLoading(true);
-        const response = await axios.post(
-          "/api/search",
-          { search: debouncedSearch },
-          {
-            withCredentials: true,
-          }
-        );
-        if (response.data?.status) {
-          setSearchResults(response.data.data);
-          setShowSearchDropdown(true);
-        } else {
-          setSearchResults(null);
-          setShowSearchDropdown(false);
-        }
-      } catch (err) {
-        console.error("Search API Error:", err);
-        setSearchResults(null);
-        setShowSearchDropdown(false);
-      } finally {
-        setSearchLoading(false);
-      }
-    };
-    runSearch();
-  }, [debouncedSearch]);
-
-  const renderSearchSection = () => {
-    const handleSelectResult = (key: string, item: Record<string, unknown>) => {
-      let path = null;
-      switch (key) {
-        case "clients":
-          path = item.client_id ? `/admin/clients/${item.client_id}` : null;
-          break;
-        case "employees":
-          path = item.employee_id
-            ? `/admin/employees/${item.employee_id}`
-            : null;
-          break;
-        case "projects":
-          path = item.project_id ? `/admin/projects/${item.project_id}` : null;
-          break;
-        case "suppliers":
-          path = item.supplier_id
-            ? `/admin/suppliers/${item.supplier_id}`
-            : null;
-          break;
-        case "items":
-          path = item.item_id ? `/admin/inventory/${item.item_id}` : null;
-          break;
-        default:
-          break;
-      }
-      if (path) {
-        setShowSearchDropdown(false);
-        router.push(path);
-      }
-    };
-
-    const groups = [
-      {
-        key: "clients",
-        label: "Clients",
-        fields: ["client_name", "client_type"],
-      },
-      {
-        key: "employees",
-        label: "Employees",
-        fields: ["first_name", "last_name", "role"],
-      },
-      { key: "projects", label: "Projects", fields: ["project_name"] },
-      { key: "suppliers", label: "Suppliers", fields: ["supplier_name"] },
-      {
-        key: "items",
-        label: "Items",
-        fields: ["category", "name", "brand", "color", "type", "sub_category"],
-      },
-    ];
-
-    const hasResults =
-      searchResults &&
-      groups.some((g) => {
-        const results = searchResults[g.key];
-        return Array.isArray(results) && results.length > 0;
-      });
-
-    return (
-      <div className="relative min-w-md global-search-container">
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search clients, employees, projects..."
-          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-          onFocus={() => searchResults && setShowSearchDropdown(true)}
-        />
-        {searchLoading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <div className="h-4 w-4 border-2 border-slate-300 border-t-secondary rounded-full animate-spin"></div>
-          </div>
-        )}
-        {showSearchDropdown && hasResults && (
-          <div className="absolute z-20 mt-1 w-full max-h-80 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
-            {groups.map(({ key, label, fields }) => {
-              const list =
-                (searchResults?.[key] as Array<Record<string, unknown>>) || [];
-              if (!list.length) return null;
-              return (
-                <div
-                  key={key}
-                  className="border-b border-slate-100 last:border-b-0"
-                >
-                  <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-slate-500 font-semibold bg-slate-50">
-                    {label}
-                  </div>
-                  <ul className="divide-y divide-slate-100">
-                    {list.map((item: Record<string, unknown>, idx: number) => {
-                      const itemKey = (item.id ||
-                        item[`${key}_id`] ||
-                        `item-${idx}`) as string;
-                      return (
-                        <li key={itemKey}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectResult(key, item)}
-                            className="cursor-pointer w-full text-left px-3 py-2 hover:bg-slate-50"
-                          >
-                            <div className="text-sm text-slate-800 font-medium truncate">
-                              {fields
-                                .map((f) => item[f])
-                                .filter(Boolean)
-                                .join(" • ") || "No label"}
-                            </div>
-                            <div className="text-[11px] text-slate-500 truncate">
-                              {key === "items"
-                                ? [
-                                    item.brand,
-                                    item.color,
-                                    item.type,
-                                    item.sub_category,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" • ")
-                                : key === "projects" &&
-                                  typeof item.number_of_lots === "number"
-                                ? `${item.number_of_lots} lots`
-                                : null}
-                            </div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {showSearchDropdown &&
-          !hasResults &&
-          debouncedSearch &&
-          !searchLoading && (
-            <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-3 text-sm text-slate-500">
-              No results
-            </div>
-          )}
-      </div>
-    );
-  };
 
   // Get all available years from dashboard data (from multiple sources)
   const getAllDashboardYears = (): string[] => {
@@ -679,7 +476,7 @@ export default function DashboardPage() {
     }
 
     return Array.from(years).sort(
-      (a: string, b: string) => Number(b) - Number(a)
+      (a: string, b: string) => Number(b) - Number(a),
     );
   };
 
@@ -737,16 +534,16 @@ export default function DashboardPage() {
     return {
       labels: dashboardData.lotsByStage.map(
         (item: { name: string; _count: number }) =>
-          item.name.charAt(0).toUpperCase() + item.name.slice(1)
+          item.name.charAt(0).toUpperCase() + item.name.slice(1),
       ),
       datasets: [
         {
           data: dashboardData.lotsByStage.map(
-            (item: { name: string; _count: number }) => item._count
+            (item: { name: string; _count: number }) => item._count,
           ),
           backgroundColor: CHART_COLORS.slice(
             0,
-            dashboardData.lotsByStage.length
+            dashboardData.lotsByStage.length,
           ),
           borderColor: "#fff",
           borderWidth: 2,
@@ -763,16 +560,16 @@ export default function DashboardPage() {
     return {
       labels: dashboardData.MTOsByStatus.map(
         (item: { status: string; _count: number }) =>
-          item.status.replace(/_/g, " ")
+          item.status.replace(/_/g, " "),
       ),
       datasets: [
         {
           data: dashboardData.MTOsByStatus.map(
-            (item: { status: string; _count: number }) => item._count
+            (item: { status: string; _count: number }) => item._count,
           ),
           backgroundColor: CHART_COLORS.slice(
             0,
-            dashboardData.MTOsByStatus.length
+            dashboardData.MTOsByStatus.length,
           ),
           borderColor: "#fff",
           borderWidth: 2,
@@ -792,16 +589,16 @@ export default function DashboardPage() {
     return {
       labels: dashboardData.purchaseOrdersByStatus.map(
         (item: { status: string; _count: number }) =>
-          item.status.replace(/_/g, " ")
+          item.status.replace(/_/g, " "),
       ),
       datasets: [
         {
           data: dashboardData.purchaseOrdersByStatus.map(
-            (item: { status: string; _count: number }) => item._count
+            (item: { status: string; _count: number }) => item._count,
           ),
           backgroundColor: CHART_COLORS.slice(
             0,
-            dashboardData.purchaseOrdersByStatus.length
+            dashboardData.purchaseOrdersByStatus.length,
           ),
           borderColor: "#fff",
           borderWidth: 2,
@@ -945,7 +742,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {renderSearchSection()}
+                    <SearchBar />
                     {/* Storage Usage - Compact Display */}
                     {storageLoading ? (
                       <div className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 bg-white border border-slate-200 rounded-lg">
@@ -956,7 +753,7 @@ export default function DashboardPage() {
                       <div
                         className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg cursor-help"
                         title={`Last updated: ${formatTimestampAdelaide(
-                          storageUsage.timestamp
+                          storageUsage.timestamp,
                         )} (Adelaide time)`}
                       >
                         <div className="flex items-center gap-2">
@@ -964,7 +761,7 @@ export default function DashboardPage() {
                           <span className="text-xs text-slate-600">
                             DB:{" "}
                             {formatStorageSize(
-                              storageUsage.database?.size_mb || 0
+                              storageUsage.database?.size_mb || 0,
                             )}
                           </span>
                         </div>
@@ -974,7 +771,7 @@ export default function DashboardPage() {
                           <span className="text-xs text-slate-600">
                             Files:{" "}
                             {formatStorageSize(
-                              storageUsage.uploads?.size_mb || 0
+                              storageUsage.uploads?.size_mb || 0,
                             )}
                           </span>
                         </div>
@@ -983,7 +780,7 @@ export default function DashboardPage() {
                           Total:{" "}
                           {formatStorageSize(
                             (storageUsage.database?.size_mb || 0) +
-                              (storageUsage.uploads?.size_mb || 0)
+                              (storageUsage.uploads?.size_mb || 0),
                           )}
                         </span>
                       </div>
@@ -1010,7 +807,7 @@ export default function DashboardPage() {
                       <button
                         onClick={() =>
                           setDashboardYearDropdownOpen(
-                            !dashboardYearDropdownOpen
+                            !dashboardYearDropdownOpen,
                           )
                         }
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
@@ -1060,7 +857,7 @@ export default function DashboardPage() {
                         onClick={() => {
                           if (dashboardYearFilter !== "all") {
                             setDashboardMonthDropdownOpen(
-                              !dashboardMonthDropdownOpen
+                              !dashboardMonthDropdownOpen,
                             );
                           }
                         }}
@@ -1195,7 +992,7 @@ export default function DashboardPage() {
                 {/* Stages Due */}
                 <ChartCard title="Upcoming Stage Deadlines">
                   {sortedStagesDue.length > 0 ? (
-                    <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                    <div className="overflow-x-auto max-h-75 overflow-y-auto">
                       <table className="w-full">
                         <thead className="sticky top-0 bg-white">
                           <tr className="border-b border-slate-100">
@@ -1251,7 +1048,7 @@ export default function DashboardPage() {
                                 <td className="py-3 px-3">
                                   <span
                                     className={`text-[10px] font-semibold px-2 py-1 rounded-full uppercase ${getStatusColor(
-                                      stage.status
+                                      stage.status,
                                     )}`}
                                   >
                                     {stage.status?.replace(/_/g, " ")}
@@ -1261,7 +1058,7 @@ export default function DashboardPage() {
                                   {stage.endDate &&
                                   new Date(stage.endDate).getFullYear() > 2000
                                     ? new Date(
-                                        stage.endDate
+                                        stage.endDate,
                                       ).toLocaleDateString("en-US", {
                                         month: "short",
                                         day: "numeric",
@@ -1302,7 +1099,7 @@ export default function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-[250px] flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
                         No lot data available
                       </div>
                     )}
@@ -1318,7 +1115,7 @@ export default function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-[250px] flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
                         No MTO data available
                       </div>
                     )}
@@ -1334,7 +1131,7 @@ export default function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-[250px] flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
                         No purchase order data available
                       </div>
                     )}
@@ -1348,7 +1145,7 @@ export default function DashboardPage() {
                     {dashboardData &&
                     dashboardData.top10items &&
                     dashboardData.top10items.length > 0 ? (
-                      <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                      <div className="overflow-x-auto max-h-100 overflow-y-auto">
                         <table className="w-full">
                           <thead className="sticky top-0 bg-white">
                             <tr className="border-b border-slate-100">
@@ -1429,7 +1226,7 @@ export default function DashboardPage() {
                                       {item.quantity}
                                     </td>
                                   </tr>
-                                )
+                                ),
                               )}
                           </tbody>
                         </table>
@@ -1444,11 +1241,11 @@ export default function DashboardPage() {
                   {/* Recent Logs */}
                   <ChartCard title="Recent Activity">
                     {logsLoading ? (
-                      <div className="h-[400px] flex items-center justify-center">
+                      <div className="h-100 flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
                       </div>
                     ) : logsData.length > 0 ? (
-                      <div className="max-h-[400px] overflow-y-auto space-y-3">
+                      <div className="max-h-100 overflow-y-auto space-y-3">
                         {logsData.map((log: Log) => (
                           <div
                             key={log.id}
@@ -1461,7 +1258,7 @@ export default function DashboardPage() {
                               <div className="flex items-center gap-2 mb-1">
                                 <span
                                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase ${getActionColor(
-                                    log.action
+                                    log.action,
                                   )}`}
                                 >
                                   {log.action}
@@ -1485,7 +1282,7 @@ export default function DashboardPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="h-[400px] flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-100 flex items-center justify-center text-slate-400 text-sm">
                         No recent activity
                       </div>
                     )}

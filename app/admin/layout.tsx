@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { requireAdminAuthFromCookies, AuthenticationError, checkUserAuthFromCookies } from "@/lib/auth-middleware";
+import {
+  requireAdminAuthFromCookies,
+  AuthenticationError,
+  checkUserAuthFromCookies,
+} from "@/lib/auth-middleware";
 import AppHeader from "@/components/AppHeader";
 
 /**
@@ -14,14 +18,14 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  
+
   // First check if a client user is trying to access admin routes
   const clientAuth = await checkUserAuthFromCookies(cookieStore);
   if (clientAuth) {
     // Client users should not access admin routes - redirect to app
     redirect("/app");
   }
-  
+
   // Now check for admin authentication
   try {
     await requireAdminAuthFromCookies(cookieStore);
@@ -39,4 +43,3 @@ export default async function AdminLayout({
     </>
   );
 }
-

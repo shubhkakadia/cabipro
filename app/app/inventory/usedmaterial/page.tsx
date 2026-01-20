@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Sheet {
@@ -119,7 +120,7 @@ export default function UsedMaterialPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedMto, setExpandedMto] = useState<string | null>(null);
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>(
-    {}
+    {},
   );
   const [saving, setSaving] = useState(false);
   const [mtoTab, setMtoTab] = useState<"active" | "completed">("active");
@@ -127,7 +128,7 @@ export default function UsedMaterialPage() {
     string | null
   >(null);
   const [updatingMtoStatusId, setUpdatingMtoStatusId] = useState<string | null>(
-    null
+    null,
   );
 
   // Manual add modal states
@@ -214,7 +215,7 @@ export default function UsedMaterialPage() {
 
   const handleUpdateMtoUsedMaterialStatus = async (
     mtoId: string,
-    completed: boolean
+    completed: boolean,
   ) => {
     try {
       setUpdatingMtoStatusId(mtoId);
@@ -227,13 +228,13 @@ export default function UsedMaterialPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
         const updatedMto = response?.data?.data as MTO;
         setMtos((prev) =>
-          prev.map((mto) => (mto.id === mtoId ? updatedMto || mto : mto))
+          prev.map((mto) => (mto.id === mtoId ? updatedMto || mto : mto)),
         );
         if (expandedMto === mtoId) setExpandedMto(null);
         setOpenMtoStatusDropdownId(null);
@@ -255,7 +256,7 @@ export default function UsedMaterialPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Error updating MTO status. Please try again.", {
@@ -270,7 +271,7 @@ export default function UsedMaterialPage() {
 
   // Group items by category
   const groupItemsByCategory = (
-    items: MTOItem[]
+    items: MTOItem[],
   ): Record<string, MTOItem[]> => {
     const grouped: Record<string, MTOItem[]> = {};
     items.forEach((mtoItem: MTOItem) => {
@@ -364,7 +365,7 @@ export default function UsedMaterialPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
         return;
       }
@@ -393,7 +394,7 @@ export default function UsedMaterialPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
         return;
       }
@@ -432,7 +433,7 @@ export default function UsedMaterialPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -456,7 +457,7 @@ export default function UsedMaterialPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Error updating quantity used. Please try again.", {
@@ -581,28 +582,28 @@ export default function UsedMaterialPage() {
     if (item.sheet) {
       matchesDetails = Boolean(
         item.sheet.brand?.toLowerCase().includes(searchLower) ||
-          item.sheet.color?.toLowerCase().includes(searchLower) ||
-          item.sheet.finish?.toLowerCase().includes(searchLower)
+        item.sheet.color?.toLowerCase().includes(searchLower) ||
+        item.sheet.finish?.toLowerCase().includes(searchLower),
       );
     } else if (item.handle) {
       matchesDetails = Boolean(
         item.handle.brand?.toLowerCase().includes(searchLower) ||
-          item.handle.color?.toLowerCase().includes(searchLower) ||
-          item.handle.type?.toLowerCase().includes(searchLower)
+        item.handle.color?.toLowerCase().includes(searchLower) ||
+        item.handle.type?.toLowerCase().includes(searchLower),
       );
     } else if (item.hardware) {
       matchesDetails = Boolean(
         item.hardware.brand?.toLowerCase().includes(searchLower) ||
-          item.hardware.name?.toLowerCase().includes(searchLower)
+        item.hardware.name?.toLowerCase().includes(searchLower),
       );
     } else if (item.accessory) {
       matchesDetails = Boolean(
-        item.accessory.name?.toLowerCase().includes(searchLower)
+        item.accessory.name?.toLowerCase().includes(searchLower),
       );
     } else if (item.edging_tape) {
       matchesDetails = Boolean(
         item.edging_tape.brand?.toLowerCase().includes(searchLower) ||
-          item.edging_tape.color?.toLowerCase().includes(searchLower)
+        item.edging_tape.color?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -645,7 +646,7 @@ export default function UsedMaterialPage() {
   const handleUpdateItem = (
     itemId: string,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
     setSelectedItems((prev: SelectedItem[]) =>
       prev.map((item: SelectedItem) => {
@@ -653,14 +654,14 @@ export default function UsedMaterialPage() {
           return { ...item, [field]: value };
         }
         return item;
-      })
+      }),
     );
   };
 
   // Handle remove item from table
   const handleRemoveItem = (itemId: string) => {
     setSelectedItems((prev: SelectedItem[]) =>
-      prev.filter((item: SelectedItem) => item.id !== itemId)
+      prev.filter((item: SelectedItem) => item.id !== itemId),
     );
   };
 
@@ -696,7 +697,7 @@ export default function UsedMaterialPage() {
 
     // Validate quantities
     const invalidItems = selectedItems.some(
-      (item) => !item.quantity || item.quantity <= 0
+      (item) => !item.quantity || item.quantity <= 0,
     );
     if (invalidItems) {
       toast.error("All items must have a quantity greater than 0", {
@@ -742,15 +743,15 @@ export default function UsedMaterialPage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
-        )
+          },
+        ),
       );
 
       const results = await Promise.allSettled(promises);
       const failed = results.filter(
         (r) =>
           r.status === "rejected" ||
-          (r.status === "fulfilled" && !r.value?.data?.status)
+          (r.status === "fulfilled" && !r.value?.data?.status),
       );
 
       if (failed.length > 0) {
@@ -759,7 +760,7 @@ export default function UsedMaterialPage() {
           {
             position: "top-right",
             autoClose: 5000,
-          }
+          },
         );
       } else {
         toast.success("All materials used recorded successfully", {
@@ -777,7 +778,7 @@ export default function UsedMaterialPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Error recording material used. Please try again.", {
@@ -792,7 +793,7 @@ export default function UsedMaterialPage() {
 
   // Get item details based on category
   const getItemDetails = (
-    item: Item | null | undefined
+    item: Item | null | undefined,
   ): {
     name: string;
     image: string | null;
@@ -884,10 +885,10 @@ export default function UsedMaterialPage() {
   };
 
   const activeMtos = mtos.filter(
-    (mto: MTO) => !Boolean(mto.used_material_completed)
+    (mto: MTO) => !Boolean(mto.used_material_completed),
   );
   const completedMtos = mtos.filter((mto: MTO) =>
-    Boolean(mto.used_material_completed)
+    Boolean(mto.used_material_completed),
   );
   const displayedMtos = mtoTab === "completed" ? completedMtos : activeMtos;
 
@@ -928,13 +929,16 @@ export default function UsedMaterialPage() {
                   <h1 className="text-xl font-bold text-slate-700">
                     Used Material
                   </h1>
-                  <button
-                    onClick={() => setShowManualAddModal(true)}
-                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Manually Add Material Used
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <SearchBar />
+                    <button
+                      onClick={() => setShowManualAddModal(true)}
+                      className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Manually Add Material Used
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-hidden px-4 pb-4">
@@ -1002,7 +1006,7 @@ export default function UsedMaterialPage() {
                               {displayedMtos.map((mto: MTO) => {
                                 const isExpanded = expandedMto === mto.id;
                                 const groupedItems = groupItemsByCategory(
-                                  mto.items || []
+                                  mto.items || [],
                                 );
                                 const lotIds =
                                   mto.lots && mto.lots.length > 0
@@ -1056,7 +1060,7 @@ export default function UsedMaterialPage() {
                                                 (prev) =>
                                                   prev === mto.id
                                                     ? null
-                                                    : mto.id
+                                                    : mto.id,
                                               );
                                             }}
                                             disabled={
@@ -1081,7 +1085,7 @@ export default function UsedMaterialPage() {
                                                   e.stopPropagation();
                                                   handleUpdateMtoUsedMaterialStatus(
                                                     mto.id,
-                                                    true
+                                                    true,
                                                   );
                                                 }}
                                                 className="cursor-pointer w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center justify-between"
@@ -1115,7 +1119,7 @@ export default function UsedMaterialPage() {
                                             {Object.entries(groupedItems).map(
                                               ([category, items]: [
                                                 string,
-                                                MTOItem[]
+                                                MTOItem[],
                                               ]) => (
                                                 <div
                                                   key={category}
@@ -1125,7 +1129,7 @@ export default function UsedMaterialPage() {
                                                     {getCategoryIcon(category)}
                                                     <h3 className="text-sm font-semibold text-slate-700">
                                                       {formatCategoryName(
-                                                        category
+                                                        category,
                                                       )}
                                                     </h3>
                                                     <span className="text-sm text-slate-500 ml-auto font-medium">
@@ -1137,7 +1141,7 @@ export default function UsedMaterialPage() {
                                                       (mtoItem: MTOItem) => {
                                                         const itemDetails =
                                                           getItemDetails(
-                                                            mtoItem.item
+                                                            mtoItem.item,
                                                           );
                                                         // Compare string input with original number value
                                                         const inputString =
@@ -1147,7 +1151,7 @@ export default function UsedMaterialPage() {
                                                         const originalValue =
                                                           String(
                                                             mtoItem.quantity_used ||
-                                                              0
+                                                              0,
                                                           );
                                                         const hasChanges =
                                                           inputString !==
@@ -1183,7 +1187,7 @@ export default function UsedMaterialPage() {
                                                                         e: React.SyntheticEvent<
                                                                           HTMLImageElement,
                                                                           Event
-                                                                        >
+                                                                        >,
                                                                       ) => {
                                                                         const target =
                                                                           e.target as HTMLImageElement;
@@ -1191,7 +1195,7 @@ export default function UsedMaterialPage() {
                                                                           "none";
                                                                         const fallback =
                                                                           target.parentElement?.querySelector(
-                                                                            ".image-fallback"
+                                                                            ".image-fallback",
                                                                           ) as HTMLElement | null;
                                                                         if (
                                                                           fallback
@@ -1337,7 +1341,7 @@ export default function UsedMaterialPage() {
                                                               </div>
 
                                                               {/* Total Quantity Column */}
-                                                              <div className="text-center min-w-[90px]">
+                                                              <div className="text-center min-w-22">
                                                                 <div className="text-sm text-slate-500 mb-1.5 font-medium">
                                                                   Total
                                                                 </div>
@@ -1359,7 +1363,7 @@ export default function UsedMaterialPage() {
                                                               </div>
 
                                                               {/* Used Count Column */}
-                                                              <div className="text-center min-w-[80px]">
+                                                              <div className="text-center min-w-20">
                                                                 <div className="text-sm text-slate-500 mb-1.5 font-medium">
                                                                   Used
                                                                 </div>
@@ -1380,7 +1384,7 @@ export default function UsedMaterialPage() {
                                                               </div>
 
                                                               {/* Input Field Column */}
-                                                              <div className="text-center min-w-[100px]">
+                                                              <div className="text-center min-w-25">
                                                                 <div className="text-sm text-slate-500 mb-1.5 font-medium">
                                                                   New Used
                                                                 </div>
@@ -1403,11 +1407,11 @@ export default function UsedMaterialPage() {
                                                                           ]
                                                                         : String(
                                                                             mtoItem.quantity_used ||
-                                                                              0
+                                                                              0,
                                                                           )
                                                                     }
                                                                     onChange={(
-                                                                      e: React.ChangeEvent<HTMLInputElement>
+                                                                      e: React.ChangeEvent<HTMLInputElement>,
                                                                     ) => {
                                                                       // Store raw string value to allow empty input
                                                                       const value =
@@ -1415,7 +1419,7 @@ export default function UsedMaterialPage() {
                                                                           .value;
                                                                       handleQuantityInputChange(
                                                                         mtoItem.id,
-                                                                        value
+                                                                        value,
                                                                       );
                                                                     }}
                                                                     className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-center font-medium"
@@ -1449,11 +1453,11 @@ export default function UsedMaterialPage() {
                                                                       ""
                                                                         ? 0
                                                                         : parseFloat(
-                                                                            inputString
+                                                                            inputString,
                                                                           );
                                                                     if (
                                                                       !isNaN(
-                                                                        inputValue
+                                                                        inputValue,
                                                                       ) &&
                                                                       inputValue >
                                                                         mtoItem.quantity
@@ -1473,7 +1477,7 @@ export default function UsedMaterialPage() {
                                                               </div>
 
                                                               {/* Actions Column */}
-                                                              <div className="text-center min-w-[80px]">
+                                                              <div className="text-center min-w-20">
                                                                 <div className="text-sm text-slate-500 mb-1.5 font-medium">
                                                                   Actions
                                                                 </div>
@@ -1482,7 +1486,7 @@ export default function UsedMaterialPage() {
                                                                     <button
                                                                       onClick={() =>
                                                                         handleCancelEdit(
-                                                                          mtoItem.id
+                                                                          mtoItem.id,
                                                                         )
                                                                       }
                                                                       disabled={
@@ -1497,7 +1501,7 @@ export default function UsedMaterialPage() {
                                                                       onClick={() =>
                                                                         handleSaveUsage(
                                                                           mto.id,
-                                                                          mtoItem
+                                                                          mtoItem,
                                                                         )
                                                                       }
                                                                       disabled={(() => {
@@ -1520,11 +1524,11 @@ export default function UsedMaterialPage() {
                                                                           ""
                                                                             ? 0
                                                                             : parseFloat(
-                                                                                inputString
+                                                                                inputString,
                                                                               );
                                                                         return (
                                                                           !isNaN(
-                                                                            inputValue
+                                                                            inputValue,
                                                                           ) &&
                                                                           inputValue >
                                                                             mtoItem.quantity
@@ -1545,11 +1549,11 @@ export default function UsedMaterialPage() {
                                                             </div>
                                                           </div>
                                                         );
-                                                      }
+                                                      },
                                                     )}
                                                   </div>
                                                 </div>
-                                              )
+                                              ),
                                             )}
                                           </div>
                                         )}
@@ -1906,12 +1910,12 @@ export default function UsedMaterialPage() {
                                 min="1"
                                 value={item.quantity}
                                 onChange={(
-                                  e: React.ChangeEvent<HTMLInputElement>
+                                  e: React.ChangeEvent<HTMLInputElement>,
                                 ) =>
                                   handleUpdateItem(
                                     item.id,
                                     "quantity",
-                                    Number(e.target.value)
+                                    Number(e.target.value),
                                   )
                                 }
                                 className="w-20 p-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-primary outline-none"

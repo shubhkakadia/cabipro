@@ -30,7 +30,7 @@ export function setOrganizationId(organizationId: string): void {
  */
 export async function withOrganizationContext<T>(
   organizationId: string,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   return organizationContext.run(organizationId, fn);
 }
@@ -87,7 +87,7 @@ type PrismaMiddlewareParams = {
  * Type for Prisma middleware next function
  */
 type PrismaMiddlewareNext = (
-  params: PrismaMiddlewareParams
+  params: PrismaMiddlewareParams,
 ) => Promise<unknown>;
 
 /**
@@ -95,7 +95,7 @@ type PrismaMiddlewareNext = (
  */
 function addOrganizationFilter(
   args: Record<string, unknown> | undefined | null,
-  organizationId: string
+  organizationId: string,
 ): Record<string, unknown> {
   if (!args) {
     return { organization_id: organizationId };
@@ -132,7 +132,7 @@ function addOrganizationFilter(
       ) {
         processed[key] = addOrganizationFilter(
           processed[key] as Record<string, unknown>,
-          organizationId
+          organizationId,
         );
       }
     }
@@ -185,7 +185,7 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             // Add organization_id to where clause
             params.args = addOrganizationFilter(
               params.args as Record<string, unknown>,
-              organizationId
+              organizationId,
             ) as Record<string, unknown>;
             break;
 
@@ -194,7 +194,7 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             // Ensure organization_id is set on create
             params.args = addOrganizationFilter(
               params.args as Record<string, unknown>,
-              organizationId
+              organizationId,
             ) as Record<string, unknown>;
             break;
 
@@ -203,7 +203,7 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             // Filter by organization_id in where clause and ensure it's not changed
             params.args = addOrganizationFilter(
               params.args as Record<string, unknown>,
-              organizationId
+              organizationId,
             ) as Record<string, unknown>;
             // Prevent changing organization_id
             const updateArgs = params.args as {
@@ -218,7 +218,7 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             // Filter by organization_id in where clause
             params.args = addOrganizationFilter(
               params.args as Record<string, unknown>,
-              organizationId
+              organizationId,
             ) as Record<string, unknown>;
             // Ensure organization_id is set in create/update data
             const upsertArgs = params.args as {
@@ -228,13 +228,13 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             if (upsertArgs.create) {
               upsertArgs.create = addOrganizationFilter(
                 upsertArgs.create,
-                organizationId
+                organizationId,
               );
             }
             if (upsertArgs.update) {
               upsertArgs.update = addOrganizationFilter(
                 upsertArgs.update,
-                organizationId
+                organizationId,
               );
               // Prevent changing organization_id
               if (upsertArgs.update.organization_id) {
@@ -248,7 +248,7 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             // Filter by organization_id in where clause
             params.args = addOrganizationFilter(
               params.args as Record<string, unknown>,
-              organizationId
+              organizationId,
             ) as Record<string, unknown>;
             break;
 
@@ -256,13 +256,13 @@ export function setupOrganizationMiddleware(prisma: PrismaClient): void {
             // For other operations, try to add filter if args exist
             params.args = addOrganizationFilter(
               params.args as Record<string, unknown>,
-              organizationId
+              organizationId,
             ) as Record<string, unknown>;
             break;
         }
 
         return next(params);
-      }
+      },
     );
   }
 }

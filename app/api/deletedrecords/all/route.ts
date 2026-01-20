@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
 
     // Sort by updatedAt descending (most recently deleted first)
     allDeletedRecords.sort(
-      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
     );
 
     return NextResponse.json(
@@ -251,13 +251,13 @@ export async function GET(request: NextRequest) {
         message: "Deleted records fetched successfully",
         data: allDeletedRecords,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/deletedrecords/all:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

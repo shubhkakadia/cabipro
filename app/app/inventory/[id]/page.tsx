@@ -208,7 +208,7 @@ export default function InventoryItemDetailPage() {
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
-      fileCount: number
+      fileCount: number,
     ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
@@ -231,7 +231,7 @@ export default function InventoryItemDetailPage() {
   const [subCategorySearchTerm, setSubCategorySearchTerm] = useState("");
   const subCategoryDropdownRef = useRef<HTMLDivElement>(null);
   const [hardwareSubCategories, setHardwareSubCategories] = useState<string[]>(
-    []
+    [],
   );
   const [loadingSubCategories, setLoadingSubCategories] = useState(false);
   const [showCreateSubCategoryModal, setShowCreateSubCategoryModal] =
@@ -242,15 +242,13 @@ export default function InventoryItemDetailPage() {
   const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
   const supplierDropdownRef = useRef<HTMLDivElement>(null);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
-  );
+  const [, setSelectedSupplier] = useState<Supplier | null>(null);
   const [isMeasuringUnitDropdownOpen, setIsMeasuringUnitDropdownOpen] =
     useState(false);
   const [measuringUnitSearchTerm, setMeasuringUnitSearchTerm] = useState("");
   const measuringUnitDropdownRef = useRef<HTMLDivElement>(null);
   const [measuringUnitOptions, setMeasuringUnitOptions] = useState<string[]>(
-    []
+    [],
   );
   const [loadingMeasuringUnits, setLoadingMeasuringUnits] = useState(false);
   const [showCreateMeasuringUnitModal, setShowCreateMeasuringUnitModal] =
@@ -276,18 +274,18 @@ export default function InventoryItemDetailPage() {
     const transactions = item?.stock_transactions ?? [];
     return [...transactions].sort(
       (a: StockTransaction, b: StockTransaction) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [item?.stock_transactions]);
 
   const stockTxTotalPages = Math.ceil(
-    sortedStockTransactions.length / stock_tx_item_per_page
+    sortedStockTransactions.length / stock_tx_item_per_page,
   );
   const stockTxStartIndex = (stockTxCurrentPage - 1) * stock_tx_item_per_page;
   const stockTxEndIndex = stockTxStartIndex + stock_tx_item_per_page;
   const currentStockTransactions = sortedStockTransactions.slice(
     stockTxStartIndex,
-    stockTxEndIndex
+    stockTxEndIndex,
   );
 
   const handleStockTxPageChange = (page: number) => {
@@ -297,13 +295,13 @@ export default function InventoryItemDetailPage() {
 
   const filteredSubCategories = hardwareSubCategories.filter(
     (subCategory: string) =>
-      subCategory.toLowerCase().includes(subCategorySearchTerm.toLowerCase())
+      subCategory.toLowerCase().includes(subCategorySearchTerm.toLowerCase()),
   );
 
   // Face options
   const faceOptions = ["single side", "double side"];
   const filteredFaces = faceOptions.filter((face: string) =>
-    face.toLowerCase().includes(faceSearchTerm.toLowerCase())
+    face.toLowerCase().includes(faceSearchTerm.toLowerCase()),
   );
 
   // Fetch hardware sub categories from config API
@@ -319,7 +317,7 @@ export default function InventoryItemDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
@@ -334,7 +332,7 @@ export default function InventoryItemDetailPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Error fetching hardware sub categories"
+            "Error fetching hardware sub categories",
         );
       }
       // Fallback to empty array if API fails
@@ -361,13 +359,13 @@ export default function InventoryItemDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
         const units = (response.data.data as Array<{ value: string }>).map(
-          (item: { value: string }) => item.value
+          (item: { value: string }) => item.value,
         );
         setMeasuringUnitOptions(units);
       }
@@ -375,7 +373,7 @@ export default function InventoryItemDetailPage() {
       console.error("Error fetching measuring units:", err);
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.message || "Error fetching measuring units"
+          err.response?.data?.message || "Error fetching measuring units",
         );
       }
       // Fallback to empty array if API fails
@@ -402,13 +400,13 @@ export default function InventoryItemDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
         const finishes = (response.data.data as Array<{ value: string }>).map(
-          (item: { value: string }) => item.value
+          (item: { value: string }) => item.value,
         );
         setFinishOptions(finishes);
       }
@@ -450,7 +448,7 @@ export default function InventoryItemDetailPage() {
         console.error("Error Response:", err.response?.data);
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching item data"
+            "An error occurred while fetching item data",
         );
       } else {
         setError("An error occurred while fetching item data");
@@ -563,7 +561,7 @@ export default function InventoryItemDetailPage() {
   };
 
   const handleSubCategorySearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setSubCategorySearchTerm(e.target.value);
     setIsSubCategoryDropdownOpen(true);
@@ -595,7 +593,7 @@ export default function InventoryItemDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -629,7 +627,7 @@ export default function InventoryItemDetailPage() {
   };
 
   const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
-    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase()),
   );
 
   const handleSupplierSelect = (supplier: Supplier) => {
@@ -644,7 +642,7 @@ export default function InventoryItemDetailPage() {
 
   // Measuring unit handlers
   const filteredMeasuringUnits = measuringUnitOptions.filter((unit: string) =>
-    unit.toLowerCase().includes(measuringUnitSearchTerm.toLowerCase())
+    unit.toLowerCase().includes(measuringUnitSearchTerm.toLowerCase()),
   );
 
   const handleMeasuringUnitSelect = (unit: string) => {
@@ -654,7 +652,7 @@ export default function InventoryItemDetailPage() {
   };
 
   const handleMeasuringUnitSearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = e.target.value;
     setMeasuringUnitSearchTerm(value);
@@ -664,7 +662,7 @@ export default function InventoryItemDetailPage() {
 
   // Finish handlers
   const filteredFinishes = finishOptions.filter((finish: string) =>
-    finish.toLowerCase().includes(finishSearchTerm.toLowerCase())
+    finish.toLowerCase().includes(finishSearchTerm.toLowerCase()),
   );
 
   const handleFinishSelect = (finish: string) => {
@@ -715,7 +713,7 @@ export default function InventoryItemDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -766,7 +764,7 @@ export default function InventoryItemDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -797,7 +795,7 @@ export default function InventoryItemDetailPage() {
   };
 
   const handleSupplierSearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setSupplierSearchTerm(e.target.value);
     setIsSupplierDropdownOpen(true);
@@ -968,7 +966,7 @@ export default function InventoryItemDetailPage() {
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
-          }
+          },
         );
       } else {
         toast.error("Failed to update item. Please try again.", {
@@ -1067,7 +1065,7 @@ export default function InventoryItemDetailPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to delete item. Please try again."
+            "Failed to delete item. Please try again.",
         );
       } else {
         toast.error("Failed to delete item. Please try again.");
@@ -1217,7 +1215,7 @@ export default function InventoryItemDetailPage() {
                       {finishSearchTerm &&
                         !filteredFinishes.some(
                           (f) =>
-                            f.toLowerCase() === finishSearchTerm.toLowerCase()
+                            f.toLowerCase() === finishSearchTerm.toLowerCase(),
                         ) && (
                           <div className="border-t border-slate-200">
                             <button
@@ -1513,7 +1511,7 @@ export default function InventoryItemDetailPage() {
                           !filteredSubCategories.some(
                             (sc) =>
                               sc.toLowerCase() ===
-                              subCategorySearchTerm.toLowerCase()
+                              subCategorySearchTerm.toLowerCase(),
                           ) && (
                             <div className="border-t border-slate-200">
                               <button
@@ -1692,7 +1690,7 @@ export default function InventoryItemDetailPage() {
                       {finishSearchTerm &&
                         !filteredFinishes.some(
                           (f) =>
-                            f.toLowerCase() === finishSearchTerm.toLowerCase()
+                            f.toLowerCase() === finishSearchTerm.toLowerCase(),
                         ) && (
                           <div className="border-t border-slate-200">
                             <button
@@ -1990,7 +1988,7 @@ export default function InventoryItemDetailPage() {
                                     onChange={(e) =>
                                       handleInputChange(
                                         "description",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     placeholder={formatValue(item.description)}
@@ -2017,7 +2015,7 @@ export default function InventoryItemDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "quantity",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={formatValue(item.quantity)}
@@ -2050,7 +2048,7 @@ export default function InventoryItemDetailPage() {
                                         onChange={(e) =>
                                           handleInputChange(
                                             "price",
-                                            e.target.value
+                                            e.target.value,
                                           )
                                         }
                                         placeholder={formatValue(item.price)}
@@ -2112,7 +2110,7 @@ export default function InventoryItemDetailPage() {
                                         type="button"
                                         onClick={() =>
                                           setIsSupplierDropdownOpen(
-                                            !isSupplierDropdownOpen
+                                            !isSupplierDropdownOpen,
                                           )
                                         }
                                         className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -2136,7 +2134,7 @@ export default function InventoryItemDetailPage() {
                                                   type="button"
                                                   onClick={() =>
                                                     handleSupplierSelect(
-                                                      supplier
+                                                      supplier,
                                                     )
                                                   }
                                                   className="cursor-pointer w-full text-left px-3 py-2 text-xs text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
@@ -2148,7 +2146,7 @@ export default function InventoryItemDetailPage() {
                                                     {supplier.id}
                                                   </div>
                                                 </button>
-                                              )
+                                              ),
                                             )
                                           ) : (
                                             <div className="px-3 py-2 text-xs text-slate-500 text-center">
@@ -2167,7 +2165,7 @@ export default function InventoryItemDetailPage() {
                                             router.push(
                                               item.supplier
                                                 ? `/app/suppliers/${item.supplier.id}`
-                                                : "#"
+                                                : "#",
                                             )
                                           }
                                         >
@@ -2208,7 +2206,7 @@ export default function InventoryItemDetailPage() {
                                             setIsMeasuringUnitDropdownOpen(true)
                                           }
                                           placeholder={formatValue(
-                                            item.measurement_unit
+                                            item.measurement_unit,
                                           )}
                                           className="w-full text-sm text-slate-800 px-2 py-1 pr-8 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                                         />
@@ -2216,7 +2214,7 @@ export default function InventoryItemDetailPage() {
                                           type="button"
                                           onClick={() =>
                                             setIsMeasuringUnitDropdownOpen(
-                                              !isMeasuringUnitDropdownOpen
+                                              !isMeasuringUnitDropdownOpen,
                                             )
                                           }
                                           className="cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -2247,30 +2245,30 @@ export default function InventoryItemDetailPage() {
                                                     type="button"
                                                     onClick={() =>
                                                       handleMeasuringUnitSelect(
-                                                        unit
+                                                        unit,
                                                       )
                                                     }
                                                     className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg"
                                                   >
                                                     {unit}
                                                   </button>
-                                                )
+                                                ),
                                               )}
                                               {measuringUnitSearchTerm &&
                                                 !filteredMeasuringUnits.some(
                                                   (u) =>
                                                     u.toLowerCase() ===
-                                                    measuringUnitSearchTerm.toLowerCase()
+                                                    measuringUnitSearchTerm.toLowerCase(),
                                                 ) && (
                                                   <div className="border-t border-slate-200">
                                                     <button
                                                       type="button"
                                                       onClick={() => {
                                                         setNewMeasuringUnitValue(
-                                                          measuringUnitSearchTerm
+                                                          measuringUnitSearchTerm,
                                                         );
                                                         setShowCreateMeasuringUnitModal(
-                                                          true
+                                                          true,
                                                         );
                                                       }}
                                                       className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
@@ -2294,10 +2292,10 @@ export default function InventoryItemDetailPage() {
                                                   type="button"
                                                   onClick={() => {
                                                     setNewMeasuringUnitValue(
-                                                      measuringUnitSearchTerm
+                                                      measuringUnitSearchTerm,
                                                     );
                                                     setShowCreateMeasuringUnitModal(
-                                                      true
+                                                      true,
                                                     );
                                                   }}
                                                   className="cursor-pointer w-full px-4 py-2 text-sm text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -2336,11 +2334,11 @@ export default function InventoryItemDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "supplier_reference",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={formatValue(
-                                        item.supplier_reference
+                                        item.supplier_reference,
                                       )}
                                       className="w-full text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                                     />
@@ -2366,11 +2364,11 @@ export default function InventoryItemDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "supplier_product_link",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={formatValue(
-                                        item.supplier_product_link
+                                        item.supplier_product_link,
                                       )}
                                       className="w-full text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                                     />
@@ -2387,7 +2385,7 @@ export default function InventoryItemDetailPage() {
                                           40
                                             ? `${item.supplier_product_link.substring(
                                                 0,
-                                                40
+                                                40,
                                               )}...`
                                             : item.supplier_product_link}
                                         </a>
@@ -2455,7 +2453,7 @@ export default function InventoryItemDetailPage() {
                                             {transaction.notes && (
                                               <div className="flex items-center">
                                                 {expandedNotes.has(
-                                                  transaction.id
+                                                  transaction.id,
                                                 ) ? (
                                                   <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
                                                 ) : (
@@ -2466,7 +2464,7 @@ export default function InventoryItemDetailPage() {
                                           </td>
                                           <td className="py-2 px-3 text-slate-700">
                                             {new Date(
-                                              transaction.createdAt
+                                              transaction.createdAt,
                                             ).toLocaleString("en-US", {
                                               year: "numeric",
                                               month: "short",
@@ -2481,8 +2479,8 @@ export default function InventoryItemDetailPage() {
                                                 transaction.type === "ADDED"
                                                   ? "bg-emerald-100 text-emerald-800"
                                                   : transaction.type === "USED"
-                                                  ? "bg-blue-100 text-blue-800"
-                                                  : "bg-red-100 text-red-800"
+                                                    ? "bg-blue-100 text-blue-800"
+                                                    : "bg-red-100 text-red-800"
                                               }`}
                                             >
                                               {transaction.type}
@@ -2538,11 +2536,11 @@ export default function InventoryItemDetailPage() {
                                                   .map(
                                                     (lot: {
                                                       lot_id?: string;
-                                                    }) => lot.lot_id
+                                                    }) => lot.lot_id,
                                                   )
                                                   .filter(
                                                     (id): id is string =>
-                                                      id !== undefined
+                                                      id !== undefined,
                                                   )
                                                   .join(", ")}
                                               </span>
@@ -2570,7 +2568,7 @@ export default function InventoryItemDetailPage() {
                                             </tr>
                                           )}
                                       </React.Fragment>
-                                    )
+                                    ),
                                   )}
                                 </tbody>
                               </table>
@@ -2583,7 +2581,7 @@ export default function InventoryItemDetailPage() {
                                   Showing {stockTxStartIndex + 1} to{" "}
                                   {Math.min(
                                     stockTxEndIndex,
-                                    sortedStockTransactions.length
+                                    sortedStockTransactions.length,
                                   )}{" "}
                                   of {sortedStockTransactions.length} results
                                 </div>
@@ -2591,7 +2589,7 @@ export default function InventoryItemDetailPage() {
                                   <button
                                     onClick={() =>
                                       handleStockTxPageChange(
-                                        stockTxCurrentPage - 1
+                                        stockTxCurrentPage - 1,
                                       )
                                     }
                                     disabled={stockTxCurrentPage === 1}
@@ -2602,7 +2600,7 @@ export default function InventoryItemDetailPage() {
                                   <div className="flex items-center gap-1">
                                     {Array.from(
                                       { length: stockTxTotalPages },
-                                      (_, i) => i + 1
+                                      (_, i) => i + 1,
                                     ).map((page) => (
                                       <button
                                         key={page}
@@ -2622,7 +2620,7 @@ export default function InventoryItemDetailPage() {
                                   <button
                                     onClick={() =>
                                       handleStockTxPageChange(
-                                        stockTxCurrentPage + 1
+                                        stockTxCurrentPage + 1,
                                       )
                                     }
                                     disabled={

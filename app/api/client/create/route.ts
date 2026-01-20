@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "Client already exists with this name: " + name,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
               status: false,
               message: "First Name and Last Name are required for all contacts",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       "client",
       client.id,
       "CREATE",
-      `Client created successfully: ${client.name}`
+      `Client created successfully: ${client.name}`,
     );
 
     // Log contact creations
@@ -109,14 +109,14 @@ export async function POST(request: NextRequest) {
         "contact",
         contact.id,
         "CREATE",
-        `Contact created successfully: ${contact.first_name} ${contact.last_name} for client: ${client.name}`
+        `Contact created successfully: ${contact.first_name} ${contact.last_name} for client: ${client.name}`,
       );
     }
 
     // Prepare response
     if (!logged) {
       console.error(
-        `Failed to log client creation: ${client.id} - ${client.name}`
+        `Failed to log client creation: ${client.id} - ${client.name}`,
       );
     }
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in POST /api/client/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

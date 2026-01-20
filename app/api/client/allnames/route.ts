@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth-middleware";
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    
+
     const clients = await prisma.client.findMany({
       where: {
         organization_id: user.organizationId,
@@ -17,20 +17,20 @@ export async function GET(request: NextRequest) {
         type: true,
       },
     });
-    
+
     return NextResponse.json(
       {
         status: true,
         message: "Clients fetched successfully",
-        data: clients
+        data: clients,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/client/allnames:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

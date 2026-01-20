@@ -11,7 +11,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function CabinetMakers() {
-
   const solutions = [
     {
       title: "Production Order Management",
@@ -121,7 +120,9 @@ export default function CabinetMakers() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Built specifically for cabinet makers and manufacturers. Track production, manage materials, schedule jobs, and optimize your manufacturing floor, all in one place.
+            Built specifically for cabinet makers and manufacturers. Track
+            production, manage materials, schedule jobs, and optimize your
+            manufacturing floor, all in one place.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
@@ -159,7 +160,8 @@ export default function CabinetMakers() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              We understand the daily challenges of running a cabinet manufacturing business. CabiPro is built to solve them.
+              We understand the daily challenges of running a cabinet
+              manufacturing business. CabiPro is built to solve them.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2">
@@ -197,7 +199,8 @@ export default function CabinetMakers() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Powerful features designed specifically for cabinet manufacturing operations.
+              Powerful features designed specifically for cabinet manufacturing
+              operations.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-2">
@@ -262,7 +265,8 @@ export default function CabinetMakers() {
                 Industry-Specific Features
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Not a generic project management tool. Every feature is designed specifically for how cabinet manufacturing actually works.
+                Not a generic project management tool. Every feature is designed
+                specifically for how cabinet manufacturing actually works.
               </p>
             </div>
             <div
@@ -274,7 +278,8 @@ export default function CabinetMakers() {
                 Easy to Get Started
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Start tracking production orders and managing materials in minutes. No complex setup or extensive training required.
+                Start tracking production orders and managing materials in
+                minutes. No complex setup or extensive training required.
               </p>
             </div>
             <div
@@ -286,7 +291,9 @@ export default function CabinetMakers() {
                 Grows With Your Business
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                From small workshops to large production facilities, CabiPro scales with your business. Add features and team members as you grow.
+                From small workshops to large production facilities, CabiPro
+                scales with your business. Add features and team members as you
+                grow.
               </p>
             </div>
           </div>
@@ -307,9 +314,14 @@ export default function CabinetMakers() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join cabinet makers and manufacturers who are already using CabiPro to run more organized, efficient operations.
+            Join cabinet makers and manufacturers who are already using CabiPro
+            to run more organized, efficient operations.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <Link
               href="/waitlist"
               className="inline-block rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors touch-manipulation"

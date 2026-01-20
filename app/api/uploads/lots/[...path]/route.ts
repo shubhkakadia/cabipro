@@ -102,7 +102,7 @@ function getMimeType(filePath: string): string {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string | string[] }> }
+  { params }: { params: Promise<{ path: string | string[] }> },
 ) {
   try {
     // Get organization slug from cookie
@@ -110,7 +110,7 @@ export async function GET(
     if (!organizationSlug) {
       return NextResponse.json(
         { status: false, message: "Organization slug not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -119,7 +119,7 @@ export async function GET(
     if (segments.length === 0) {
       return NextResponse.json(
         { status: false, message: "Missing path" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     // Prepend organization slug to path segments
@@ -128,7 +128,7 @@ export async function GET(
       "public",
       "uploads",
       organizationSlug,
-      ...segments
+      ...segments,
     );
 
     // Prevent path traversal
@@ -137,7 +137,7 @@ export async function GET(
     if (!normalized.startsWith(uploadsRoot)) {
       return NextResponse.json(
         { status: false, message: "Not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -147,13 +147,13 @@ export async function GET(
     } catch {
       return NextResponse.json(
         { status: false, message: "Not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (!stat.isFile()) {
       return NextResponse.json(
         { status: false, message: "Not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -169,7 +169,7 @@ export async function GET(
     if (fileRecord && fileRecord.is_deleted) {
       return NextResponse.json(
         { status: false, message: "Not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -187,14 +187,14 @@ export async function GET(
     console.error("Error in GET /api/uploads/lots/[...path]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string | string[] }> }
+  { params }: { params: Promise<{ path: string | string[] }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -208,7 +208,7 @@ export async function POST(
           message:
             "Path must be /api/uploads/[project_id]/[lot_id]/[tabkind]/[filename?]",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const [projectId, lotId, tabKind] = segments;
@@ -219,10 +219,10 @@ export async function POST(
         {
           status: false,
           message: `Invalid TabKind: ${tabKind}. Allowed values are: ${VALID_TABKINDS.join(
-            ", "
+            ", ",
           )}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -242,7 +242,7 @@ export async function POST(
           message: errorMessage,
           error: errorMessage,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const fileEntries: Array<{ field: string; file: File }> = [];
@@ -254,7 +254,7 @@ export async function POST(
     if (fileEntries.length === 0) {
       return NextResponse.json(
         { status: false, message: "No file found in form-data" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -279,7 +279,7 @@ export async function POST(
     if (!tabKindEnum) {
       return NextResponse.json(
         { status: false, message: `Invalid TabKind: ${tabKind}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -302,7 +302,7 @@ export async function POST(
     if (!lot) {
       return NextResponse.json(
         { status: false, message: `Lot with ID ${lotId} not found` },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -338,7 +338,7 @@ export async function POST(
     if (!organizationSlug) {
       return NextResponse.json(
         { status: false, message: "Organization slug not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -386,15 +386,15 @@ export async function POST(
           "lot_file",
           file.fileId,
           "CREATE",
-          `File uploaded successfully: ${file.filename} for lot: ${lot.lot_id} and project: ${lot.project.name}`
-        )
-      )
+          `File uploaded successfully: ${file.filename} for lot: ${lot.lot_id} and project: ${lot.project.name}`,
+        ),
+      ),
     );
 
     const hasLoggingFailures = logged.some((log) => !log);
     if (hasLoggingFailures) {
       console.error(
-        `Failed to log some file uploads for lot tab: ${lotTab.id}`
+        `Failed to log some file uploads for lot tab: ${lotTab.id}`,
       );
     }
     return NextResponse.json(
@@ -409,26 +409,26 @@ export async function POST(
           ? { warning: "Note: Upload succeeded but some logging failed" }
           : {}),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/uploads/lots/[...path]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string | string[] }> }
+  { params }: { params: Promise<{ path: string | string[] }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -438,7 +438,7 @@ export async function DELETE(
     if (!organizationSlug) {
       return NextResponse.json(
         { status: false, message: "Organization slug not found" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -447,7 +447,7 @@ export async function DELETE(
     if (segments.length === 0) {
       return NextResponse.json(
         { status: false, message: "Missing path" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -456,7 +456,7 @@ export async function DELETE(
     let fileRecord = null;
 
     if (segments.length >= 4) {
-      const [projectId, lotId, tabKind, filename] = segments;
+      const [, lotId, tabKind, filename] = segments;
       const tabKindEnum = TABKIND_TO_ENUM[tabKind] || tabKind.toUpperCase();
 
       // Find the lot first to get its UUID
@@ -500,7 +500,7 @@ export async function DELETE(
         "public",
         "uploads",
         organizationSlug,
-        ...segments
+        ...segments,
       );
 
       // Prevent path traversal
@@ -536,7 +536,7 @@ export async function DELETE(
             segments,
           },
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -559,19 +559,19 @@ export async function DELETE(
           filename: updatedFile.filename,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/uploads/lots/[...path]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

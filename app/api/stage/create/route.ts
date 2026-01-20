@@ -13,13 +13,13 @@ function processDateTimeField(value: string | null | undefined): Date | null {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    const { lot_id, name, status, notes, startDate, endDate, assigned_to } =
+    const { id, name, status, notes, startDate, endDate, assigned_to } =
       await request.json();
 
     // Verify lot exists and belongs to this organization
     const lot = await prisma.lot.findFirst({
       where: {
-        id: lot_id,
+        id: id,
         organization_id: user.organizationId,
       },
       include: {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (!lot) {
       return NextResponse.json(
         { status: false, message: "Lot not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
             message:
               "One or more employees not found or do not belong to your organization",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
     }
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     if (!stage) {
       return NextResponse.json(
         { status: false, message: "Failed to fetch created stage" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -148,12 +148,12 @@ export async function POST(request: NextRequest) {
       "CREATE",
       `Stage created successfully: ${stage.name} for lot: ${
         stage.lot.lot_id
-      } and project: ${stage.lot.project?.name || "Unknown"}`
+      } and project: ${stage.lot.project?.name || "Unknown"}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log stage creation: ${stage.id} - ${stage.name}`
+        `Failed to log stage creation: ${stage.id} - ${stage.name}`,
       );
     }
 
@@ -166,19 +166,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Creation succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/stage/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

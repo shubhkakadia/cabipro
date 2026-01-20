@@ -15,10 +15,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Send email via Mailgun
@@ -42,7 +39,7 @@ Email: ${email}`;
 
     return NextResponse.json(
       { success: true, message: "Email sent successfully", data },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: unknown) {
     console.error("Error sending email:", error);
@@ -50,8 +47,7 @@ Email: ${email}`;
       error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "Failed to send email", details: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -124,7 +124,7 @@ export default function ClientDetailPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [newProject, setNewProject] = useState<NewProject>({
@@ -175,7 +175,7 @@ export default function ClientDetailPage() {
         console.error("Error Response:", err.response?.data);
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching client data"
+            "An error occurred while fetching client data",
         );
       } else {
         setError("An error occurred while fetching client data");
@@ -257,7 +257,7 @@ export default function ClientDetailPage() {
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
-          }
+          },
         );
       } else {
         toast.error("Failed to update client. Please try again.", {
@@ -325,7 +325,7 @@ export default function ClientDetailPage() {
   };
 
   const isInstallationDueSoon = (
-    installationDate: string | undefined | null
+    installationDate: string | undefined | null,
   ): boolean => {
     if (!installationDate) return false;
     const today = new Date();
@@ -336,7 +336,7 @@ export default function ClientDetailPage() {
   };
 
   const getStageStatusSummary = (
-    stages: Stage[] | undefined
+    stages: Stage[] | undefined,
   ): { text: string; color: string } => {
     if (!stages || stages.length === 0) {
       return { text: "No stages", color: "text-slate-500" };
@@ -422,7 +422,7 @@ export default function ClientDetailPage() {
       } else {
         // For projects with lots, check if any lot matches the active tab status
         const hasMatchingLot = lots.some(
-          (lot: Lot) => lot.status === activeTab
+          (lot: Lot) => lot.status === activeTab,
         );
         if (!hasMatchingLot) return false;
       }
@@ -576,7 +576,7 @@ export default function ClientDetailPage() {
   const handleLotChange = (
     index: number,
     field: keyof LotData,
-    value: string
+    value: string,
   ) => {
     const updatedLots = [...lots];
     updatedLots[index] = {
@@ -670,7 +670,7 @@ export default function ClientDetailPage() {
             position: "top-right",
             autoClose: 5000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error("An error occurred while creating the project", {
@@ -722,12 +722,12 @@ export default function ClientDetailPage() {
               <div className="p-3">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                <button
-                  onClick={() => router.back()}
-                  className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
-                >
-                  <ChevronLeft className="w-8 h-8 text-slate-600" />
-                </button>
+                  <button
+                    onClick={() => router.back()}
+                    className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-8 h-8 text-slate-600" />
+                  </button>
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-slate-600">
                       {client.name}
@@ -840,7 +840,7 @@ export default function ClientDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "email",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={client.email || "Email"}
@@ -856,7 +856,7 @@ export default function ClientDetailPage() {
                                         onChange={(e) =>
                                           handleInputChange(
                                             "phone",
-                                            e.target.value
+                                            e.target.value,
                                           )
                                         }
                                         placeholder="Eg. 0400 123 456 or +61 400 123 456"
@@ -884,7 +884,7 @@ export default function ClientDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "website",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={client.website || "Website"}
@@ -899,7 +899,7 @@ export default function ClientDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "address",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={client.address || "Address"}
@@ -913,7 +913,7 @@ export default function ClientDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "notes",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={formatValue(client.notes)}
@@ -1067,7 +1067,7 @@ export default function ClientDetailPage() {
                     {/* Search and Sort Controls */}
                     <div className="p-4 border-b border-slate-100">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 w-[350px] relative">
+                        <div className="flex items-center gap-2 w-87 relative">
                           <Search className="h-4 w-4 absolute left-2.5 text-slate-400" />
                           <input
                             type="text"
@@ -1169,12 +1169,12 @@ export default function ClientDetailPage() {
                             <tbody className="bg-white divide-y divide-slate-200">
                               {currentProjects.map((project: Project) => {
                                 const isExpanded = expandedProjects.has(
-                                  project.project_id
+                                  project.project_id,
                                 );
                                 const allLots = project.lots || [];
                                 // Filter lots based on active tab
                                 const filteredLots = allLots.filter(
-                                  (lot: Lot) => lot.status === activeTab
+                                  (lot: Lot) => lot.status === activeTab,
                                 );
                                 // For display in table row, show count of filtered lots
                                 const lots = filteredLots;
@@ -1186,7 +1186,7 @@ export default function ClientDetailPage() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             toggleProjectExpansion(
-                                              project.project_id
+                                              project.project_id,
                                             );
                                           }}
                                           className="flex items-center gap-2 text-xs font-medium text-slate-900 hover:text-primary transition-colors"
@@ -1203,7 +1203,7 @@ export default function ClientDetailPage() {
                                         className="px-4 py-2 whitespace-nowrap text-xs text-slate-600 cursor-pointer"
                                         onClick={() =>
                                           router.push(
-                                            `/admin/projects/${project.project_id}`
+                                            `/admin/projects/${project.project_id}`,
                                           )
                                         }
                                       >
@@ -1215,7 +1215,7 @@ export default function ClientDetailPage() {
                                         className="px-4 py-2 whitespace-nowrap text-xs text-slate-600 cursor-pointer"
                                         onClick={() =>
                                           router.push(
-                                            `/admin/projects/${project.project_id}`
+                                            `/admin/projects/${project.project_id}`,
                                           )
                                         }
                                       >
@@ -1228,7 +1228,7 @@ export default function ClientDetailPage() {
                                         className="px-4 py-2 whitespace-nowrap text-xs text-slate-600 cursor-pointer"
                                         onClick={() =>
                                           router.push(
-                                            `/admin/projects/${project.project_id}`
+                                            `/admin/projects/${project.project_id}`,
                                           )
                                         }
                                       >
@@ -1280,14 +1280,14 @@ export default function ClientDetailPage() {
                                                     {lots.map((lot: Lot) => {
                                                       const stageStatus =
                                                         getStageStatusSummary(
-                                                          lot.stages
+                                                          lot.stages,
                                                         );
                                                       return (
                                                         <tr
                                                           key={lot.id}
                                                           onClick={() =>
                                                             router.push(
-                                                              `/admin/projects/${project.project_id}`
+                                                              `/admin/projects/${project.project_id}`,
                                                             )
                                                           }
                                                           className="cursor-pointer hover:bg-slate-50 transition-colors"
@@ -1302,20 +1302,20 @@ export default function ClientDetailPage() {
                                                             <div className="flex items-center gap-1.5">
                                                               <Calendar className="w-3 h-3 text-slate-400" />
                                                               {formatDate(
-                                                                lot.startDate
+                                                                lot.startDate,
                                                               )}
                                                             </div>
                                                           </td>
                                                           <td className="px-3 py-2 whitespace-nowrap text-xs text-slate-600">
                                                             <div className="flex items-center gap-1.5">
                                                               {isInstallationDueSoon(
-                                                                lot.installationDueDate
+                                                                lot.installationDueDate,
                                                               ) ? (
                                                                 <>
                                                                   <AlertTriangle className="w-3 h-3 text-yellow-500" />
                                                                   <span className="text-yellow-600 font-medium">
                                                                     {formatDate(
-                                                                      lot.installationDueDate
+                                                                      lot.installationDueDate,
                                                                     )}
                                                                   </span>
                                                                 </>
@@ -1323,7 +1323,7 @@ export default function ClientDetailPage() {
                                                                 <>
                                                                   <Calendar className="w-3 h-3 text-slate-400" />
                                                                   {formatDate(
-                                                                    lot.installationDueDate
+                                                                    lot.installationDueDate,
                                                                   )}
                                                                 </>
                                                               )}
@@ -1361,7 +1361,7 @@ export default function ClientDetailPage() {
                               Showing {startIndex + 1} to{" "}
                               {Math.min(
                                 endIndex,
-                                filteredAndSortedProjects.length
+                                filteredAndSortedProjects.length,
                               )}{" "}
                               of {filteredAndSortedProjects.length} results
                             </div>
@@ -1378,7 +1378,7 @@ export default function ClientDetailPage() {
                               <div className="flex items-center gap-1">
                                 {Array.from(
                                   { length: totalPages },
-                                  (_, i) => i + 1
+                                  (_, i) => i + 1,
                                 ).map((page) => (
                                   <button
                                     key={page}
@@ -1575,12 +1575,12 @@ export default function ClientDetailPage() {
                                     type="text"
                                     value={lot.lotId}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleLotChange(
                                         index,
                                         "lotId",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="w-full text-sm text-slate-800 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
@@ -1605,12 +1605,12 @@ export default function ClientDetailPage() {
                                     type="text"
                                     value={lot.clientName}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleLotChange(
                                         index,
                                         "clientName",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="w-full text-sm text-slate-800 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
@@ -1627,12 +1627,12 @@ export default function ClientDetailPage() {
                                   type="date"
                                   value={lot.installationDueDate}
                                   onChange={(
-                                    e: React.ChangeEvent<HTMLInputElement>
+                                    e: React.ChangeEvent<HTMLInputElement>,
                                   ) =>
                                     handleLotChange(
                                       index,
                                       "installationDueDate",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="w-full text-sm text-slate-800 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
@@ -1645,12 +1645,12 @@ export default function ClientDetailPage() {
                                 <textarea
                                   value={lot.notes}
                                   onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>
+                                    e: React.ChangeEvent<HTMLTextAreaElement>,
                                   ) =>
                                     handleLotChange(
                                       index,
                                       "notes",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   rows={2}

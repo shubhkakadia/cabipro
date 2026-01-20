@@ -22,7 +22,7 @@ export default function MultiSelectDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">(
-    "bottom"
+    "bottom",
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -46,7 +46,7 @@ export default function MultiSelectDropdown({
   }, [isOpen]);
 
   const filteredOptions = options.filter((option: string) =>
-    option.toLowerCase().includes(searchTerm.toLowerCase())
+    option.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleToggle = (value: string) => {
@@ -102,8 +102,8 @@ export default function MultiSelectDropdown({
               {selectedValues.length === 0
                 ? placeholder
                 : selectedValues.length === 1
-                ? selectedValues[0]
-                : `${selectedValues.length} selected`}
+                  ? selectedValues[0]
+                  : `${selectedValues.length} selected`}
             </span>
             <ChevronDown
               className={`h-4 w-4 text-slate-400 transition-transform ${

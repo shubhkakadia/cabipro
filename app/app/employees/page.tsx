@@ -19,6 +19,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Employee {
@@ -59,7 +60,7 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("employee_id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "relevance">(
-    "asc"
+    "asc",
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -69,7 +70,7 @@ export default function EmployeesPage() {
   const [showColumnDropdown, setShowColumnDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"active" | "inactive">("active");
   const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(
-    null
+    null,
   );
   const [popupPosition, setPopupPosition] = useState<{
     top: number;
@@ -104,7 +105,7 @@ export default function EmployeesPage() {
       "Created At",
       "Updated At",
     ],
-    []
+    [],
   );
 
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
@@ -198,7 +199,7 @@ export default function EmployeesPage() {
       ...new Set(
         employees
           .map((emp: Employee) => emp.role)
-          .filter((role): role is string => Boolean(role))
+          .filter((role): role is string => Boolean(role)),
       ),
     ];
     return roles.sort();
@@ -278,7 +279,7 @@ export default function EmployeesPage() {
   const endIndex = itemsPerPage === 0 ? totalItems : startIndex + itemsPerPage;
   const paginatedEmployees = filteredAndSortedEmployees.slice(
     startIndex,
-    endIndex
+    endIndex,
   );
 
   // Reset to first page when search, tab, or items per page changes
@@ -323,7 +324,7 @@ export default function EmployeesPage() {
       }
     } else {
       setSelectedRoles((prev) =>
-        prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+        prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
       );
     }
   };
@@ -341,7 +342,7 @@ export default function EmployeesPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -448,13 +449,18 @@ export default function EmployeesPage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Employees
                     </h1>
-                    <button
-                      onClick={() => router.push("/app/employees/addemployee")}
-                      className="cursor-pointer hover:bg-primary transition-all duration-200 bg-primary/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Employee
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() =>
+                          router.push("/app/employees/addemployee")
+                        }
+                        className="cursor-pointer hover:bg-primary transition-all duration-200 bg-primary/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Employee
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -490,7 +496,7 @@ export default function EmployeesPage() {
                             <button
                               onClick={() =>
                                 setShowRoleFilterDropdown(
-                                  !showRoleFilterDropdown
+                                  !showRoleFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -653,7 +659,7 @@ export default function EmployeesPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -777,10 +783,10 @@ export default function EmployeesPage() {
                                   {search
                                     ? "No employees found matching your search"
                                     : selectedRoles.length === 0
-                                    ? "No employees found"
-                                    : activeTab === "active"
-                                    ? "No current employees found"
-                                    : "No former employees found"}
+                                      ? "No employees found"
+                                      : activeTab === "active"
+                                        ? "No current employees found"
+                                        : "No former employees found"}
                                 </td>
                               </tr>
                             ) : (
@@ -789,7 +795,7 @@ export default function EmployeesPage() {
                                   key={e.id}
                                   onClick={() => {
                                     router.push(
-                                      `/app/employees/${e.employee_id}`
+                                      `/app/employees/${e.employee_id}`,
                                     );
                                   }}
                                   className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
@@ -861,7 +867,7 @@ export default function EmployeesPage() {
                                             setPopupPosition(null);
                                             popupTimeoutRef.current = null;
                                           },
-                                          300
+                                          300,
                                         );
                                       }}
                                     >
@@ -935,11 +941,11 @@ export default function EmployeesPage() {
           popupPosition &&
           (() => {
             const hoveredEmployee = paginatedEmployees.find(
-              (emp) => emp.id === hoveredEmployeeId
+              (emp) => emp.id === hoveredEmployeeId,
             );
             return hoveredEmployee?.image ? (
               <div
-                className={`fixed w-[250px] h-[250px] bg-white border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out pointer-events-auto ${
+                className={`fixed w-64 h-64 bg-white border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out pointer-events-auto ${
                   popupVisible
                     ? "opacity-100 scale-100 translate-y-0"
                     : "opacity-0 scale-95 translate-y-2"

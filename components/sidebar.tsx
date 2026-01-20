@@ -137,10 +137,10 @@ export default function Sidebar() {
                   item.label === "Projects"
                     ? projectDropdownOpen
                     : item.label === "Suppliers"
-                    ? suppliersDropdownOpen
-                    : item.label === "Inventory"
-                    ? inventoryDropdownOpen
-                    : false;
+                      ? suppliersDropdownOpen
+                      : item.label === "Inventory"
+                        ? inventoryDropdownOpen
+                        : false;
 
                 const toggleDropdown = () => {
                   if (item.label === "Projects")

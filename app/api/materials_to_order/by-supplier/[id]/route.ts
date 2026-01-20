@@ -4,7 +4,7 @@ import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -21,7 +21,7 @@ export async function GET(
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -105,19 +105,22 @@ export async function GET(
         message: "Materials to orders fetched successfully",
         data: mtos,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
-    console.error("Error in GET /api/materials_to_order/by-supplier/[id]:", error);
+    console.error(
+      "Error in GET /api/materials_to_order/by-supplier/[id]:",
+      error,
+    );
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

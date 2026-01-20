@@ -7,7 +7,7 @@ import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -49,7 +49,7 @@ export async function GET(
     if (!po) {
       return NextResponse.json(
         { status: false, message: "Purchase order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -59,26 +59,26 @@ export async function GET(
         message: "Purchase order fetched successfully",
         data: po,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/purchase_order/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -98,7 +98,7 @@ export async function PATCH(
     if (!existing) {
       return NextResponse.json(
         { status: false, message: "Purchase order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -191,7 +191,7 @@ export async function PATCH(
       const file = fileResult instanceof File ? fileResult : null;
       if (file) {
         const order_no = existing.order_no; // immutable
-        
+
         // Get organization slug for file path
         const organizationSlug = getOrganizationSlugFromRequest(request);
         if (!organizationSlug) {
@@ -257,7 +257,7 @@ export async function PATCH(
             item.new_delivery !== null &&
             parseFloat(item.new_delivery || 0) > 0) ||
           (item.quantity_received !== undefined &&
-            item.quantity_received !== null)
+            item.quantity_received !== null),
       );
 
       if (itemsToUpdate.length > 0) {
@@ -282,7 +282,7 @@ export async function PATCH(
 
         // Create a map for quick lookup
         const existingItemsMap = new Map(
-          existingItems.map((item) => [item.id, item])
+          existingItems.map((item) => [item.id, item]),
         );
 
         // Update purchase_order_item and item inventory
@@ -294,7 +294,7 @@ export async function PATCH(
 
           const currentReceived = parseInt(
             String(existingItem.quantity_received || 0),
-            10
+            10,
           );
 
           // Support both formats: quantity_received (total) or new_delivery (incremental)
@@ -307,7 +307,7 @@ export async function PATCH(
           ) {
             // Frontend sends total quantity_received
             newTotalReceived = Math.floor(
-              parseFloat(itemUpdate.quantity_received || 0)
+              parseFloat(itemUpdate.quantity_received || 0),
             );
             newDelivery = newTotalReceived - currentReceived;
           } else if (
@@ -372,15 +372,15 @@ export async function PATCH(
       if (!updatedPO) {
         return NextResponse.json(
           { status: false, message: "Purchase order not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
       const allItemsReceived = updatedPO.items.every(
-        (item) => (item.quantity_received || 0) >= item.quantity
+        (item) => (item.quantity_received || 0) >= item.quantity,
       );
       const someItemsReceived = updatedPO.items.some(
-        (item) => (item.quantity_received || 0) > 0
+        (item) => (item.quantity_received || 0) > 0,
       );
 
       let newStatus = existing.status;
@@ -438,7 +438,7 @@ export async function PATCH(
       if (!finalPO) {
         return NextResponse.json(
           { status: false, message: "Purchase order not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -459,7 +459,7 @@ export async function PATCH(
           message: "Received quantities updated successfully",
           data: finalPO,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
     if (body.status !== undefined) {
@@ -477,10 +477,10 @@ export async function PATCH(
           {
             status: false,
             message: `Invalid status. Must be one of: ${validStatuses.join(
-              ", "
+              ", ",
             )}`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       updateData.status = statusValue;
@@ -536,10 +536,10 @@ export async function PATCH(
 
           // Create maps for efficient lookup
           const existingById = new Map(
-            existingItems.map((item) => [item.id, item])
+            existingItems.map((item) => [item.id, item]),
           );
           const existingByItemId = new Map(
-            existingItems.map((item) => [item.item_id, item])
+            existingItems.map((item) => [item.item_id, item]),
           );
           const incomingItemIds = new Set();
 
@@ -595,7 +595,7 @@ export async function PATCH(
 
           // Delete items that are no longer in the incoming list
           const itemsToDelete = existingItems.filter(
-            (item) => !incomingItemIds.has(item.id)
+            (item) => !incomingItemIds.has(item.id),
           );
           if (itemsToDelete.length > 0) {
             await tx.purchase_order_item.deleteMany({
@@ -661,7 +661,7 @@ export async function PATCH(
       "purchase_order",
       id,
       "UPDATE",
-      `Purchase order updated successfully for project: ${updated.mto?.project?.name}`
+      `Purchase order updated successfully for project: ${updated.mto?.project?.name}`,
     );
     if (!logged) {
       console.error(`Failed to log purchase order update: ${id}`);
@@ -675,26 +675,26 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/purchase_order/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -721,7 +721,7 @@ export async function DELETE(
     if (!poForLogging) {
       return NextResponse.json(
         { status: false, message: "Purchase order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -736,7 +736,7 @@ export async function DELETE(
       "DELETE",
       `Purchase order deleted successfully for project: ${
         poForLogging.mto?.project?.name || "Unknown"
-      }`
+      }`,
     );
 
     if (!logged) {
@@ -748,7 +748,7 @@ export async function DELETE(
           data: po,
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -758,19 +758,19 @@ export async function DELETE(
         message: "Purchase order deleted successfully",
         data: po,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/purchase_order/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

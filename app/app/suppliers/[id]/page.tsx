@@ -174,7 +174,7 @@ export default function SupplierDetailPage() {
         console.error("Error Response:", err.response?.data);
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching supplier data"
+            "An error occurred while fetching supplier data",
         );
       } else {
         setError("An error occurred while fetching supplier data");
@@ -314,7 +314,7 @@ export default function SupplierDetailPage() {
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
-          }
+          },
         );
       } else {
         toast.error("Failed to update supplier. Please try again.", {
@@ -376,7 +376,7 @@ export default function SupplierDetailPage() {
         `/api/supplier/${supplier.supplier_id}`,
         {
           withCredentials: true,
-        }
+        },
       );
       if (!response?.data?.status) {
         toast.error(response?.data?.message || "Failed to delete supplier");
@@ -589,7 +589,7 @@ export default function SupplierDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "email",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={supplier.email || "Email"}
@@ -605,7 +605,7 @@ export default function SupplierDetailPage() {
                                         onChange={(e) =>
                                           handleInputChange(
                                             "phone",
-                                            e.target.value
+                                            e.target.value,
                                           )
                                         }
                                         placeholder="Eg. 0400 123 456 or +61 400 123 456"
@@ -633,7 +633,7 @@ export default function SupplierDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "website",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={
@@ -652,7 +652,7 @@ export default function SupplierDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "abn_number",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={
@@ -669,7 +669,7 @@ export default function SupplierDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "address",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={
@@ -685,7 +685,7 @@ export default function SupplierDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "notes",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder={formatValue(supplier.notes)}
@@ -887,7 +887,7 @@ export default function SupplierDetailPage() {
                         <div>
                           {/* Search Bar */}
                           <div className="mb-4">
-                            <div className="flex items-center gap-2 w-[350px] relative">
+                            <div className="flex items-center gap-2 w-87 relative">
                               <Search className="h-4 w-4 absolute left-2.5 text-slate-400" />
                               <input
                                 type="text"
@@ -1237,7 +1237,7 @@ export default function SupplierDetailPage() {
                                         <p className="text-xs text-slate-900">
                                           $
                                           {parseFloat(
-                                            String(item.price) || "0"
+                                            String(item.price) || "0",
                                           ).toFixed(2)}
                                         </p>
                                       </td>

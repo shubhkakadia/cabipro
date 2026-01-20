@@ -88,7 +88,7 @@ export default function ContactSection({
 
   const saveEditContact = async (
     contactData: ContactDraft,
-    contactId: string
+    contactId: string,
   ) => {
     try {
       const payload = {
@@ -109,7 +109,7 @@ export default function ContactSection({
       }
       const updated = response.data.data as Contact;
       const updatedContacts = contacts.map((c) =>
-        c.id === updated.id ? updated : c
+        c.id === updated.id ? updated : c,
       );
       onContactsUpdate(updatedContacts);
       setSelectedContact(updated);
@@ -341,7 +341,7 @@ export default function ContactSection({
   return (
     <>
       <div className="col-span-3">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 max-h-[200px] flex flex-col">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 max-h-50 flex flex-col">
           <div className="flex items-center rounded-t-lg justify-between p-3 border-b border-slate-100 sticky top-0 bg-white z-10">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <User className="w-4 h-4" />
@@ -731,8 +731,8 @@ export default function ContactSection({
                         ? "Creating..."
                         : "Saving..."
                       : isCreateMode
-                      ? "Create Contact"
-                      : "Save"}
+                        ? "Create Contact"
+                        : "Save"}
                   </button>
                 </>
               )}

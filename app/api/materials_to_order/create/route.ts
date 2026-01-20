@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       if (!project) {
         return NextResponse.json(
           { status: false, message: "Project not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
       projectUuid = project.id;
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       if (lots.length !== lot_ids.length) {
         return NextResponse.json(
           { status: false, message: "One or more lots not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
       lotUuids = lots.map((lot) => lot.id);
@@ -68,10 +68,14 @@ export async function POST(request: NextRequest) {
                       quantity: number;
                       notes?: string | null;
                     }) => ({
-                      item_id: item.item_id,
+                      item: {
+                        connect: {
+                          id: item.item_id,
+                        },
+                      },
                       quantity: item.quantity,
                       notes: item.notes || null,
-                    })
+                    }),
                   ),
                 }
               : undefined,
@@ -129,7 +133,7 @@ export async function POST(request: NextRequest) {
     if (!completeMto) {
       return NextResponse.json(
         { status: false, message: "Failed to fetch created MTO" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -154,7 +158,9 @@ export async function POST(request: NextRequest) {
       "materials_to_order",
       mto.id,
       "CREATE",
-      `Materials to order created successfully${completeMto.project ? ` for project: ${projectName}` : ""}`
+      `Materials to order created successfully${
+        completeMto.project ? ` for project: ${projectName}` : ""
+      }`,
     );
 
     if (!logged) {
@@ -170,19 +176,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Creation succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/materials_to_order/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

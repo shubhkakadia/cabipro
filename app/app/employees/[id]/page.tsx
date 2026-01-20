@@ -141,7 +141,7 @@ export default function EmployeeDetailPage() {
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
-      fileCount: number
+      fileCount: number,
     ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
@@ -282,7 +282,7 @@ export default function EmployeeDetailPage() {
         ) {
           try {
             employeeData.availability = JSON.parse(
-              employeeData.availability
+              employeeData.availability,
             ) as Availability;
           } catch (e) {
             console.error("Error parsing availability:", e);
@@ -300,7 +300,7 @@ export default function EmployeeDetailPage() {
         console.error("Error Response:", err.response?.data);
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching employee data"
+            "An error occurred while fetching employee data",
         );
       } else {
         setError("An error occurred while fetching employee data");
@@ -324,13 +324,13 @@ export default function EmployeeDetailPage() {
         { category: "role" },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status && response.data.data) {
         // Extract the value field from each config item
         const roles = response.data.data.map(
-          (item: { value: string }) => item.value
+          (item: { value: string }) => item.value,
         );
         setRoleOptions(roles);
       }
@@ -425,7 +425,7 @@ export default function EmployeeDetailPage() {
       }
       if (formattedData.emergency_contact_phone) {
         formattedData.emergency_contact_phone = formatPhoneToNational(
-          formattedData.emergency_contact_phone
+          formattedData.emergency_contact_phone,
         );
       }
 
@@ -466,7 +466,7 @@ export default function EmployeeDetailPage() {
         dataToSend = {
           ...formattedData,
           availability: JSON.stringify(
-            formattedData.availability
+            formattedData.availability,
           ) as unknown as Availability,
         };
       }
@@ -504,7 +504,7 @@ export default function EmployeeDetailPage() {
         ) {
           try {
             employeeData.availability = JSON.parse(
-              employeeData.availability
+              employeeData.availability,
             ) as Availability;
           } catch (e) {
             console.error("Error parsing availability:", e);
@@ -556,7 +556,7 @@ export default function EmployeeDetailPage() {
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
-          }
+          },
         );
       } else {
         toast.error("Failed to update employee. Please try again.", {
@@ -740,7 +740,7 @@ export default function EmployeeDetailPage() {
         },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -772,7 +772,7 @@ export default function EmployeeDetailPage() {
 
   // Filter role options based on search term
   const filteredRoleOptions = roleOptions.filter((role: string) =>
-    role.toLowerCase().includes(roleSearchTerm.toLowerCase())
+    role.toLowerCase().includes(roleSearchTerm.toLowerCase()),
   );
 
   // User management functions
@@ -929,7 +929,7 @@ export default function EmployeeDetailPage() {
         if (response.data.data.module_access) {
           try {
             parsedModuleAccess = JSON.parse(
-              response.data.data.module_access
+              response.data.data.module_access,
             ) as Record<string, boolean>;
           } catch (e) {
             console.error("Error parsing module access:", e);
@@ -991,7 +991,7 @@ export default function EmployeeDetailPage() {
 
       if (response.data.status) {
         toast.success(
-          "User account removed successfully. Employee data is preserved."
+          "User account removed successfully. Employee data is preserved.",
         );
         // Refresh employee data to update user status
         await fetchEmployee();
@@ -1004,7 +1004,7 @@ export default function EmployeeDetailPage() {
       console.error("Error removing user account:", err);
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.message || "Failed to remove user account"
+          err.response?.data?.message || "Failed to remove user account",
         );
       } else {
         toast.error("Failed to remove user account");
@@ -1023,7 +1023,7 @@ export default function EmployeeDetailPage() {
         `/api/employee/${employee.employee_id}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1039,7 +1039,7 @@ export default function EmployeeDetailPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to delete employee. Please try again."
+            "Failed to delete employee. Please try again.",
         );
       } else {
         toast.error("Failed to delete employee. Please try again.");
@@ -1063,7 +1063,7 @@ export default function EmployeeDetailPage() {
       !validatePhone(editData.emergency_contact_phone)
     ) {
       errors.push(
-        "Emergency contact phone should be a valid Australian phone number"
+        "Emergency contact phone should be a valid Australian phone number",
       );
     }
 
@@ -1089,7 +1089,7 @@ export default function EmployeeDetailPage() {
   const handleAvailabilityChange = (
     day: DayOfWeek,
     field: "start" | "end",
-    value: string
+    value: string,
   ) => {
     setEditData((prev) => {
       const availability = (prev.availability || {}) as Availability;
@@ -1145,12 +1145,12 @@ export default function EmployeeDetailPage() {
               <div className="p-3">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                <button
-                  onClick={() => router.back()}
-                  className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
-                >
-                  <ChevronLeft className="w-8 h-8 text-slate-600" />
-                </button>
+                  <button
+                    onClick={() => router.back()}
+                    className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-8 h-8 text-slate-600" />
+                  </button>
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-slate-600">
                       {employee.first_name} {employee.last_name}
@@ -1353,7 +1353,7 @@ export default function EmployeeDetailPage() {
                                   onChange={(e) =>
                                     handleInputChange(
                                       "first_name",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder={employee.first_name}
@@ -1365,7 +1365,7 @@ export default function EmployeeDetailPage() {
                                   onChange={(e) =>
                                     handleInputChange(
                                       "last_name",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   placeholder={employee.last_name}
@@ -1389,7 +1389,7 @@ export default function EmployeeDetailPage() {
                                       type="button"
                                       onClick={() =>
                                         setIsRoleDropdownOpen(
-                                          !isRoleDropdownOpen
+                                          !isRoleDropdownOpen,
                                         )
                                       }
                                       className="cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
@@ -1422,23 +1422,23 @@ export default function EmployeeDetailPage() {
                                               >
                                                 {role}
                                               </button>
-                                            )
+                                            ),
                                           )}
                                           {roleSearchTerm &&
                                             !filteredRoleOptions.some(
                                               (r) =>
                                                 r.toLowerCase() ===
-                                                roleSearchTerm.toLowerCase()
+                                                roleSearchTerm.toLowerCase(),
                                             ) && (
                                               <div className="border-t border-slate-200">
                                                 <button
                                                   type="button"
                                                   onClick={() => {
                                                     setNewRoleValue(
-                                                      roleSearchTerm
+                                                      roleSearchTerm,
                                                     );
                                                     setShowCreateRoleModal(
-                                                      true
+                                                      true,
                                                     );
                                                   }}
                                                   className="cursor-pointer w-full text-left px-4 py-3 text-sm text-primary font-medium hover:bg-primary/10 transition-colors flex items-center gap-2"
@@ -1501,7 +1501,7 @@ export default function EmployeeDetailPage() {
                                       onChange={(e) =>
                                         handleInputChange(
                                           "phone",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder="Eg. 0400 123 456 or +61 400 123 456"
@@ -1529,7 +1529,7 @@ export default function EmployeeDetailPage() {
                                     onChange={(e) =>
                                       handleInputChange(
                                         "address",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     placeholder={employee.address || "Address"}
@@ -1711,11 +1711,11 @@ export default function EmployeeDetailPage() {
                               onChange={(e) =>
                                 handleInputChange(
                                   "emergency_contact_name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder={formatValue(
-                                employee.emergency_contact_name
+                                employee.emergency_contact_name,
                               )}
                               className="w-full text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                             />
@@ -1737,14 +1737,14 @@ export default function EmployeeDetailPage() {
                                 onChange={(e) =>
                                   handleInputChange(
                                     "emergency_contact_phone",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 placeholder="Eg. 0400 123 456 or +61 400 123 456"
                                 className={`w-full text-sm text-slate-800 px-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none ${
                                   editData.emergency_contact_phone &&
                                   !validatePhone(
-                                    editData.emergency_contact_phone
+                                    editData.emergency_contact_phone,
                                   )
                                     ? "border-red-500"
                                     : "border-slate-300"
@@ -1752,7 +1752,7 @@ export default function EmployeeDetailPage() {
                               />
                               {editData.emergency_contact_phone &&
                                 !validatePhone(
-                                  editData.emergency_contact_phone
+                                  editData.emergency_contact_phone,
                                 ) && (
                                   <p className="mt-1 text-xs text-red-500">
                                     Please enter a valid Australian phone number
@@ -1803,7 +1803,7 @@ export default function EmployeeDetailPage() {
                                     handleAvailabilityChange(
                                       day,
                                       "start",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="text-xs text-slate-600 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
@@ -1820,7 +1820,7 @@ export default function EmployeeDetailPage() {
                                     handleAvailabilityChange(
                                       day,
                                       "end",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="text-xs text-slate-600 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
@@ -1835,19 +1835,19 @@ export default function EmployeeDetailPage() {
                               if (typeof employee.availability === "string") {
                                 try {
                                   return JSON.parse(
-                                    employee.availability
+                                    employee.availability,
                                   ) as Availability;
                                 } catch (e) {
                                   console.error(
                                     "Error parsing availability:",
-                                    e
+                                    e,
                                   );
                                   return {} as Availability;
                                 }
                               }
                               return (employee.availability ||
                                 {}) as Availability;
-                            })()
+                            })(),
                           ).map(([day, schedule]) => {
                             const scheduleData = schedule as
                               | { start: string; end: string }
@@ -1904,11 +1904,11 @@ export default function EmployeeDetailPage() {
                               onChange={(e) =>
                                 handleInputChange(
                                   "bank_account_name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder={formatValue(
-                                employee.bank_account_name
+                                employee.bank_account_name,
                               )}
                               className="w-full text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                             />
@@ -1929,11 +1929,11 @@ export default function EmployeeDetailPage() {
                               onChange={(e) =>
                                 handleInputChange(
                                   "bank_account_number",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder={formatValue(
-                                employee.bank_account_number
+                                employee.bank_account_number,
                               )}
                               className="w-full text-sm text-slate-800 font-mono px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                             />
@@ -1954,11 +1954,11 @@ export default function EmployeeDetailPage() {
                               onChange={(e) =>
                                 handleInputChange(
                                   "bank_account_bsb",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder={formatValue(
-                                employee.bank_account_bsb
+                                employee.bank_account_bsb,
                               )}
                               className="w-full text-sm text-slate-800 font-mono px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                             />
@@ -1989,11 +1989,11 @@ export default function EmployeeDetailPage() {
                               onChange={(e) =>
                                 handleInputChange(
                                   "supper_account_name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder={formatValue(
-                                employee.supper_account_name
+                                employee.supper_account_name,
                               )}
                               className="w-full text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                             />
@@ -2014,11 +2014,11 @@ export default function EmployeeDetailPage() {
                               onChange={(e) =>
                                 handleInputChange(
                                   "supper_account_number",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder={formatValue(
-                                employee.supper_account_number
+                                employee.supper_account_number,
                               )}
                               className="w-full text-sm text-slate-800 font-mono px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                             />
@@ -2260,8 +2260,8 @@ export default function EmployeeDetailPage() {
                             isEditingUser || isCreatingUser
                               ? userEditData.is_active
                               : user
-                              ? user.is_active
-                              : false
+                                ? user.is_active
+                                : false
                           }
                           onChange={(e) =>
                             handleUserInputChange("is_active", e.target.checked)
@@ -2322,7 +2322,7 @@ export default function EmployeeDetailPage() {
                                   checked={
                                     module.children?.every(
                                       (child) =>
-                                        moduleAccess[child.key] === true
+                                        moduleAccess[child.key] === true,
                                     ) || false
                                   }
                                   ref={(el) => {
@@ -2330,7 +2330,7 @@ export default function EmployeeDetailPage() {
                                       const checkedCount =
                                         module.children.filter(
                                           (child) =>
-                                            moduleAccess[child.key] === true
+                                            moduleAccess[child.key] === true,
                                         ).length;
                                       el.indeterminate =
                                         checkedCount > 0 &&
@@ -2342,7 +2342,7 @@ export default function EmployeeDetailPage() {
                                     module.children?.forEach((child) => {
                                       handleModuleAccessChange(
                                         child.key,
-                                        e.target.checked
+                                        e.target.checked,
                                       );
                                     });
                                   }}
@@ -2372,7 +2372,7 @@ export default function EmployeeDetailPage() {
                                         onChange={(e) =>
                                           handleModuleAccessChange(
                                             child.key,
-                                            e.target.checked
+                                            e.target.checked,
                                           )
                                         }
                                         disabled={
@@ -2400,7 +2400,7 @@ export default function EmployeeDetailPage() {
                                 onChange={(e) =>
                                   handleModuleAccessChange(
                                     module.key,
-                                    e.target.checked
+                                    e.target.checked,
                                   )
                                 }
                                 disabled={!(isEditingUser || isCreatingUser)}

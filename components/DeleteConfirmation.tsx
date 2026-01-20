@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Trash2, X, AlertTriangle } from "lucide-react";
 import { deletionWarning } from "./constants";
 
-
 // Type definitions
 interface DeleteConfirmationProps {
   isOpen: boolean;
@@ -40,7 +39,10 @@ export default function DeleteConfirmation({
 
   // Get associated data that will be deleted
   const getAssociatedData = (): string[] => {
-    if (!entityType || !deletionWarning[entityType as keyof typeof deletionWarning]) {
+    if (
+      !entityType ||
+      !deletionWarning[entityType as keyof typeof deletionWarning]
+    ) {
       return [];
     }
     return deletionWarning[entityType as keyof typeof deletionWarning];

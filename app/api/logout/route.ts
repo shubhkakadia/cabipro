@@ -18,7 +18,9 @@ function extractTokenFromHeader(request: NextRequest): string | null {
 export async function POST(request: NextRequest) {
   try {
     // Extract tokens from Authorization header or cookies
-    const adminToken = request.cookies.get(COOKIE_NAMES.ADMIN_AUTH_TOKEN)?.value;
+    const adminToken = request.cookies.get(
+      COOKIE_NAMES.ADMIN_AUTH_TOKEN,
+    )?.value;
     const userToken =
       extractTokenFromHeader(request) ||
       request.cookies.get(COOKIE_NAMES.AUTH_TOKEN)?.value;
@@ -82,13 +84,13 @@ export async function POST(request: NextRequest) {
     // No valid token found
     return NextResponse.json(
       { error: "Invalid or expired token." },
-      { status: 401 }
+      { status: 401 },
     );
   } catch (error) {
     console.error("Logout error:", error);
     return NextResponse.json(
       { error: "An error occurred during logout" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

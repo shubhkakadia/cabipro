@@ -12,7 +12,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function InventoryManagement() {
-  
   const features = [
     {
       title: "Inventory Management",
@@ -104,14 +103,16 @@ export default function InventoryManagement() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-100 drop-shadow-2xl px-2 leading-tight"
             data-aos="fade-up"
           >
-            Complete Inventory Management for Cabinet Makers &amp; Joinery Workshops
+            Complete Inventory Management for Cabinet Makers &amp; Joinery
+            Workshops
           </h1>
           <p
             className="mx-auto mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-200 drop-shadow-2xl px-2"
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Track materials, manage suppliers, plan orders, and optimize your inventory. Never run out of stock or waste materials again.
+            Track materials, manage suppliers, plan orders, and optimize your
+            inventory. Never run out of stock or waste materials again.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
@@ -149,10 +150,11 @@ export default function InventoryManagement() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              From stock tracking to supplier management, everything you need to manage your materials efficiently.
+              From stock tracking to supplier management, everything you need to
+              manage your materials efficiently.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
@@ -215,7 +217,8 @@ export default function InventoryManagement() {
                 Real-Time Stock Levels
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Always know exactly what you have in stock. Automatic updates when materials arrive or are used in production.
+                Always know exactly what you have in stock. Automatic updates
+                when materials arrive or are used in production.
               </p>
             </div>
             <div
@@ -227,7 +230,8 @@ export default function InventoryManagement() {
                 Reduce Waste
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Track material usage and waste per job. Identify patterns and optimize your material usage to reduce costs.
+                Track material usage and waste per job. Identify patterns and
+                optimize your material usage to reduce costs.
               </p>
             </div>
             <div
@@ -239,7 +243,8 @@ export default function InventoryManagement() {
                 Streamlined Ordering
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Plan material orders, create purchase orders, and track deliveries all in one system. Never miss an order again.
+                Plan material orders, create purchase orders, and track
+                deliveries all in one system. Never miss an order again.
               </p>
             </div>
           </div>
@@ -260,9 +265,14 @@ export default function InventoryManagement() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join the waitlist to get early access to CabiPro&apos;s inventory management features.
+            Join the waitlist to get early access to CabiPro&apos;s inventory
+            management features.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <Link
               href="/waitlist"
               className="inline-block rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors touch-manipulation"

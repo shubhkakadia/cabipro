@@ -8,7 +8,7 @@ const USER_STORAGE_KEY = "cabipro_user_state";
  */
 const saveStateToStorage = (state: UserState) => {
   if (typeof window === "undefined") return;
-  
+
   try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem(USER_STORAGE_KEY, serializedState);
@@ -38,4 +38,3 @@ export const makeStore = () => {
 export type AppStore = ReturnType<typeof makeStore>;
 export type RootState = ReturnType<AppStore["getState"]>;
 export type AppDispatch = AppStore["dispatch"];
-

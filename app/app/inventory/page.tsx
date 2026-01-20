@@ -25,6 +25,7 @@ import {
 import StockTally from "@/components/StockTally";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Sheet {
@@ -131,7 +132,7 @@ export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<string>("brand");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "relevance">(
-    "asc"
+    "asc",
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -280,13 +281,13 @@ export default function InventoryPage() {
       } else if (field.startsWith("accessory_")) {
         const accessoryField = field.replace(
           "accessory_",
-          ""
+          "",
         ) as keyof Accessory;
         value = item.accessory?.[accessoryField] as string | undefined;
       } else if (field.startsWith("edging_tape_")) {
         const edging_tapeField = field.replace(
           "edging_tape_",
-          ""
+          "",
         ) as keyof EdgingTape;
         value = item.edging_tape?.[edging_tapeField] as string | undefined;
       }
@@ -433,7 +434,7 @@ export default function InventoryPage() {
         if (
           filters.sheet_brand.length > 0 &&
           !filters.sheet_brand.some((brand) =>
-            item.sheet?.brand?.toLowerCase().includes(brand.toLowerCase())
+            item.sheet?.brand?.toLowerCase().includes(brand.toLowerCase()),
           )
         ) {
           return false;
@@ -441,7 +442,7 @@ export default function InventoryPage() {
         if (
           filters.sheet_color.length > 0 &&
           !filters.sheet_color.some((color) =>
-            item.sheet?.color?.toLowerCase().includes(color.toLowerCase())
+            item.sheet?.color?.toLowerCase().includes(color.toLowerCase()),
           )
         ) {
           return false;
@@ -449,7 +450,7 @@ export default function InventoryPage() {
         if (
           filters.sheet_finish.length > 0 &&
           !filters.sheet_finish.some((finish) =>
-            item.sheet?.finish?.toLowerCase().includes(finish.toLowerCase())
+            item.sheet?.finish?.toLowerCase().includes(finish.toLowerCase()),
           )
         ) {
           return false;
@@ -457,7 +458,7 @@ export default function InventoryPage() {
         if (
           filters.sheet_face.length > 0 &&
           !filters.sheet_face.some((face) =>
-            item.sheet?.face?.toLowerCase().includes(face.toLowerCase())
+            item.sheet?.face?.toLowerCase().includes(face.toLowerCase()),
           )
         ) {
           return false;
@@ -469,7 +470,7 @@ export default function InventoryPage() {
         if (
           filters.handle_brand.length > 0 &&
           !filters.handle_brand.some((brand) =>
-            item.handle?.brand?.toLowerCase().includes(brand.toLowerCase())
+            item.handle?.brand?.toLowerCase().includes(brand.toLowerCase()),
           )
         ) {
           return false;
@@ -477,7 +478,7 @@ export default function InventoryPage() {
         if (
           filters.handle_color.length > 0 &&
           !filters.handle_color.some((color) =>
-            item.handle?.color?.toLowerCase().includes(color.toLowerCase())
+            item.handle?.color?.toLowerCase().includes(color.toLowerCase()),
           )
         ) {
           return false;
@@ -485,7 +486,7 @@ export default function InventoryPage() {
         if (
           filters.handle_type.length > 0 &&
           !filters.handle_type.some((type) =>
-            item.handle?.type?.toLowerCase().includes(type.toLowerCase())
+            item.handle?.type?.toLowerCase().includes(type.toLowerCase()),
           )
         ) {
           return false;
@@ -495,7 +496,7 @@ export default function InventoryPage() {
           !filters.handle_material.some((material) =>
             item.handle?.material
               ?.toLowerCase()
-              .includes(material.toLowerCase())
+              .includes(material.toLowerCase()),
           )
         ) {
           return false;
@@ -507,7 +508,7 @@ export default function InventoryPage() {
         if (
           filters.hardware_brand.length > 0 &&
           !filters.hardware_brand.some((brand) =>
-            item.hardware?.brand?.toLowerCase().includes(brand.toLowerCase())
+            item.hardware?.brand?.toLowerCase().includes(brand.toLowerCase()),
           )
         ) {
           return false;
@@ -515,7 +516,7 @@ export default function InventoryPage() {
         if (
           filters.hardware_name.length > 0 &&
           !filters.hardware_name.some((name) =>
-            item.hardware?.name?.toLowerCase().includes(name.toLowerCase())
+            item.hardware?.name?.toLowerCase().includes(name.toLowerCase()),
           )
         ) {
           return false;
@@ -523,7 +524,7 @@ export default function InventoryPage() {
         if (
           filters.hardware_type.length > 0 &&
           !filters.hardware_type.some((type) =>
-            item.hardware?.type?.toLowerCase().includes(type.toLowerCase())
+            item.hardware?.type?.toLowerCase().includes(type.toLowerCase()),
           )
         ) {
           return false;
@@ -533,7 +534,7 @@ export default function InventoryPage() {
           !filters.hardware_sub_category.some((subCategory) =>
             item.hardware?.sub_category
               ?.toLowerCase()
-              .includes(subCategory.toLowerCase())
+              .includes(subCategory.toLowerCase()),
           )
         ) {
           return false;
@@ -545,7 +546,7 @@ export default function InventoryPage() {
         if (
           filters.accessory_name.length > 0 &&
           !filters.accessory_name.some((name) =>
-            item.accessory?.name?.toLowerCase().includes(name.toLowerCase())
+            item.accessory?.name?.toLowerCase().includes(name.toLowerCase()),
           )
         ) {
           return false;
@@ -556,7 +557,9 @@ export default function InventoryPage() {
         if (
           filters.edging_tape_brand.length > 0 &&
           !filters.edging_tape_brand.some((brand) =>
-            item.edging_tape?.brand?.toLowerCase().includes(brand.toLowerCase())
+            item.edging_tape?.brand
+              ?.toLowerCase()
+              .includes(brand.toLowerCase()),
           )
         ) {
           return false;
@@ -564,7 +567,9 @@ export default function InventoryPage() {
         if (
           filters.edging_tape_color.length > 0 &&
           !filters.edging_tape_color.some((color) =>
-            item.edging_tape?.color?.toLowerCase().includes(color.toLowerCase())
+            item.edging_tape?.color
+              ?.toLowerCase()
+              .includes(color.toLowerCase()),
           )
         ) {
           return false;
@@ -574,7 +579,7 @@ export default function InventoryPage() {
           !filters.edging_tape_finish.some((finish) =>
             item.edging_tape?.finish
               ?.toLowerCase()
-              .includes(finish.toLowerCase())
+              .includes(finish.toLowerCase()),
           )
         ) {
           return false;
@@ -584,7 +589,7 @@ export default function InventoryPage() {
           !filters.edging_tape_dimensions.some((dimensions) =>
             item.edging_tape?.dimensions
               ?.toLowerCase()
-              .includes(dimensions.toLowerCase())
+              .includes(dimensions.toLowerCase()),
           )
         ) {
           return false;
@@ -678,8 +683,8 @@ export default function InventoryPage() {
           return aDimensions < bDimensions
             ? -1
             : aDimensions > bDimensions
-            ? 1
-            : 0;
+              ? 1
+              : 0;
         } else if (activeTab === "handle") {
           // Brand → Color → Type → Material → Dimensions
           const aBrand = getFieldValue(a, "brand").toString().toLowerCase();
@@ -719,8 +724,8 @@ export default function InventoryPage() {
           return aDimensions < bDimensions
             ? -1
             : aDimensions > bDimensions
-            ? 1
-            : 0;
+              ? 1
+              : 0;
         } else if (activeTab === "hardware") {
           // Brand → Name → Type → Sub Category → Dimensions
           const aBrand = getFieldValue(a, "brand").toString().toLowerCase();
@@ -751,8 +756,8 @@ export default function InventoryPage() {
             return aSubCategory < bSubCategory
               ? -1
               : aSubCategory > bSubCategory
-              ? 1
-              : 0;
+                ? 1
+                : 0;
           }
 
           const aDimensions = getFieldValue(a, "dimensions")
@@ -764,8 +769,8 @@ export default function InventoryPage() {
           return aDimensions < bDimensions
             ? -1
             : aDimensions > bDimensions
-            ? 1
-            : 0;
+              ? 1
+              : 0;
         }
       }
 
@@ -896,14 +901,14 @@ export default function InventoryPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
 
   const handleFilterChange = (
     field: keyof Filters,
-    value: string | string[]
+    value: string | string[],
   ) => {
     setFilters((prev) => ({
       ...prev,
@@ -1070,13 +1075,16 @@ export default function InventoryPage() {
                   <h1 className="text-xl font-bold text-slate-700">
                     Inventory
                   </h1>
-                  <button
-                    onClick={() => router.push("/app/inventory/additem")}
-                    className="cursor-pointer hover:bg-emerald-600 transition-all duration-200 bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Item
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <SearchBar />
+                    <button
+                      onClick={() => router.push("/app/inventory/additem")}
+                      className="cursor-pointer hover:bg-emerald-600 transition-all duration-200 bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Item
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1572,7 +1580,7 @@ export default function InventoryPage() {
                                           setPopupPosition(null);
                                           popupTimeoutRef.current = null;
                                         },
-                                        300
+                                        300,
                                       );
                                     }}
                                   >
@@ -1906,7 +1914,7 @@ export default function InventoryPage() {
                         field="hardware_sub_category"
                         options={getDistinctValues(
                           "hardware_sub_category",
-                          data
+                          data,
                         )}
                         selectedValues={filters.hardware_sub_category}
                         onSelectionChange={(field, values) =>
@@ -1981,7 +1989,7 @@ export default function InventoryPage() {
                         field="edging_tape_dimensions"
                         options={getDistinctValues(
                           "edging_tape_dimensions",
-                          data
+                          data,
                         )}
                         selectedValues={filters.edging_tape_dimensions}
                         onSelectionChange={(field, values) =>
@@ -2038,11 +2046,11 @@ export default function InventoryPage() {
           popupPosition &&
           (() => {
             const hoveredItem = paginatedData.find(
-              (item) => item.id === hoveredItemId
+              (item) => item.id === hoveredItemId,
             );
             return hoveredItem?.image?.url ? (
               <div
-                className={`fixed w-[250px] h-[250px] bg-white border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out pointer-events-auto ${
+                className={`fixed w-64 h-64 bg-white border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out pointer-events-auto ${
                   popupVisible
                     ? "opacity-100 scale-100 translate-y-0"
                     : "opacity-0 scale-95 translate-y-2"

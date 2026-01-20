@@ -56,7 +56,7 @@ export const useExcelExport = <T = unknown>({
    */
   const exportToExcel = async (
     data: T[],
-    options: ExportOptions = {}
+    options: ExportOptions = {},
   ): Promise<void> => {
     // Validate data
     if (!data || data.length === 0) {
@@ -66,7 +66,7 @@ export const useExcelExport = <T = unknown>({
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
-        }
+        },
       );
       return;
     }
@@ -148,7 +148,7 @@ export const useExcelExport = <T = unknown>({
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
-        }
+        },
       );
     } catch (error) {
       console.error("Error exporting to Excel:", error);

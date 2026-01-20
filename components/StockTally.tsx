@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
-// import { useAuth } from "@/contexts/AuthContext";
 
 // Type definitions
 interface Item {
@@ -237,7 +236,7 @@ export default function StockTally({
   };
 
   const handleStockTallyFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -306,22 +305,22 @@ export default function StockTally({
             if (isNaN(parsedNewQty)) {
               errors.push(
                 `Row ${index + 2}: Invalid new stock quantity "${String(
-                  newStockQty
-                )}"`
+                  newStockQty,
+                )}"`,
               );
               return;
             }
 
             if (parsedNewQty < 0) {
               errors.push(
-                `Row ${index + 2}: New stock quantity cannot be negative`
+                `Row ${index + 2}: New stock quantity cannot be negative`,
               );
               return;
             }
 
             // Find the original item from our data to get all details
             const originalItem = filteredAndSortedData.find(
-              (item: Item) => item.item_id === itemId
+              (item: Item) => item.item_id === itemId,
             );
 
             if (!originalItem) {
@@ -364,7 +363,7 @@ export default function StockTally({
 
           if (itemsToUpdate.length === 0) {
             setStockTallyError(
-              "No items found with new stock quantities to update. Please fill in the 'New Stock Quantity' column for items you want to update."
+              "No items found with new stock quantities to update. Please fill in the 'New Stock Quantity' column for items you want to update.",
             );
             setIsProcessingStockTally(false);
             return;
@@ -376,7 +375,7 @@ export default function StockTally({
         } catch (parseError) {
           console.error("Error parsing Excel file:", parseError);
           setStockTallyError(
-            "Failed to parse the Excel file. Please make sure it's a valid Excel file."
+            "Failed to parse the Excel file. Please make sure it's a valid Excel file.",
           );
           setIsProcessingStockTally(false);
         }
@@ -419,7 +418,7 @@ export default function StockTally({
         { items: itemsToSend },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -428,7 +427,7 @@ export default function StockTally({
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
         handleCloseStockTally();
       } else {
@@ -446,7 +445,7 @@ export default function StockTally({
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Failed to save stock tally. Please try again.", {
@@ -526,8 +525,8 @@ export default function StockTally({
                     stockTallyStep === "upload"
                       ? "bg-secondary text-white"
                       : stockTallyStep === "preview"
-                      ? "bg-green-500 text-white"
-                      : "bg-slate-200 text-slate-500"
+                        ? "bg-green-500 text-white"
+                        : "bg-slate-200 text-slate-500"
                   }`}
                 >
                   {stockTallyStep === "preview" ? (
@@ -541,8 +540,8 @@ export default function StockTally({
                     stockTallyStep === "upload"
                       ? "text-secondary"
                       : stockTallyStep === "preview"
-                      ? "text-green-600"
-                      : "text-slate-400"
+                        ? "text-green-600"
+                        : "text-slate-400"
                   }`}
                 >
                   Upload

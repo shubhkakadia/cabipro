@@ -43,6 +43,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import Image from "next/image";
 import CreatePurchaseOrderModal from "./components/CreatePurchaseOrderModal";
+import SearchBar from "@/components/SearchBar";
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // Type definitions
@@ -222,7 +223,7 @@ export default function PurchaseOrderPage() {
   const [selectedPOId, setSelectedPOId] = useState<string>("");
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
   const [quantityReceived, setQuantityReceived] = useState<QuantityReceived>(
-    {}
+    {},
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [poSearchTerm, setPoSearchTerm] = useState("");
@@ -245,21 +246,21 @@ export default function PurchaseOrderPage() {
   >(null);
   // Invoice delete
   const [deletingInvoicePOId, setDeletingInvoicePOId] = useState<string | null>(
-    null
+    null,
   );
   const [showDeleteInvoiceModal, setShowDeleteInvoiceModal] = useState(false);
   const [invoicePendingDelete, setInvoicePendingDelete] = useState<
     string | null
   >(null);
   const invoiceFileInputRefs = useRef<Record<string, HTMLInputElement | null>>(
-    {}
+    {},
   );
   const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
   // Purchase order delete
   const [deletingPOId, setDeletingPOId] = useState<string | null>(null);
   const [showDeletePOModal, setShowDeletePOModal] = useState(false);
   const [poPendingDelete, setPoPendingDelete] = useState<PurchaseOrder | null>(
-    null
+    null,
   );
 
   const formatMoney = (value: string | number | undefined): string => {
@@ -287,7 +288,7 @@ export default function PurchaseOrderPage() {
       console.error("Error fetching purchase orders:", err);
       if (axios.isAxiosError(err)) {
         setError(
-          err.response?.data?.message || "Failed to fetch purchase orders"
+          err.response?.data?.message || "Failed to fetch purchase orders",
         );
       } else {
         setError("Failed to fetch purchase orders");
@@ -334,7 +335,7 @@ export default function PurchaseOrderPage() {
       const totalQty = (po.items || []).reduce(
         (sum: number, it: POItem) =>
           sum + (parseFloat(String(it.quantity)) || 0),
-        0
+        0,
       );
       return { ...po, __itemsCount: itemsCount, __totalQty: totalQty };
     });
@@ -342,7 +343,7 @@ export default function PurchaseOrderPage() {
     withCounts.sort(
       (
         a: PurchaseOrder & { __itemsCount?: number; __totalQty?: number },
-        b: PurchaseOrder & { __itemsCount?: number; __totalQty?: number }
+        b: PurchaseOrder & { __itemsCount?: number; __totalQty?: number },
       ) => {
         const dir = sortOrder === "asc" ? 1 : -1;
         let aVal: string | number;
@@ -376,7 +377,7 @@ export default function PurchaseOrderPage() {
         if (aVal < bVal) return -1 * dir;
         if (aVal > bVal) return 1 * dir;
         return 0;
-      }
+      },
     );
 
     return withCounts;
@@ -440,7 +441,7 @@ export default function PurchaseOrderPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -450,7 +451,7 @@ export default function PurchaseOrderPage() {
       (po: PurchaseOrder) =>
         po.status === "DRAFT" ||
         po.status === "ORDERED" ||
-        po.status === "PARTIALLY_RECEIVED"
+        po.status === "PARTIALLY_RECEIVED",
     );
   }, [pos]);
 
@@ -644,7 +645,7 @@ export default function PurchaseOrderPage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
       });
 
@@ -686,7 +687,7 @@ export default function PurchaseOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
         setShowMaterialsReceivedModal(false);
         setSelectedPOId("");
@@ -703,7 +704,7 @@ export default function PurchaseOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
         // Still refresh to show partial updates
         fetchPOs();
@@ -716,7 +717,7 @@ export default function PurchaseOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Failed to update received quantities", {
@@ -751,7 +752,7 @@ export default function PurchaseOrderPage() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -791,7 +792,7 @@ export default function PurchaseOrderPage() {
 
   const handleInvoiceFileChange = (
     poId: string,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -817,7 +818,7 @@ export default function PurchaseOrderPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -875,7 +876,7 @@ export default function PurchaseOrderPage() {
         `/api/purchase_order/${poPendingDelete.id}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -897,7 +898,7 @@ export default function PurchaseOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       }
     } catch (err) {
@@ -926,7 +927,7 @@ export default function PurchaseOrderPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -946,7 +947,7 @@ export default function PurchaseOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       }
     } catch (err) {
@@ -957,7 +958,7 @@ export default function PurchaseOrderPage() {
           {
             position: "top-right",
             autoClose: 3000,
-          }
+          },
         );
       } else {
         toast.error("Failed to cancel purchase order", {
@@ -1168,13 +1169,16 @@ export default function PurchaseOrderPage() {
                     <h1 className="text-xl font-bold text-slate-600">
                       Purchase Orders
                     </h1>
-                    <button
-                      onClick={() => setShowCreatePOModal(true)}
-                      className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-primary/80 hover:bg-primary text-white rounded-lg transition-all duration-200 text-xs font-medium"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Create Purchase Order
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() => setShowCreatePOModal(true)}
+                        className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-primary/80 hover:bg-primary text-white rounded-lg transition-all duration-200 text-xs font-medium"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Create Purchase Order
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1321,7 +1325,7 @@ export default function PurchaseOrderPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -1466,12 +1470,12 @@ export default function PurchaseOrderPage() {
                                     <td className="px-3 py-2 text-xs text-slate-700">
                                       {po.ordered_at
                                         ? `Ordered: ${new Date(
-                                            po.ordered_at
+                                            po.ordered_at,
                                           ).toLocaleDateString()}`
                                         : `Created: ${
                                             po.createdAt
                                               ? new Date(
-                                                  po.createdAt
+                                                  po.createdAt,
                                                 ).toLocaleDateString()
                                               : "-"
                                           }`}
@@ -1482,7 +1486,7 @@ export default function PurchaseOrderPage() {
                                           sum +
                                           (parseFloat(String(it.quantity)) ||
                                             0),
-                                        0
+                                        0,
                                       )}
                                     </td>
                                     <td className="px-3 py-2 text-xs text-slate-700">
@@ -1494,14 +1498,15 @@ export default function PurchaseOrderPage() {
                                           po.status === "DRAFT"
                                             ? "bg-yellow-100 text-yellow-800"
                                             : po.status === "ORDERED"
-                                            ? "bg-blue-100 text-blue-800"
-                                            : po.status === "PARTIALLY_RECEIVED"
-                                            ? "bg-purple-100 text-purple-800"
-                                            : po.status === "FULLY_RECEIVED"
-                                            ? "bg-green-100 text-green-800"
-                                            : po.status === "CANCELLED"
-                                            ? "bg-red-100 text-red-800"
-                                            : "bg-gray-100 text-gray-800"
+                                              ? "bg-blue-100 text-blue-800"
+                                              : po.status ===
+                                                  "PARTIALLY_RECEIVED"
+                                                ? "bg-purple-100 text-purple-800"
+                                                : po.status === "FULLY_RECEIVED"
+                                                  ? "bg-green-100 text-green-800"
+                                                  : po.status === "CANCELLED"
+                                                    ? "bg-red-100 text-red-800"
+                                                    : "bg-gray-100 text-gray-800"
                                         }`}
                                       >
                                         {po.status}
@@ -1540,7 +1545,7 @@ export default function PurchaseOrderPage() {
                                                     </span>{" "}
                                                     {po.createdAt
                                                       ? new Date(
-                                                          po.createdAt
+                                                          po.createdAt,
                                                         ).toLocaleString()
                                                       : "No date"}
                                                   </span>
@@ -1553,7 +1558,7 @@ export default function PurchaseOrderPage() {
                                                         Ordered:
                                                       </span>{" "}
                                                       {new Date(
-                                                        po.ordered_at
+                                                        po.ordered_at,
                                                       ).toLocaleDateString()}
                                                     </span>
                                                   </div>
@@ -1568,7 +1573,7 @@ export default function PurchaseOrderPage() {
                                                       <span className="font-semibold">
                                                         $
                                                         {formatMoney(
-                                                          po.total_amount
+                                                          po.total_amount,
                                                         )}
                                                       </span>
                                                     </span>
@@ -1584,7 +1589,7 @@ export default function PurchaseOrderPage() {
                                                       <span className="font-semibold">
                                                         $
                                                         {formatMoney(
-                                                          po.delivery_charge
+                                                          po.delivery_charge,
                                                         )}
                                                       </span>
                                                     </span>
@@ -1598,7 +1603,7 @@ export default function PurchaseOrderPage() {
                                                         Invoice Date:
                                                       </span>{" "}
                                                       {new Date(
-                                                        po.invoice_date
+                                                        po.invoice_date,
                                                       ).toLocaleDateString()}
                                                     </span>
                                                   </div>
@@ -1726,7 +1731,7 @@ export default function PurchaseOrderPage() {
                                                           isExisting: true,
                                                         } as ViewFile);
                                                         setShowInvoicePreview(
-                                                          true
+                                                          true,
                                                         );
                                                       }}
                                                       className="cursor-pointer px-2 py-1 border border-slate-300 rounded-lg hover:bg-slate-50 text-xs text-slate-700"
@@ -1737,7 +1742,7 @@ export default function PurchaseOrderPage() {
                                                       onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleInvoiceDelete(
-                                                          po.id
+                                                          po.id,
                                                         );
                                                       }}
                                                       disabled={
@@ -1809,7 +1814,7 @@ export default function PurchaseOrderPage() {
                                                           e.stopPropagation();
                                                           handleInvoiceFileChange(
                                                             po.id,
-                                                            e
+                                                            e,
                                                           );
                                                         }}
                                                         className="hidden"
@@ -1890,21 +1895,21 @@ export default function PurchaseOrderPage() {
                                                       const orderedQty =
                                                         parseFloat(
                                                           String(
-                                                            item.quantity || 0
-                                                          )
+                                                            item.quantity || 0,
+                                                          ),
                                                         ) || 0;
                                                       const receivedQty =
                                                         parseFloat(
                                                           String(
                                                             item.quantity_received ||
-                                                              0
-                                                          )
+                                                              0,
+                                                          ),
                                                         ) || 0;
                                                       const remainingQty =
                                                         Math.max(
                                                           0,
                                                           orderedQty -
-                                                            receivedQty
+                                                            receivedQty,
                                                         );
                                                       const measurementUnit =
                                                         item.item
@@ -2246,8 +2251,8 @@ export default function PurchaseOrderPage() {
                                                               $
                                                               {parseFloat(
                                                                 String(
-                                                                  item.unit_price
-                                                                )
+                                                                  item.unit_price,
+                                                                ),
                                                               ).toFixed(2)}
                                                             </span>
                                                           </td>
@@ -2257,20 +2262,20 @@ export default function PurchaseOrderPage() {
                                                               {formatMoney(
                                                                 parseFloat(
                                                                   String(
-                                                                    item.quantity
-                                                                  )
+                                                                    item.quantity,
+                                                                  ),
                                                                 ) *
                                                                   parseFloat(
                                                                     String(
-                                                                      item.unit_price
-                                                                    )
-                                                                  )
+                                                                      item.unit_price,
+                                                                    ),
+                                                                  ),
                                                               )}
                                                             </span>
                                                           </td>
                                                         </tr>
                                                       );
-                                                    }
+                                                    },
                                                   )}
                                                 </tbody>
                                               </table>
@@ -2341,15 +2346,15 @@ export default function PurchaseOrderPage() {
                         selectedPOId
                           ? `${
                               pos.find(
-                                (p: PurchaseOrder) => p.id === selectedPOId
+                                (p: PurchaseOrder) => p.id === selectedPOId,
                               )?.order_no || ""
                             } - ${
                               pos.find(
-                                (p: PurchaseOrder) => p.id === selectedPOId
+                                (p: PurchaseOrder) => p.id === selectedPOId,
                               )?.supplier?.name || "Unknown Supplier"
                             } (${
                               pos.find(
-                                (p: PurchaseOrder) => p.id === selectedPOId
+                                (p: PurchaseOrder) => p.id === selectedPOId,
                               )?.status || ""
                             })`
                           : poSearchTerm
@@ -2464,7 +2469,7 @@ export default function PurchaseOrderPage() {
                       <tbody className="bg-white divide-y divide-slate-200">
                         {selectedPO.items.map((item: POItem) => {
                           const orderedQty = parseFloat(
-                            String(item.quantity || 0)
+                            String(item.quantity || 0),
                           );
                           const existingReceived = getExistingReceived(item);
                           const remainingQty = getRemaining(item);
@@ -2707,7 +2712,7 @@ export default function PurchaseOrderPage() {
                                   onChange={(e) =>
                                     handleQuantityReceivedChange(
                                       item.id,
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className={`w-24 text-sm text-slate-800 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${

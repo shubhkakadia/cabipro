@@ -12,7 +12,7 @@ import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -30,7 +30,7 @@ export async function GET(
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -56,13 +56,13 @@ export async function GET(
         message: "Statements fetched successfully",
         data: statements,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error fetching statements:", error);
@@ -71,14 +71,14 @@ export async function GET(
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -95,7 +95,7 @@ export async function POST(
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -113,28 +113,31 @@ export async function POST(
     if (!file) {
       return NextResponse.json(
         { status: false, message: "File is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!month_year) {
       return NextResponse.json(
         { status: false, message: "Month/Year is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!due_date) {
       return NextResponse.json(
         { status: false, message: "Due date is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    if (!payment_status || !["PENDING", "PAID"].includes(payment_status as string)) {
+    if (
+      !payment_status ||
+      !["PENDING", "PAID"].includes(payment_status as string)
+    ) {
       return NextResponse.json(
         { status: false, message: "Payment status must be PENDING or PAID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -145,7 +148,10 @@ export async function POST(
     }
 
     // Handle file upload (must happen before transaction)
-    const sanitizedMonthYear = (month_year as string).replace(/[^a-zA-Z0-9_-]/g, "_");
+    const sanitizedMonthYear = (month_year as string).replace(
+      /[^a-zA-Z0-9_-]/g,
+      "_",
+    );
     const uploadResult = await uploadFile(file, {
       subDir: `suppliers/${id}/statements`,
       filenameStrategy: "id-based",
@@ -193,7 +199,7 @@ export async function POST(
       } catch (deleteError) {
         console.error(
           `Failed to clean up uploaded file after transaction failure: ${uploadResult.relativePath}`,
-          deleteError
+          deleteError,
         );
       }
       // Re-throw the original transaction error
@@ -205,18 +211,20 @@ export async function POST(
       "supplier_statement",
       statement.id,
       "CREATE",
-      `Statement uploaded successfully: ${statement.month_year} for supplier: ${supplier.name}`
+      `Statement uploaded successfully: ${statement.month_year} for supplier: ${supplier.name}`,
     );
     if (!logged) {
-      console.error(`Failed to log statement upload: ${statement.id} - ${statement.month_year}`);
+      console.error(
+        `Failed to log statement upload: ${statement.id} - ${statement.month_year}`,
+      );
       return NextResponse.json(
         {
           status: true,
           message: "Statement uploaded successfully",
           data: statement,
-          warning: "Note: Creation succeeded but logging failed"
+          warning: "Note: Creation succeeded but logging failed",
         },
-        { status: 201 }
+        { status: 201 },
       );
     }
     return NextResponse.json(
@@ -225,13 +233,13 @@ export async function POST(
         message: "Statement uploaded successfully",
         data: statement,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error uploading statement:", error);
@@ -240,7 +248,7 @@ export async function POST(
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

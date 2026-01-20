@@ -83,12 +83,12 @@ interface GroupedItemsTableProps {
   onOpenPO: (
     supplierName: string,
     supplierId: string,
-    mtoId: string | null
+    mtoId: string | null,
   ) => void;
   onUpdateQuantityOrdered: (
     mtoId: string,
     mtoItemId: string,
-    value: number
+    value: number,
   ) => void;
 }
 
@@ -105,7 +105,7 @@ const GroupedItemsTable: React.FC<GroupedItemsTableProps> = ({
   const [isSavingQuantityOrderedById, setIsSavingQuantityOrderedById] =
     useState<Record<string, boolean>>({});
   const quantityOrderedTimersRef = useRef<Map<string, NodeJS.Timeout>>(
-    new Map()
+    new Map(),
   );
 
   // Initialize draft values (don't clobber what the user is typing)
@@ -142,12 +142,12 @@ const GroupedItemsTable: React.FC<GroupedItemsTableProps> = ({
       const response = await axios.patch(
         `/api/materials_to_order_item/${mtoItemId}`,
         { quantity_ordered: parsed },
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       if (!response?.data?.status) {
         throw new Error(
-          response?.data?.message || "Failed to update quantity ordered"
+          response?.data?.message || "Failed to update quantity ordered",
         );
       }
 
@@ -163,7 +163,7 @@ const GroupedItemsTable: React.FC<GroupedItemsTableProps> = ({
       console.error("Failed to update quantity_ordered:", err);
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.message || err.message || "Failed to save"
+          err.response?.data?.message || err.message || "Failed to save",
         );
       } else {
         toast.error("Failed to save");
@@ -178,7 +178,7 @@ const GroupedItemsTable: React.FC<GroupedItemsTableProps> = ({
 
   const handleQuantityOrderedChange = (
     mtoItemId: string,
-    nextValue: string
+    nextValue: string,
   ) => {
     setQuantityOrderedDraftById((prev) => ({
       ...prev,
@@ -423,16 +423,18 @@ const GroupedItemsTable: React.FC<GroupedItemsTableProps> = ({
                             {item.quantity} {item.item?.measurement_unit}
                           </span>
                         </div>
-                        {item.quantity_ordered_po && item.quantity_ordered_po > 0 && (
-                          <div className="flex items-center gap-1.5 text-blue-600 text-xs">
-                            <span>Ordered: {item.quantity_ordered_po}</span>
-                          </div>
-                        )}
-                        {item.quantity_received && item.quantity_received > 0 && (
-                          <div className="flex items-center gap-1.5 text-green-600 text-xs">
-                            <span>Received: {item.quantity_received}</span>
-                          </div>
-                        )}
+                        {item.quantity_ordered_po &&
+                          item.quantity_ordered_po > 0 && (
+                            <div className="flex items-center gap-1.5 text-blue-600 text-xs">
+                              <span>Ordered: {item.quantity_ordered_po}</span>
+                            </div>
+                          )}
+                        {item.quantity_received &&
+                          item.quantity_received > 0 && (
+                            <div className="flex items-center gap-1.5 text-green-600 text-xs">
+                              <span>Received: {item.quantity_received}</span>
+                            </div>
+                          )}
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
@@ -545,13 +547,13 @@ export default function MaterialsToOrder({
     supplier_id: string;
   } | null>(null);
   const [mtosForSelectedSupplier, setMtosForSelectedSupplier] = useState<MTO[]>(
-    []
+    [],
   );
   const [preSelectedMtoId, setPreSelectedMtoId] = useState<string | null>(null);
   // Media popup state
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [selectedMtoForMedia, setSelectedMtoForMedia] = useState<MTO | null>(
-    null
+    null,
   );
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -573,7 +575,7 @@ export default function MaterialsToOrder({
   const handleUpdateQuantityOrdered = (
     mtoId: string,
     mtoItemId: string,
-    value: number
+    value: number,
   ) => {
     setMaterialsToOrder((prev) =>
       (prev || []).map((mto) => {
@@ -581,10 +583,10 @@ export default function MaterialsToOrder({
         return {
           ...mto,
           items: (mto.items || []).map((it) =>
-            it.id === mtoItemId ? { ...it, quantity_ordered: value } : it
+            it.id === mtoItemId ? { ...it, quantity_ordered: value } : it,
           ),
         };
-      })
+      }),
     );
   };
 
@@ -595,7 +597,7 @@ export default function MaterialsToOrder({
         `/api/materials_to_order/by-supplier/${supplierId}`,
         {
           withCredentials: true,
-        }
+        },
       );
       if (response.data.status) {
         const data = response.data.data || [];
@@ -611,7 +613,7 @@ export default function MaterialsToOrder({
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
-          }
+          },
         );
       } else {
         toast.error("Failed to fetch materials to order", {
@@ -634,7 +636,7 @@ export default function MaterialsToOrder({
   const openCreatePOForSupplier = (
     supplierName: string,
     supplierId: string,
-    mtoId: string | null = null
+    mtoId: string | null = null,
   ) => {
     // Build materialsToOrder list filtered to only include items from the selected supplier
     const filteredMTOs = (materialsToOrder || [])
@@ -642,7 +644,7 @@ export default function MaterialsToOrder({
         const supplierItems = (mto.items || []).filter(
           (it) =>
             (it.item?.supplier?.supplier_id || it.item?.supplier_id || null) ===
-            supplierId
+            supplierId,
         );
         return { ...mto, items: supplierItems };
       })
@@ -682,7 +684,7 @@ export default function MaterialsToOrder({
     const list = materialsToOrder.filter((mto) =>
       mtoActiveTab === "active"
         ? mto.status === "DRAFT" || mto.status === "PARTIALLY_ORDERED"
-        : mto.status === "FULLY_ORDERED" || mto.status === "CLOSED"
+        : mto.status === "FULLY_ORDERED" || mto.status === "CLOSED",
     );
 
     // Precompute counts
@@ -690,7 +692,7 @@ export default function MaterialsToOrder({
       const itemsCount = mto.items?.length || 0;
       const itemsRemainingCount =
         mto.items?.filter(
-          (it) => (it.quantity_ordered_po || 0) < (it.quantity || 0)
+          (it) => (it.quantity_ordered_po || 0) < (it.quantity || 0),
         ).length || 0;
       return {
         ...mto,
@@ -784,7 +786,7 @@ export default function MaterialsToOrder({
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -838,7 +840,7 @@ export default function MaterialsToOrder({
         `/api/uploads/materials-to-order/${selectedMtoForMedia.id}?mediaId=${pendingDeleteMediaId}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -848,7 +850,7 @@ export default function MaterialsToOrder({
         });
         // Remove from local state
         setMediaFiles((prev) =>
-          prev.filter((f) => f.id !== pendingDeleteMediaId)
+          prev.filter((f) => f.id !== pendingDeleteMediaId),
         );
         // Refresh MTO list
         fetchMaterialsToOrder();
@@ -1010,7 +1012,7 @@ export default function MaterialsToOrder({
                                 >
                                   {lot.name}
                                 </span>
-                              )
+                              ),
                             )}
                           </div>
                         </div>
@@ -1022,7 +1024,8 @@ export default function MaterialsToOrder({
                         {mto.__itemsRemaining ??
                           (mto.items?.filter(
                             (it) =>
-                              (it.quantity_ordered_po || 0) < (it.quantity || 0)
+                              (it.quantity_ordered_po || 0) <
+                              (it.quantity || 0),
                           ).length ||
                             0)}
                       </td>
@@ -1032,10 +1035,10 @@ export default function MaterialsToOrder({
                             mto.status === "DRAFT"
                               ? "bg-yellow-100 text-yellow-800"
                               : mto.status === "PARTIALLY_ORDERED"
-                              ? "bg-blue-100 text-blue-800"
-                              : mto.status === "FULLY_ORDERED"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
+                                ? "bg-blue-100 text-blue-800"
+                                : mto.status === "FULLY_ORDERED"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {mto.status}

@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
               status: false,
               message: "order_no is required when uploading a file",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
     if (!supplier_id) {
       return NextResponse.json(
         { status: false, message: "supplier_id is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     if (!supplier) {
       return NextResponse.json(
         { status: false, message: "Supplier not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
     if (!order_no) {
       return NextResponse.json(
         { status: false, message: "order_no is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
           message:
             "Purchase order already exists with this order_no: " + order_no,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
       if (!mto) {
         return NextResponse.json(
           { status: false, message: "Materials to order not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
     }
@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
           const orderedThisPO = Number(poi.quantity || 0);
           const cappedOrdered = Math.min(
             Number(mtoItem.quantity),
-            alreadyOrdered + orderedThisPO
+            alreadyOrdered + orderedThisPO,
           );
           if (cappedOrdered !== alreadyOrdered) {
             await tx.materials_to_order_item.update({
@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
           mtoItems.length > 0 &&
           mtoItems.every(
             (mi) =>
-              Number(mi.quantity_ordered_po || 0) === Number(mi.quantity || 0)
+              Number(mi.quantity_ordered_po || 0) === Number(mi.quantity || 0),
           );
         await tx.materials_to_order.update({
           where: {
@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
       "purchase_order",
       result.id,
       "CREATE",
-      `Purchase order created successfully: ${result.order_no}`
+      `Purchase order created successfully: ${result.order_no}`,
     );
 
     if (!logged) {
@@ -351,19 +351,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Creation succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/purchase_order/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -12,7 +12,7 @@ function processDateTimeField(value: string | null | undefined): Date | null {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -44,7 +44,7 @@ export async function PATCH(
     if (!existingStage) {
       return NextResponse.json(
         { status: false, message: "Stage not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function PATCH(
             message:
               "One or more employees not found or do not belong to your organization",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
     }
@@ -94,7 +94,8 @@ export async function PATCH(
     }
 
     // Use transaction to ensure atomicity - all operations succeed or all fail
-    const stage = await prisma.$transaction(async (tx) => {
+    // Use transaction to ensure atomicity - all operations succeed or all fail
+    await prisma.$transaction(async (tx) => {
       // Update the stage basic information
       const updatedStage = await tx.stage.update({
         where: { id: id },
@@ -160,7 +161,7 @@ export async function PATCH(
     if (!updatedStage) {
       return NextResponse.json(
         { status: false, message: "Failed to fetch updated stage" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -171,7 +172,7 @@ export async function PATCH(
       "UPDATE",
       `Stage updated successfully: ${updatedStage.name} for lot: ${
         updatedStage.lot.lot_id
-      } and project: ${updatedStage.lot.project?.name || "Unknown"}`
+      } and project: ${updatedStage.lot.project?.name || "Unknown"}`,
     );
 
     if (!logged) {
@@ -187,26 +188,26 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/stage/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -238,7 +239,7 @@ export async function DELETE(
     if (!stageForLogging) {
       return NextResponse.json(
         { status: false, message: "Stage not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -253,12 +254,12 @@ export async function DELETE(
       "DELETE",
       `Stage deleted successfully: ${stageForLogging.name} for lot: ${
         stageForLogging.lot.lot_id
-      } and project: ${stageForLogging.lot.project?.name || "Unknown"}`
+      } and project: ${stageForLogging.lot.project?.name || "Unknown"}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log stage deletion: ${id} - ${stageForLogging.name}`
+        `Failed to log stage deletion: ${id} - ${stageForLogging.name}`,
       );
       return NextResponse.json(
         {
@@ -267,25 +268,25 @@ export async function DELETE(
           data: stage,
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "Stage deleted successfully", data: stage },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/stage/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

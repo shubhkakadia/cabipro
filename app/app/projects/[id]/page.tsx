@@ -187,7 +187,7 @@ export default function ProjectDetailPage() {
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
     getUploadProgressHandler: (
-      fileCount: number
+      fileCount: number,
     ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
@@ -235,7 +235,7 @@ export default function ProjectDetailPage() {
         if (selectedLot?.id || selectedLot?.lot_id) {
           const stillExists = projectData.lots?.find(
             (l: Lot) =>
-              l.id === selectedLot.id || l.lot_id === selectedLot.lot_id
+              l.id === selectedLot.id || l.lot_id === selectedLot.lot_id,
           );
           if (stillExists) {
             setSelectedLot(stillExists);
@@ -249,7 +249,7 @@ export default function ProjectDetailPage() {
                   return match ? parseInt(match[1], 10) : 0;
                 };
                 return getLotNumber(a.lot_id) - getLotNumber(b.lot_id);
-              }
+              },
             );
             const firstLot = sortedLots.length > 0 ? sortedLots[0] : null;
             setSelectedLot(firstLot);
@@ -263,7 +263,7 @@ export default function ProjectDetailPage() {
                 return match ? parseInt(match[1], 10) : 0;
               };
               return getLotNumber(a.lot_id) - getLotNumber(b.lot_id);
-            }
+            },
           );
           const firstLot = sortedLots.length > 0 ? sortedLots[0] : null;
           setSelectedLot(firstLot);
@@ -276,7 +276,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching project data"
+            "An error occurred while fetching project data",
         );
       } else {
         setError("An error occurred while fetching project data");
@@ -316,7 +316,7 @@ export default function ProjectDetailPage() {
         if (axios.isAxiosError(err)) {
           setError(
             err.response?.data?.message ||
-              "An error occurred while fetching lot data"
+              "An error occurred while fetching lot data",
           );
         } else {
           setError("An error occurred while fetching lot data");
@@ -325,7 +325,7 @@ export default function ProjectDetailPage() {
         setLoading(false);
       }
     },
-    [selectedLot?.id, selectedLotData]
+    [selectedLot?.id, selectedLotData],
   );
 
   const fetchClients = useCallback(async () => {
@@ -344,7 +344,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to fetch clients. Please try again."
+            "Failed to fetch clients. Please try again.",
         );
       } else {
         toast.error("Failed to fetch clients. Please try again.");
@@ -367,7 +367,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to fetch employees. Please try again."
+            "Failed to fetch employees. Please try again.",
         );
       } else {
         toast.error("Failed to fetch employees. Please try again.");
@@ -395,7 +395,7 @@ export default function ProjectDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -412,7 +412,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to assign client. Please try again."
+            "Failed to assign client. Please try again.",
         );
       } else {
         toast.error("Failed to assign client. Please try again.");
@@ -447,7 +447,7 @@ export default function ProjectDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -462,7 +462,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to remove client. Please try again."
+            "Failed to remove client. Please try again.",
         );
       } else {
         toast.error("Failed to remove client. Please try again.");
@@ -528,7 +528,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to create lot. Please try again."
+            "Failed to create lot. Please try again.",
         );
       } else {
         toast.error("Failed to create lot. Please try again.");
@@ -661,7 +661,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to delete lot. Please try again."
+            "Failed to delete lot. Please try again.",
         );
       } else {
         toast.error("Failed to delete lot. Please try again.");
@@ -693,7 +693,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to delete project. Please try again."
+            "Failed to delete project. Please try again.",
         );
       } else {
         toast.error("Failed to delete project. Please try again.");
@@ -732,7 +732,7 @@ export default function ProjectDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       if (response.data.status) {
         toast.success("Project updated successfully");
@@ -747,7 +747,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to update project. Please try again."
+            "Failed to update project. Please try again.",
         );
       } else {
         toast.error("Failed to update project. Please try again.");
@@ -771,7 +771,7 @@ export default function ProjectDetailPage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.data.status) {
@@ -791,7 +791,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to update lot. Please try again."
+            "Failed to update lot. Please try again.",
         );
       } else {
         toast.error("Failed to update lot. Please try again.");
@@ -813,7 +813,7 @@ export default function ProjectDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -835,7 +835,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to update status. Please try again."
+            "Failed to update status. Please try again.",
         );
       } else {
         toast.error("Failed to update status. Please try again.");
@@ -844,7 +844,7 @@ export default function ProjectDetailPage() {
   };
 
   const handleAssignInstaller = async (
-    newInstallerEmployeeId: string | null
+    newInstallerEmployeeId: string | null,
   ) => {
     if (!selectedLotData?.id) return;
     try {
@@ -858,12 +858,14 @@ export default function ProjectDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
         toast.success(
-          newInstallerEmployeeId ? "Installer assigned" : "Installer unassigned"
+          newInstallerEmployeeId
+            ? "Installer assigned"
+            : "Installer unassigned",
         );
         setShowInstallerDropdown(false);
         setInstallerSearchTerm("");
@@ -876,7 +878,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to update installer. Please try again."
+            "Failed to update installer. Please try again.",
         );
       } else {
         toast.error("Failed to update installer. Please try again.");
@@ -890,7 +892,7 @@ export default function ProjectDetailPage() {
   const validateDateInput = (
     startDate: string,
     endDate: string,
-    fieldChanged: string
+    fieldChanged: string,
   ): boolean => {
     if (!startDate || !endDate) return true;
 
@@ -932,7 +934,9 @@ export default function ProjectDetailPage() {
       (client.id || "")
         .toLowerCase()
         .includes(clientSearchTerm.toLowerCase()) ||
-      (client.type || "").toLowerCase().includes(clientSearchTerm.toLowerCase())
+      (client.type || "")
+        .toLowerCase()
+        .includes(clientSearchTerm.toLowerCase()),
   );
 
   // Tab to enum mapping
@@ -986,7 +990,7 @@ export default function ProjectDetailPage() {
     const tabEnum = getTabEnum(activeTab);
     const currentTab = selectedLotData.tabs.find(
       (tab: { tab: string; files?: FileData[]; [key: string]: unknown }) =>
-        tab.tab.toLowerCase() === tabEnum.toLowerCase()
+        tab.tab.toLowerCase() === tabEnum.toLowerCase(),
     );
 
     return (currentTab?.files as FileData[]) || [];
@@ -1079,7 +1083,7 @@ export default function ProjectDetailPage() {
     return {
       preparedByOffice: Math.round((preparedByOfficeCount / totalFiles) * 100),
       preparedByProduction: Math.round(
-        (preparedByProductionCount / totalFiles) * 100
+        (preparedByProductionCount / totalFiles) * 100,
       ),
       deliveredToSite: Math.round((deliveredToSiteCount / totalFiles) * 100),
       installed: Math.round((installedCount / totalFiles) * 100),
@@ -1136,8 +1140,8 @@ export default function ProjectDetailPage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
-        )
+          },
+        ),
       );
 
       await Promise.all(updatePromises);
@@ -1146,11 +1150,11 @@ export default function ProjectDetailPage() {
           stage === "preparedByOffice"
             ? "Prepared by Office"
             : stage === "preparedByProduction"
-            ? "Prepared by Production"
-            : stage === "deliveredToSite"
-            ? "Delivered to Site"
-            : "Installed"
-        }`
+              ? "Prepared by Production"
+              : stage === "deliveredToSite"
+                ? "Delivered to Site"
+                : "Installed"
+        }`,
       );
 
       // Refresh lot data to get updated files
@@ -1160,7 +1164,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to mark all files. Please try again."
+            "Failed to mark all files. Please try again.",
         );
       } else {
         toast.error("Failed to mark all files. Please try again.");
@@ -1233,7 +1237,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to upload files. Please try again."
+            "Failed to upload files. Please try again.",
         );
       } else {
         toast.error("Failed to upload files. Please try again.");
@@ -1292,7 +1296,7 @@ export default function ProjectDetailPage() {
     const allFiles = getCurrentTabFiles();
     const sortedFiles = sortFilesByType(allFiles);
     const currentIndex = sortedFiles.findIndex(
-      (f: FileData) => f.id === file.id || f.filename === file.filename
+      (f: FileData) => f.id === file.id || f.filename === file.filename,
     );
 
     setSelectedFile({
@@ -1344,7 +1348,7 @@ export default function ProjectDetailPage() {
         }/${getCategorySlug(tabEnum)}/${fileToDelete.filename}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1361,7 +1365,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to delete file. Please try again."
+            "Failed to delete file. Please try again.",
         );
       } else {
         toast.error("Failed to delete file. Please try again.");
@@ -1396,7 +1400,7 @@ export default function ProjectDetailPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -1413,7 +1417,7 @@ export default function ProjectDetailPage() {
       if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message ||
-            "Failed to save notes. Please try again."
+            "Failed to save notes. Please try again.",
         );
       } else {
         toast.error("Failed to save notes. Please try again.");
@@ -1452,13 +1456,13 @@ export default function ProjectDetailPage() {
       // if lot_tab exists, update it, otherwise create it
       const lotTab = selectedLotData.tabs.find(
         (tab: { tab: string; id?: string; [key: string]: unknown }) =>
-          tab.tab.toLowerCase() === tabEnum.toLowerCase()
+          tab.tab.toLowerCase() === tabEnum.toLowerCase(),
       );
       if (lotTab?.id) {
         response = await axios.patch(
           `/api/lot_tab_notes/${lotTab.id}`,
           { notes: content },
-          { withCredentials: true }
+          { withCredentials: true },
         );
       } else {
         response = await axios.post(
@@ -1468,7 +1472,7 @@ export default function ProjectDetailPage() {
             tab: tabEnum,
             notes: content,
           },
-          { withCredentials: true }
+          { withCredentials: true },
         );
       }
       if (response.data.status) {
@@ -1480,7 +1484,7 @@ export default function ProjectDetailPage() {
         // Only update if we need to (new tab created) or if ID changed
         const existingTab = selectedLotData.tabs.find(
           (tab: { tab: string; id?: string; [key: string]: unknown }) =>
-            tab.tab.toLowerCase() === tabEnum.toLowerCase()
+            tab.tab.toLowerCase() === tabEnum.toLowerCase(),
         );
         const isNewTab = !existingTab;
         const needsIdUpdate =
@@ -1495,7 +1499,7 @@ export default function ProjectDetailPage() {
             const updatedTabs = [...prevData.tabs];
             const existingTabIndex = updatedTabs.findIndex(
               (tab: { tab: string; [key: string]: unknown }) =>
-                tab.tab.toLowerCase() === tabEnum.toLowerCase()
+                tab.tab.toLowerCase() === tabEnum.toLowerCase(),
             );
 
             if (existingTabIndex >= 0) {
@@ -1830,16 +1834,16 @@ export default function ProjectDetailPage() {
                                       <button
                                         onClick={() =>
                                           setShowStatusDropdown(
-                                            !showStatusDropdown
+                                            !showStatusDropdown,
                                           )
                                         }
                                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
                                           selectedLotData.status === "COMPLETED"
                                             ? "bg-green-50 text-green-800 border-green-200 hover:bg-green-100"
                                             : selectedLotData.status ===
-                                              "CANCELLED"
-                                            ? "bg-red-50 text-red-800 border-red-200 hover:bg-red-100"
-                                            : "bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100"
+                                                "CANCELLED"
+                                              ? "bg-red-50 text-red-800 border-red-200 hover:bg-red-100"
+                                              : "bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100"
                                         }`}
                                       >
                                         <span>
@@ -1847,9 +1851,9 @@ export default function ProjectDetailPage() {
                                           "COMPLETED"
                                             ? "Completed"
                                             : selectedLotData.status ===
-                                              "CANCELLED"
-                                            ? "Cancelled"
-                                            : "Active"}
+                                                "CANCELLED"
+                                              ? "Cancelled"
+                                              : "Active"}
                                         </span>
                                         <ChevronDown
                                           className={`w-3 h-3 transition-transform ${
@@ -1860,7 +1864,7 @@ export default function ProjectDetailPage() {
                                         />
                                       </button>
                                       {showStatusDropdown && (
-                                        <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-[140px] overflow-hidden">
+                                        <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-35 overflow-hidden">
                                           <button
                                             onClick={() =>
                                               handleStatusUpdate("ACTIVE")
@@ -1909,16 +1913,16 @@ export default function ProjectDetailPage() {
                                         selectedLotData.status === "COMPLETED"
                                           ? "bg-green-50 text-green-800 border-green-200"
                                           : selectedLotData.status ===
-                                            "CANCELLED"
-                                          ? "bg-red-50 text-red-800 border-red-200"
-                                          : "bg-blue-50 text-blue-800 border-blue-200"
+                                              "CANCELLED"
+                                            ? "bg-red-50 text-red-800 border-red-200"
+                                            : "bg-blue-50 text-blue-800 border-blue-200"
                                       }`}
                                     >
                                       {selectedLotData.status === "COMPLETED"
                                         ? "Completed"
                                         : selectedLotData.status === "CANCELLED"
-                                        ? "Cancelled"
-                                        : "Active"}
+                                          ? "Cancelled"
+                                          : "Active"}
                                     </span>
                                   )}
                                 </div>
@@ -1980,7 +1984,7 @@ export default function ProjectDetailPage() {
                                         <p className="text-sm text-slate-900 mt-1">
                                           {selectedLotData.startDate
                                             ? new Date(
-                                                selectedLotData.startDate
+                                                selectedLotData.startDate,
                                               ).toLocaleDateString("en-AU", {
                                                 year: "numeric",
                                                 month: "short",
@@ -2015,7 +2019,7 @@ export default function ProjectDetailPage() {
                                         <p className="text-sm text-slate-900 mt-1">
                                           {selectedLotData.installationDueDate
                                             ? new Date(
-                                                selectedLotData.installationDueDate
+                                                selectedLotData.installationDueDate,
                                               ).toLocaleDateString("en-AU", {
                                                 year: "numeric",
                                                 month: "short",
@@ -2191,7 +2195,7 @@ export default function ProjectDetailPage() {
                                               const installerHref = `/app/employees/${selectedLotData.installer.employee_id}`;
                                               window.open(
                                                 installerHref,
-                                                "_blank"
+                                                "_blank",
                                               );
                                             }
                                           }}
@@ -2587,7 +2591,7 @@ export default function ProjectDetailPage() {
                                         checked={filterPreparedByOffice}
                                         onChange={(e) =>
                                           setFilterPreparedByOffice(
-                                            e.target.checked
+                                            e.target.checked,
                                           )
                                         }
                                         className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary cursor-pointer"
@@ -2602,7 +2606,7 @@ export default function ProjectDetailPage() {
                                         checked={filterPreparedByProduction}
                                         onChange={(e) =>
                                           setFilterPreparedByProduction(
-                                            e.target.checked
+                                            e.target.checked,
                                           )
                                         }
                                         className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary cursor-pointer"
@@ -2617,7 +2621,7 @@ export default function ProjectDetailPage() {
                                         checked={filterDeliveredToSite}
                                         onChange={(e) =>
                                           setFilterDeliveredToSite(
-                                            e.target.checked
+                                            e.target.checked,
                                           )
                                         }
                                         className="w-4 h-4 text-secondary border-slate-300 rounded focus:ring-2 focus:ring-secondary cursor-pointer"
@@ -2904,7 +2908,7 @@ export default function ProjectDetailPage() {
                 {(() => {
                   const all = Array.isArray(employees) ? employees : [];
                   const installerOnly = all.filter((e: Employee) =>
-                    (e?.role || "").toLowerCase().includes("installer")
+                    (e?.role || "").toLowerCase().includes("installer"),
                   );
                   const source = installerOnly.length > 0 ? installerOnly : all;
 

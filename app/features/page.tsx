@@ -30,7 +30,7 @@ import { useState } from "react";
 export default function Features() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("project");
-  
+
   const allFeatures = [
     {
       title: "User Accounts & Access Control",
@@ -265,7 +265,7 @@ export default function Features() {
           "Workshop & Factory Overview",
           "Quotes & Orders",
           "Documents & Drawings",
-        ].includes(f.title)
+        ].includes(f.title),
       ),
     },
     team: {
@@ -275,7 +275,7 @@ export default function Features() {
           "Clients & Contacts",
           "Staff Management",
           "User Accounts & Access Control",
-        ].includes(f.title)
+        ].includes(f.title),
       ),
     },
     materials: {
@@ -289,7 +289,7 @@ export default function Features() {
           "Supplier Management",
           "Purchase Orders",
           "Supplier Statements & Payments",
-        ].includes(f.title)
+        ].includes(f.title),
       ),
     },
     system: {
@@ -299,7 +299,7 @@ export default function Features() {
           "Activity History (Who Did What)",
           "Mobile Access",
           "Notifications & Alerts",
-        ].includes(f.title)
+        ].includes(f.title),
       ),
     },
   };
@@ -310,7 +310,8 @@ export default function Features() {
     count: featureGroups[key as keyof typeof featureGroups].features.length,
   }));
 
-  const displayedFeatures = featureGroups[activeTab as keyof typeof featureGroups]?.features || [];
+  const displayedFeatures =
+    featureGroups[activeTab as keyof typeof featureGroups]?.features || [];
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -344,7 +345,9 @@ export default function Features() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Everything cabinet makers, manufacturers, and joinery workshops need to manage production orders, materials, customers, and manufacturing floors, all in one place.
+            Everything cabinet makers, manufacturers, and joinery workshops need
+            to manage production orders, materials, customers, and manufacturing
+            floors, all in one place.
           </p>
         </div>
       </section>
@@ -364,7 +367,8 @@ export default function Features() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Dive deeper into specific feature categories designed for cabinet manufacturing
+              Dive deeper into specific feature categories designed for cabinet
+              manufacturing
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -381,7 +385,8 @@ export default function Features() {
                 Quoting Software
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Create professional quotes, manage clients, and convert quotes to jobs seamlessly.
+                Create professional quotes, manage clients, and convert quotes
+                to jobs seamlessly.
               </p>
             </Link>
             <Link
@@ -397,7 +402,8 @@ export default function Features() {
                 Project Management
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Track projects, schedule production, assign teams, and manage your workshop floor.
+                Track projects, schedule production, assign teams, and manage
+                your workshop floor.
               </p>
             </Link>
             <Link
@@ -413,7 +419,8 @@ export default function Features() {
                 Inventory Management
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Track materials, manage suppliers, plan orders, and optimize your inventory.
+                Track materials, manage suppliers, plan orders, and optimize
+                your inventory.
               </p>
             </Link>
             <Link
@@ -429,7 +436,8 @@ export default function Features() {
                 Invoicing
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Manage supplier payments, track invoices, and maintain clear financial records.
+                Manage supplier payments, track invoices, and maintain clear
+                financial records.
               </p>
             </Link>
           </div>
@@ -473,85 +481,120 @@ export default function Features() {
       </section>
 
       {/* Features Grid */}
-      <section id="features-section" className="relative bg-gray-100 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 z-20 overflow-hidden">
+      <section
+        id="features-section"
+        className="relative bg-gray-100 px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 z-20 overflow-hidden"
+      >
         {/* Animated Background Illustrations */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Floating circles */}
           <div className="absolute top-20 left-10 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl animate-float-1"></div>
           <div className="absolute top-60 right-20 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl animate-float-2"></div>
           <div className="absolute bottom-40 left-1/4 w-72 h-72 bg-indigo-200/20 rounded-full blur-3xl animate-float-3"></div>
-          
+
           {/* Grid pattern */}
-          <svg className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            className="absolute inset-0 w-full h-full opacity-5"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
+              <pattern
+                id="grid"
+                width="40"
+                height="40"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 40 0 L 0 0 0 40"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" className="animate-grid-move" />
+            <rect
+              width="100%"
+              height="100%"
+              fill="url(#grid)"
+              className="animate-grid-move"
+            />
           </svg>
-          
+
           {/* Geometric shapes */}
           <div className="absolute top-1/4 right-1/4 w-32 h-32 border-2 border-gray-300/30 rounded-lg rotate-45 animate-spin-slow"></div>
           <div className="absolute bottom-1/3 left-1/3 w-24 h-24 border-2 border-gray-300/30 rounded-full animate-pulse-slow"></div>
-          <svg className="absolute top-1/2 left-1/2 w-48 h-48 text-gray-300/20 animate-rotate-slow" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" strokeDasharray="5,5" />
+          <svg
+            className="absolute top-1/2 left-1/2 w-48 h-48 text-gray-300/20 animate-rotate-slow"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+            />
           </svg>
         </div>
-        
+
         <div className="relative mx-auto max-w-7xl">
           {displayedFeatures.length > 0 ? (
             <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-2">
               {displayedFeatures.map((feature, index) => {
-              const IconComponent = feature.icon;
-              return (
-                <div
-                  key={index}
-                  className="flex gap-4 sm:gap-6"
-                  data-aos="fade-up"
-                  data-aos-delay={index * 100}
-                >
-                  <div className="shrink-0">
-                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
-                      <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                const IconComponent = feature.icon;
+                return (
+                  <div
+                    key={index}
+                    className="flex gap-4 sm:gap-6"
+                    data-aos="fade-up"
+                    data-aos-delay={index * 100}
+                  >
+                    <div className="shrink-0">
+                      <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+                        <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3 leading-tight">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">
+                        {feature.description}
+                      </p>
+                      <ul className="space-y-1.5 sm:space-y-2">
+                        {feature.benefits.map((benefit, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start text-xs sm:text-sm text-gray-600"
+                          >
+                            <svg
+                              className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-green-500 mt-0.5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span className="leading-relaxed">{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3 leading-tight">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">
-                      {feature.description}
-                    </p>
-                    <ul className="space-y-1.5 sm:space-y-2">
-                      {feature.benefits.map((benefit, i) => (
-                        <li
-                          key={i}
-                          className="flex items-start text-xs sm:text-sm text-gray-600"
-                        >
-                          <svg
-                            className="mr-2 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-green-500 mt-0.5"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          <span className="leading-relaxed">{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No features found in this category.</p>
+              <p className="text-gray-500 text-lg">
+                No features found in this category.
+              </p>
             </div>
           )}
         </div>
@@ -590,7 +633,8 @@ export default function Features() {
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 Not a generic project management tool. Every feature is designed
-                specifically for how cabinet makers, manufacturers, and joinery workshops actually work.
+                specifically for how cabinet makers, manufacturers, and joinery
+                workshops actually work.
               </p>
             </div>
             <div
@@ -621,9 +665,9 @@ export default function Features() {
                 Scales With You
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                From small cabinet shops to large joinery workshops and manufacturing facilities, CabiPro
-                scales with your business. Add production teams and features as
-                you grow.
+                From small cabinet shops to large joinery workshops and
+                manufacturing facilities, CabiPro scales with your business. Add
+                production teams and features as you grow.
               </p>
             </div>
           </div>
@@ -646,7 +690,11 @@ export default function Features() {
           >
             Join the waitlist to get early access and exclusive pricing.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <button
               onClick={() => router.push("/waitlist")}
               className="cursor-pointer w-full sm:w-auto rounded-lg border-2 border-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-white hover:bg-white/10 transition-colors touch-manipulation"

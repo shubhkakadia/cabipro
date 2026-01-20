@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - CabiPro",
-  description: "CabiPro Privacy Policy - Learn how we collect, use, store, and disclose information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).",
+  description:
+    "CabiPro Privacy Policy - Learn how we collect, use, store, and disclose information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).",
 };
 
 export default function PrivacyPolicy() {
@@ -20,11 +21,15 @@ export default function PrivacyPolicy() {
 
         <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none">
           <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-6 sm:mb-8">
-            CabiPro (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is committed to protecting your personal information and respecting your privacy.
+            CabiPro (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is
+            committed to protecting your personal information and respecting
+            your privacy.
           </p>
 
           <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-8 sm:mb-10 lg:mb-12">
-            This Privacy Policy explains how we collect, use, store, and disclose information in accordance with the Privacy Act 1988 and the Australian Privacy Principles.
+            This Privacy Policy explains how we collect, use, store, and
+            disclose information in accordance with the Privacy Act 1988 and the
+            Australian Privacy Principles.
           </p>
 
           <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-8 sm:mb-10 lg:mb-12">
@@ -32,11 +37,19 @@ export default function PrivacyPolicy() {
           </p>
 
           <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-8 sm:mb-10 lg:mb-12">
-            If you have any questions, we&apos;re here to help: <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium wrabreak-words">shubhkakadia@gmail.com</a>
+            If you have any questions, we&apos;re here to help:{" "}
+            <a
+              href="mailto:shubhkakadia@gmail.com"
+              className="text-gray-900 hover:underline font-medium wrabreak-words"
+            >
+              shubhkakadia@gmail.com
+            </a>
           </p>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">1. What This Policy Covers</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              1. What This Policy Covers
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               This policy applies to:
             </p>
@@ -47,17 +60,24 @@ export default function PrivacyPolicy() {
               <li>any services we provide to you</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              It explains how we handle personal information — meaning information about an identifiable person — and certain business data you store inside CabiPro.
+              It explains how we handle personal information — meaning
+              information about an identifiable person — and certain business
+              data you store inside CabiPro.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">2. Information We Collect</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              2. Information We Collect
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-4 sm:mb-6">
-              We collect information only when reasonably necessary for our functions and services.
+              We collect information only when reasonably necessary for our
+              functions and services.
             </p>
 
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">2.1 Information you provide directly</h3>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">
+              2.1 Information you provide directly
+            </h3>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               This includes information you submit when you:
             </p>
@@ -80,15 +100,22 @@ export default function PrivacyPolicy() {
               <li>role or job title</li>
               <li>account login details (passwords are encrypted)</li>
               <li>communication and support messages</li>
-              <li>billing and subscription details (processed securely through third-party providers)</li>
+              <li>
+                billing and subscription details (processed securely through
+                third-party providers)
+              </li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              We do not collect sensitive information unless absolutely necessary — and only with your consent.
+              We do not collect sensitive information unless absolutely
+              necessary — and only with your consent.
             </p>
 
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">2.2 Business data you store in CabiPro</h3>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">
+              2.2 Business data you store in CabiPro
+            </h3>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              CabiPro is designed for cabinet manufacturing operations. You may upload or generate data such as:
+              CabiPro is designed for cabinet manufacturing operations. You may
+              upload or generate data such as:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>customer information</li>
@@ -99,7 +126,8 @@ export default function PrivacyPolicy() {
               <li>project notes, drawings, photos, and documents</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              This remains your data. We process it only to provide the service and support you.
+              This remains your data. We process it only to provide the service
+              and support you.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               We do not use your business data for:
@@ -110,10 +138,13 @@ export default function PrivacyPolicy() {
               <li>unrelated data analytics</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              We only access it when necessary (for support, security, or maintenance).
+              We only access it when necessary (for support, security, or
+              maintenance).
             </p>
 
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">2.3 Information collected automatically</h3>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mt-6 sm:mt-8 mb-3 sm:mb-4">
+              2.3 Information collected automatically
+            </h3>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               When you visit our website or use our app, we may collect:
             </p>
@@ -136,7 +167,9 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">3. Why We Collect Your Information</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              3. Why We Collect Your Information
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               We collect and use information to:
             </p>
@@ -157,7 +190,9 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">4. Cookies & Tracking Tools</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              4. Cookies & Tracking Tools
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               We use cookies and similar technologies to:
             </p>
@@ -168,14 +203,18 @@ export default function PrivacyPolicy() {
               <li>improve functionality</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              You may adjust cookie settings via your browser; however, some features may not work properly if cookies are disabled.
+              You may adjust cookie settings via your browser; however, some
+              features may not work properly if cookies are disabled.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">5. How We Protect Your Data</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              5. How We Protect Your Data
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-            We take reasonable steps to safeguard personal information using measures such as:
+              We take reasonable steps to safeguard personal information using
+              measures such as:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>encrypted data transmission (HTTPS/TLS)</li>
@@ -186,20 +225,27 @@ export default function PrivacyPolicy() {
               <li>monitoring and logging for suspicious activity</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              While no system is completely risk-free, we continuously work to maintain strong protections.
+              While no system is completely risk-free, we continuously work to
+              maintain strong protections.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">6. Notifiable Data Breaches (NDB Scheme)</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              6. Notifiable Data Breaches (NDB Scheme)
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              If a data breach occurs that is likely to result in serious harm, we will:
+              If a data breach occurs that is likely to result in serious harm,
+              we will:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>investigate promptly</li>
               <li>take corrective measures</li>
               <li>notify affected individuals where required</li>
-              <li>notify the Office of the Australian Information Commissioner (OAIC), in line with the NDB scheme</li>
+              <li>
+                notify the Office of the Australian Information Commissioner
+                (OAIC), in line with the NDB scheme
+              </li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
               Transparency matters — and we will always act responsibly.
@@ -207,9 +253,12 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">7. Sharing Your Information</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              7. Sharing Your Information
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              We may share information with trusted third-party service providers who assist us in delivering CabiPro, such as:
+              We may share information with trusted third-party service
+              providers who assist us in delivering CabiPro, such as:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>cloud hosting services</li>
@@ -224,7 +273,10 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>operate under confidentiality agreements</li>
               <li>may only use data to perform agreed services</li>
-              <li>must comply with privacy protections equivalent to Australian standards</li>
+              <li>
+                must comply with privacy protections equivalent to Australian
+                standards
+              </li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               We may disclose information where legally required — for example:
@@ -235,17 +287,21 @@ export default function PrivacyPolicy() {
               <li>enforcing our terms</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              If our business structure changes (e.g., sale or merger), we will notify you and ensure continued protection under applicable laws.
+              If our business structure changes (e.g., sale or merger), we will
+              notify you and ensure continued protection under applicable laws.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">8. Overseas Transfers</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              8. Overseas Transfers
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               Some service providers may store or process information overseas.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              Where this occurs, we take reasonable steps to ensure that such providers:
+              Where this occurs, we take reasonable steps to ensure that such
+              providers:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>protect information adequately, and</li>
@@ -254,7 +310,9 @@ export default function PrivacyPolicy() {
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">9. Data Retention</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              9. Data Retention
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               We retain information only as long as necessary for:
             </p>
@@ -266,21 +324,27 @@ export default function PrivacyPolicy() {
               <li>security or audit purposes</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              When data is no longer required, we take reasonable steps to delete or de-identify it.
+              When data is no longer required, we take reasonable steps to
+              delete or de-identify it.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mt-3 sm:mt-4">
-              If you cancel your account, you may request deletion of stored data unless retention is required by law.
+              If you cancel your account, you may request deletion of stored
+              data unless retention is required by law.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">10. Your Rights Under Australian Privacy Law</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              10. Your Rights Under Australian Privacy Law
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               Under the Australian Privacy Principles, you have the right to:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-gray-700 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 ml-2 sm:ml-4">
               <li>request access to personal information we hold about you</li>
-              <li>ask for corrections to inaccurate or incomplete information</li>
+              <li>
+                ask for corrections to inaccurate or incomplete information
+              </li>
               <li>request deletion where lawful and reasonable</li>
               <li>opt out of marketing communications</li>
               <li>raise concerns or complaints about privacy handling</li>
@@ -289,48 +353,68 @@ export default function PrivacyPolicy() {
               To submit a request, contact us at:
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium wrap-break-words">shubhkakadia@gmail.com</a>
+              <a
+                href="mailto:shubhkakadia@gmail.com"
+                className="text-gray-900 hover:underline font-medium wrap-break-words"
+              >
+                shubhkakadia@gmail.com
+              </a>
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              We may need to verify your identity before processing requests, which we will handle promptly and fairly.
+              We may need to verify your identity before processing requests,
+              which we will handle promptly and fairly.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">11. Marketing Communications</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              11. Marketing Communications
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              We may send occasional service updates, news, or product information.
+              We may send occasional service updates, news, or product
+              information.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              You can opt out at any time using the unsubscribe link provided or by contacting us directly.
+              You can opt out at any time using the unsubscribe link provided or
+              by contacting us directly.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              Essential service notifications (security alerts, billing issues, etc.) may still be sent where necessary.
+              Essential service notifications (security alerts, billing issues,
+              etc.) may still be sent where necessary.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">12. Children&apos;s Privacy</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              12. Children&apos;s Privacy
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              CabiPro is intended for business use and is not directed at children.
+              CabiPro is intended for business use and is not directed at
+              children.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              We do not knowingly collect personal information from individuals under 16. If such information is identified, we will delete it.
+              We do not knowingly collect personal information from individuals
+              under 16. If such information is identified, we will delete it.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">13. Links to Third-Party Sites</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              13. Links to Third-Party Sites
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               Our platform or website may include links to external sites.
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              We are not responsible for their privacy practices and encourage you to review their policies separately.
+              We are not responsible for their privacy practices and encourage
+              you to review their policies separately.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">14. Changes to This Privacy Policy</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              14. Changes to This Privacy Policy
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               We may update this Privacy Policy from time to time to reflect:
             </p>
@@ -340,25 +424,36 @@ export default function PrivacyPolicy() {
               <li>security improvements</li>
             </ul>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-              Any updates will be posted on this page with a revised &quot;Last Updated&quot; date. Continued use of CabiPro indicates acceptance of the updated policy.
+              Any updates will be posted on this page with a revised &quot;Last
+              Updated&quot; date. Continued use of CabiPro indicates acceptance
+              of the updated policy.
             </p>
           </section>
 
           <section className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">15. Contact Us</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-8 sm:mt-10 lg:mt-12 mb-3 sm:mb-4">
+              15. Contact Us
+            </h2>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
-              If you have questions, feedback, or privacy concerns, please contact:
+              If you have questions, feedback, or privacy concerns, please
+              contact:
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-5">
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
-                <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium wrapbreak-words">shubhkakadia@gmail.com</a>
+                <a
+                  href="mailto:shubhkakadia@gmail.com"
+                  className="text-gray-900 hover:underline font-medium wrapbreak-words"
+                >
+                  shubhkakadia@gmail.com
+                </a>
               </p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                 South Australia, Australia
               </p>
             </div>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mt-3 sm:mt-4">
-              We believe privacy should be clear, respectful, and transparent — and we&apos;re always happy to clarify anything further.
+              We believe privacy should be clear, respectful, and transparent —
+              and we&apos;re always happy to clarify anything further.
             </p>
           </section>
         </div>
@@ -366,4 +461,3 @@ export default function PrivacyPolicy() {
     </div>
   );
 }
-

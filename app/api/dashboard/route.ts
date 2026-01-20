@@ -17,7 +17,7 @@ dayjs.extend(timezone);
 
 // Helper function to convert month name/number to two-digit format
 function normalizeMonth(
-  month: string | number | null | undefined
+  month: string | number | null | undefined,
 ): string | null {
   if (!month || month.toString().toLowerCase() === "all") return null;
 
@@ -65,7 +65,7 @@ function normalizeMonth(
 // Helper function to build month_year filter array
 function buildMonthYearFilter(
   year: string | number | null | undefined,
-  month: string | number | null | undefined
+  month: string | number | null | undefined,
 ): string[] | null {
   const normalizedMonth = normalizeMonth(month);
   const isYearAll = !year || year.toString().toLowerCase() === "all";
@@ -116,7 +116,7 @@ function adelaideLocalToUTC(dateString: string): Date {
 // Helper function to build date range filter for DateTime fields
 function buildDateRangeFilter(
   year: string | number | null | undefined,
-  month: string | number | null | undefined
+  month: string | number | null | undefined,
 ): { gte: Date; lt: Date } | Record<string, never> | null {
   const isYearAll = !year || year.toString().toLowerCase() === "all";
   const normalizedMonth = normalizeMonth(month);
@@ -147,7 +147,7 @@ function buildDateRangeFilter(
     return {
       gte: adelaideLocalToUTC(`${yearStr}-${normalizedMonth}-01`),
       lt: adelaideLocalToUTC(
-        `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`
+        `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`,
       ),
     };
   }
@@ -455,7 +455,7 @@ export async function POST(request: NextRequest) {
           sum + (statement.amount ? Number(statement.amount.toString()) : 0)
         );
       },
-      0
+      0,
     );
 
     // Assign results to dashboard data
@@ -486,7 +486,7 @@ export async function POST(request: NextRequest) {
           if (!project.lots || project.lots.length === 0) return null;
 
           const completedLots = project.lots.filter(
-            (lot) => lot.startDate && lot.updatedAt
+            (lot) => lot.startDate && lot.updatedAt,
           );
           if (completedLots.length === 0) return null;
 
@@ -502,10 +502,10 @@ export async function POST(request: NextRequest) {
             return null;
 
           const earliestStart = new Date(
-            Math.min(...startDates.map((d) => d.getTime()))
+            Math.min(...startDates.map((d) => d.getTime())),
           );
           const latestCompletion = new Date(
-            Math.max(...completionDates.map((d) => d.getTime()))
+            Math.max(...completionDates.map((d) => d.getTime())),
           );
           const durationDays =
             (latestCompletion.getTime() - earliestStart.getTime()) /
@@ -566,13 +566,13 @@ export async function POST(request: NextRequest) {
         message: "Dashboard fetched successfully",
         data: dashboardData,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in POST /api/dashboard:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

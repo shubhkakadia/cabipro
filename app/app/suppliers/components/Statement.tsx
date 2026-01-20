@@ -77,7 +77,9 @@ export default function Statement({ supplierId }: StatementProps) {
     showProgressToast: (fileCount: number) => void;
     completeUpload: (fileCount: number) => void;
     dismissProgressToast: () => void;
-    getUploadProgressHandler: (fileCount: number) => (progressEvent: AxiosProgressEvent) => void;
+    getUploadProgressHandler: (
+      fileCount: number,
+    ) => (progressEvent: AxiosProgressEvent) => void;
   };
 
   const [statements, setStatements] = useState<Statement[]>([]);
@@ -93,12 +95,16 @@ export default function Statement({ supplierId }: StatementProps) {
     notes: "",
     file: null,
   });
-  const [editingStatement, setEditingStatement] = useState<Statement | null>(null);
+  const [editingStatement, setEditingStatement] = useState<Statement | null>(
+    null,
+  );
   const [isEditingStatement, setIsEditingStatement] = useState(false);
   const [isUpdatingStatement, setIsUpdatingStatement] = useState(false);
   const [showDeleteStatementModal, setShowDeleteStatementModal] =
     useState(false);
-  const [statementToDelete, setStatementToDelete] = useState<Statement | null>(null);
+  const [statementToDelete, setStatementToDelete] = useState<Statement | null>(
+    null,
+  );
   const [isDeletingStatement, setIsDeletingStatement] = useState(false);
   const [viewFileModal, setViewFileModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<ViewFile | null>(null);
@@ -122,7 +128,7 @@ export default function Statement({ supplierId }: StatementProps) {
         `/api/supplier/${supplierId}/statements`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -131,11 +137,14 @@ export default function Statement({ supplierId }: StatementProps) {
     } catch (err) {
       console.error("Error fetching statements:", err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to fetch statements", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-        });
+        toast.error(
+          err.response?.data?.message || "Failed to fetch statements",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+          },
+        );
       } else {
         toast.error("Failed to fetch statements", {
           position: "top-right",
@@ -161,7 +170,11 @@ export default function Statement({ supplierId }: StatementProps) {
     }
 
     // Create new object URL if preview is open and file exists
-    if (showFilePreview && statementForm.file && statementForm.file instanceof File) {
+    if (
+      showFilePreview &&
+      statementForm.file &&
+      statementForm.file instanceof File
+    ) {
       const objectURL = URL.createObjectURL(statementForm.file);
       fileObjectURLRef.current = objectURL;
       setFileObjectURL(objectURL);
@@ -217,7 +230,12 @@ export default function Statement({ supplierId }: StatementProps) {
 
   // File handling functions
   const validateAndSetFile = (file: File) => {
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Only PDF and image files are allowed", {
         position: "top-right",
@@ -346,7 +364,7 @@ export default function Statement({ supplierId }: StatementProps) {
             "Content-Type": "multipart/form-data",
           },
           onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
-        }
+        },
       );
 
       if (response.data.status) {
@@ -369,10 +387,13 @@ export default function Statement({ supplierId }: StatementProps) {
       console.error("Error uploading statement:", err);
       dismissProgressToast();
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to upload statement", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        toast.error(
+          err.response?.data?.message || "Failed to upload statement",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          },
+        );
       } else {
         toast.error("Failed to upload statement", {
           position: "top-right",
@@ -451,7 +472,7 @@ export default function Statement({ supplierId }: StatementProps) {
           ...(hasFile && {
             onUploadProgress: getUploadProgressHandler(1), // 1 file being uploaded
           }),
-        }
+        },
       );
 
       if (response.data.status) {
@@ -475,11 +496,14 @@ export default function Statement({ supplierId }: StatementProps) {
     } catch (err) {
       console.error("Error updating statement:", err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to update statement", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-        });
+        toast.error(
+          err.response?.data?.message || "Failed to update statement",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+          },
+        );
       } else {
         toast.error("Failed to update statement", {
           position: "top-right",
@@ -507,7 +531,7 @@ export default function Statement({ supplierId }: StatementProps) {
         `/api/supplier/${supplierId}/statements/${statementToDelete.id}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -529,11 +553,14 @@ export default function Statement({ supplierId }: StatementProps) {
     } catch (err) {
       console.error("Error deleting statement:", err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to delete statement", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-        });
+        toast.error(
+          err.response?.data?.message || "Failed to delete statement",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+          },
+        );
       } else {
         toast.error("Failed to delete statement", {
           position: "top-right",
@@ -649,8 +676,9 @@ export default function Statement({ supplierId }: StatementProps) {
               {statements.map((statement: Statement) => (
                 <React.Fragment key={statement.id}>
                   <tr
-                    className={`hover:bg-slate-50 transition-colors ${statement.notes ? "cursor-pointer" : ""
-                      }`}
+                    className={`hover:bg-slate-50 transition-colors ${
+                      statement.notes ? "cursor-pointer" : ""
+                    }`}
                     onClick={() => statement.notes && toggleNotes(statement.id)}
                   >
                     <td className="px-4 py-2 whitespace-nowrap">
@@ -681,10 +709,11 @@ export default function Statement({ supplierId }: StatementProps) {
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${statement.payment_status === "PAID"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                          }`}
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          statement.payment_status === "PAID"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
                       >
                         {statement.payment_status}
                       </span>
@@ -765,8 +794,9 @@ export default function Statement({ supplierId }: StatementProps) {
         onConfirm={handleDeleteStatementConfirm}
         deleteWithInput={true}
         heading="Statement"
-        message={`This will permanently delete the statement for ${statementToDelete?.month_year || ""
-          }. This action cannot be undone.`}
+        message={`This will permanently delete the statement for ${
+          statementToDelete?.month_year || ""
+        }. This action cannot be undone.`}
         comparingName={statementToDelete?.month_year || ""}
         isDeleting={isDeletingStatement}
         entityType="supplier_statement"
@@ -783,9 +813,7 @@ export default function Statement({ supplierId }: StatementProps) {
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-slate-100">
               <h2 className="text-xl font-semibold text-slate-800">
-                {isEditingStatement
-                  ? "Edit Statement"
-                  : "Upload Statement"}
+                {isEditingStatement ? "Edit Statement" : "Upload Statement"}
               </h2>
               <button
                 onClick={resetForm}
@@ -903,10 +931,11 @@ export default function Statement({ supplierId }: StatementProps) {
                   </label>
                   {!statementForm.file ? (
                     <div
-                      className={`border-2 border-dashed rounded-lg py-8 transition-all ${isDragging
-                        ? "border-primary bg-blue-50"
-                        : "border-slate-300 hover:border-primary hover:bg-slate-50"
-                        }`}
+                      className={`border-2 border-dashed rounded-lg py-8 transition-all ${
+                        isDragging
+                          ? "border-primary bg-blue-50"
+                          : "border-slate-300 hover:border-primary hover:bg-slate-50"
+                      }`}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
@@ -923,14 +952,14 @@ export default function Statement({ supplierId }: StatementProps) {
                         className="cursor-pointer flex flex-col items-center text-center w-full h-full"
                       >
                         <FileText
-                          className={`w-8 h-8 mb-2 ${isDragging ? "text-primary" : "text-slate-400"
-                            }`}
+                          className={`w-8 h-8 mb-2 ${
+                            isDragging ? "text-primary" : "text-slate-400"
+                          }`}
                         />
                         <p
-                          className={`text-sm font-medium ${isDragging
-                            ? "text-primary"
-                            : "text-slate-700"
-                            }`}
+                          className={`text-sm font-medium ${
+                            isDragging ? "text-primary" : "text-slate-700"
+                          }`}
                         >
                           {isDragging
                             ? "Drop file here"
@@ -959,11 +988,7 @@ export default function Statement({ supplierId }: StatementProps) {
                             {statementForm.file.name}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {(
-                              statementForm.file.size /
-                              1024 /
-                              1024
-                            ).toFixed(2)}{" "}
+                            {(statementForm.file.size / 1024 / 1024).toFixed(2)}{" "}
                             MB
                           </p>
                         </div>
@@ -997,14 +1022,12 @@ export default function Statement({ supplierId }: StatementProps) {
                       </div>
                     </div>
                   )}
-                  {isEditingStatement &&
-                    editingStatement?.supplier_file && (
-                      <p className="mt-2 text-xs text-slate-500">
-                        Current file:{" "}
-                        {editingStatement.supplier_file.filename} (Leave
-                        empty to keep current file)
-                      </p>
-                    )}
+                  {isEditingStatement && editingStatement?.supplier_file && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Current file: {editingStatement.supplier_file.filename}{" "}
+                      (Leave empty to keep current file)
+                    </p>
+                  )}
                 </div>
 
                 {/* Notes */}

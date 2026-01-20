@@ -178,7 +178,7 @@ export default function Home() {
             Installations
           </h1>
           <div
-            className="relative min-h-[100px] sm:min-h-[120px] md:min-h-[140px] flex items-center justify-center px-2 mt-4 sm:mt-6"
+            className="relative min-h-25 sm:min-h-30 md:min-h-35 flex items-center justify-center px-2 mt-4 sm:mt-6"
             data-aos="fade-up"
             data-aos-delay="50"
           >
@@ -508,7 +508,7 @@ export default function Home() {
                   <div
                     id={`faq-answer-${index}`}
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isOpen ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+                      isOpen ? "max-h-200 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
                     <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0">

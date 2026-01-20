@@ -31,7 +31,7 @@ export const useUploadProgress = () => {
         position: "top-right",
         autoClose: 5000,
         customProgressBar: true,
-      }
+      },
     );
   };
 
@@ -108,7 +108,7 @@ export const useUploadProgress = () => {
     return (progressEvent: AxiosProgressEvent): void => {
       if (progressEvent.total) {
         const progress = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
+          (progressEvent.loaded * 100) / progressEvent.total,
         );
         updateProgress(progress, fileCount);
       }
@@ -125,4 +125,3 @@ export const useUploadProgress = () => {
     getUploadProgressHandler,
   };
 };
-

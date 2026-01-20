@@ -3,8 +3,6 @@ import jwt, { SignOptions } from "jsonwebtoken";
 import { prisma } from "./db";
 import { SESSION_TTL_DAYS, getSessionExpiryDate } from "./cookies";
 
-
-
 /**
  * JWT Payload structure for organization users
  */
@@ -58,7 +56,7 @@ export const hashPassword = async (password: string): Promise<string> => {
  */
 export const verifyPassword = async (
   password: string,
-  hashedPassword: string
+  hashedPassword: string,
 ): Promise<boolean> => {
   if (!password || !hashedPassword) {
     return false;
@@ -97,7 +95,7 @@ export const generateToken = async (payload: JWTPayload): Promise<string> => {
  * @returns Promise resolving to the decoded payload, or null if invalid
  */
 export const verifyToken = async (
-  token: string
+  token: string,
 ): Promise<JWTPayload | null> => {
   const secret = process.env.JWT_SECRET;
 
@@ -124,7 +122,7 @@ export const verifyToken = async (
  */
 export const authenticateUser = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<AuthResult | null> => {
   try {
     // Find user by email

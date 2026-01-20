@@ -69,7 +69,10 @@ const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<Omit<UserState, "isAuthenticated">>) => {
+    setUser: (
+      state,
+      action: PayloadAction<Omit<UserState, "isAuthenticated">>,
+    ) => {
       state.id = action.payload.id;
       state.email = action.payload.email;
       state.firstName = action.payload.firstName;
@@ -96,4 +99,3 @@ const userSlice = createSlice({
 
 export const { setUser, clearUser } = userSlice.actions;
 export default userSlice.reducer;
-

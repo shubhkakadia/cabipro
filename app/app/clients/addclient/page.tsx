@@ -92,11 +92,11 @@ export default function AddClientPage() {
   });
   const [isSavingContact, setIsSavingContact] = useState(false);
   const [editingContactIndex, setEditingContactIndex] = useState<number | null>(
-    null
+    null,
   );
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({
       ...formData,
@@ -106,7 +106,7 @@ export default function AddClientPage() {
 
   // Filter client types based on search term
   const filteredClientTypes = client_types.filter((type: string) =>
-    type.toLowerCase().includes(searchTerm.toLowerCase())
+    type.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Close dropdown when clicking outside
@@ -395,7 +395,7 @@ export default function AddClientPage() {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
-        }
+        },
       );
     } finally {
       setIsSavingContact(false);
@@ -422,7 +422,7 @@ export default function AddClientPage() {
             <div className="px-4 py-2">
               {/* Header */}
               <div className="flex items-center gap-2 mb-4">
-              <button
+                <button
                   onClick={() => router.back()}
                   className="cursor-pointer p-1 hover:bg-slate-200 rounded-lg transition-colors"
                 >
@@ -956,8 +956,8 @@ export default function AddClientPage() {
                       ? "Updating..."
                       : "Adding..."
                     : editingContactIndex !== null
-                    ? "Update Contact"
-                    : "Add Contact"}
+                      ? "Update Contact"
+                      : "Add Contact"}
                 </button>
               </div>
             </div>

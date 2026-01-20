@@ -4,7 +4,7 @@ import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ version_id: string }> }
+  { params }: { params: Promise<{ version_id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -15,7 +15,7 @@ export async function GET(
     if (!version_id) {
       return NextResponse.json(
         { status: false, message: "Version ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,7 +60,7 @@ export async function GET(
     if (!version) {
       return NextResponse.json(
         { status: false, message: "Version not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -70,19 +70,19 @@ export async function GET(
         message: "Version fetched successfully",
         data: version,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error fetching version:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

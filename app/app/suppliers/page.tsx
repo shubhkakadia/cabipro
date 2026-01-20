@@ -24,6 +24,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Statement {
@@ -172,7 +173,7 @@ export default function SuppliersPage() {
   const endIndex = itemsPerPage === 0 ? totalItems : startIndex + itemsPerPage;
   const paginatedSuppliers = filteredAndSortedSuppliers.slice(
     startIndex,
-    endIndex
+    endIndex,
   );
 
   useEffect(() => {
@@ -284,7 +285,7 @@ export default function SuppliersPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -372,13 +373,18 @@ export default function SuppliersPage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Suppliers
                     </h1>
-                    <button
-                      onClick={() => router.push("/app/suppliers/addsupplier")}
-                      className="cursor-pointer hover:bg-primary transition-all duration-200 bg-primary/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Supplier
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() =>
+                          router.push("/app/suppliers/addsupplier")
+                        }
+                        className="cursor-pointer hover:bg-primary transition-all duration-200 bg-primary/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Supplier
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -507,7 +513,7 @@ export default function SuppliersPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -613,7 +619,7 @@ export default function SuppliersPage() {
                                     key={supplier.id}
                                     onClick={() => {
                                       router.push(
-                                        `/app/suppliers/${supplier.id}`
+                                        `/app/suppliers/${supplier.id}`,
                                       );
                                     }}
                                     className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
@@ -634,7 +640,7 @@ export default function SuppliersPage() {
                                             {
                                               minimumFractionDigits: 2,
                                               maximumFractionDigits: 2,
-                                            }
+                                            },
                                           )}`
                                         : "-"}
                                     </td>

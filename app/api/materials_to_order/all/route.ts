@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
                 },
               },
             },
+            reserve_item_stock: true,
           },
         },
         media: {
@@ -74,19 +75,19 @@ export async function GET(request: NextRequest) {
         message: "Materials to orders fetched successfully",
         data: mtos,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/materials_to_order/all:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

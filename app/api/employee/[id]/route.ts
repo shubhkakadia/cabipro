@@ -19,7 +19,7 @@ function processDateTimeField(value: string | null | undefined): Date | null {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -44,7 +44,7 @@ export async function GET(
     if (!employee) {
       return NextResponse.json(
         { status: false, message: "Employee not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -54,20 +54,20 @@ export async function GET(
         message: "Employee fetched successfully",
         data: employee,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/employee/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -126,7 +126,7 @@ export async function PATCH(
           console.error("Error parsing availability JSON:", error);
           return NextResponse.json(
             { status: false, message: "Invalid availability data format" },
-            { status: 400 }
+            { status: 400 },
           );
         }
       } else if (typeof availability === "object" && availability !== null) {
@@ -147,7 +147,7 @@ export async function PATCH(
     if (!currentEmployee) {
       return NextResponse.json(
         { status: false, message: "Employee not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -314,11 +314,11 @@ export async function PATCH(
       "employee",
       currentEmployee.id,
       "UPDATE",
-      `Employee updated successfully: ${employee.first_name} ${employee.last_name}`
+      `Employee updated successfully: ${employee.first_name} ${employee.last_name}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log employee update: ${id} - ${employee.first_name} ${employee.last_name}`
+        `Failed to log employee update: ${id} - ${employee.first_name} ${employee.last_name}`,
       );
     }
     return NextResponse.json(
@@ -330,20 +330,20 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in PATCH /api/employee/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -361,7 +361,7 @@ export async function DELETE(
     if (!currentEmployee) {
       return NextResponse.json(
         { status: false, message: "Employee not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -369,7 +369,7 @@ export async function DELETE(
     if (currentEmployee.is_deleted) {
       return NextResponse.json(
         { status: false, message: "Employee already deleted" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -398,11 +398,11 @@ export async function DELETE(
       "employee",
       currentEmployee.id,
       "DELETE",
-      `Employee deleted successfully: ${employee.first_name} ${employee.last_name}`
+      `Employee deleted successfully: ${employee.first_name} ${employee.last_name}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log employee deletion: ${id} - ${employee.first_name} ${employee.last_name}`
+        `Failed to log employee deletion: ${id} - ${employee.first_name} ${employee.last_name}`,
       );
       return NextResponse.json(
         {
@@ -411,7 +411,7 @@ export async function DELETE(
           data: employee,
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
     return NextResponse.json(
@@ -420,13 +420,13 @@ export async function DELETE(
         message: "Employee deleted successfully",
         data: employee,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in DELETE /api/employee/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

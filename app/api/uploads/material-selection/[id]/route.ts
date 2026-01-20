@@ -12,7 +12,7 @@ import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 // Upload media files to Material Selection
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -37,7 +37,7 @@ export async function POST(
     if (!materialSelection) {
       return NextResponse.json(
         { status: false, message: "Material selection not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(
     if (!files || (Array.isArray(files) && files.length === 0)) {
       return NextResponse.json(
         { status: false, message: "No files provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,7 +70,7 @@ export async function POST(
     if (uploadResults.successful.length === 0) {
       return NextResponse.json(
         { status: false, message: "Failed to upload files" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -88,8 +88,8 @@ export async function POST(
             size: result.size,
             material_selection_id: id,
           },
-        })
-      )
+        }),
+      ),
     );
 
     // Log all the uploaded media ids
@@ -100,15 +100,15 @@ export async function POST(
           "media",
           media.id,
           "CREATE",
-          `Media uploaded successfully: ${media.filename} for Material Selection: ${materialSelection.id}`
-        )
-      )
+          `Media uploaded successfully: ${media.filename} for Material Selection: ${materialSelection.id}`,
+        ),
+      ),
     );
 
     const hasLoggingFailures = logged.some((log) => !log);
     if (hasLoggingFailures) {
       console.error(
-        `Failed to log some media uploads for Material Selection: ${id}`
+        `Failed to log some media uploads for Material Selection: ${id}`,
       );
     }
 
@@ -121,19 +121,19 @@ export async function POST(
           ? { warning: "Note: Upload succeeded but some logging failed" }
           : {}),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in media upload:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -141,7 +141,7 @@ export async function POST(
 // Delete media file from Material Selection
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -152,7 +152,7 @@ export async function DELETE(
     if (!mediaId) {
       return NextResponse.json(
         { status: false, message: "mediaId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -175,7 +175,7 @@ export async function DELETE(
     if (!materialSelection) {
       return NextResponse.json(
         { status: false, message: "Material selection not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -192,7 +192,7 @@ export async function DELETE(
     if (!media) {
       return NextResponse.json(
         { status: false, message: "Media not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -208,12 +208,12 @@ export async function DELETE(
       "media",
       updatedMedia.id,
       "DELETE",
-      `Media deleted successfully: ${updatedMedia.filename} for Material Selection: ${materialSelection.id} (Project: ${materialSelection.project?.name || "N/A"})`
+      `Media deleted successfully: ${updatedMedia.filename} for Material Selection: ${materialSelection.id} (Project: ${materialSelection.project?.name || "N/A"})`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log media deletion: ${updatedMedia.id} - ${updatedMedia.filename}`
+        `Failed to log media deletion: ${updatedMedia.id} - ${updatedMedia.filename}`,
       );
     }
 
@@ -229,19 +229,19 @@ export async function DELETE(
           ? {}
           : { warning: "Note: Deletion succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error deleting media:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

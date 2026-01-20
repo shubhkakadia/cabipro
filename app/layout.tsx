@@ -21,11 +21,15 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
-  description: "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops. Track production, manage materials, schedule jobs, and optimize your manufacturing floor.",
+  title:
+    "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
+  description:
+    "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops. Track production, manage materials, schedule jobs, and optimize your manufacturing floor.",
   openGraph: {
-    title: "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
-    description: "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops.",
+    title:
+      "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
+    description:
+      "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops.",
     images: [
       {
         url: "/CabiPro.svg",
@@ -38,11 +42,11 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "CabiPro - Cabinet Maker Software",
-    description: "Cabinet maker software to manage jobs, production, materials & installations.",
+    description:
+      "Cabinet maker software to manage jobs, production, materials & installations.",
     images: ["/CabiPro.svg"],
   },
 };
-
 
 export default function RootLayout({
   children,
@@ -71,9 +75,7 @@ export default function RootLayout({
         />
         <ReduxProvider>
           <AOSProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
+            <ConditionalLayout>{children}</ConditionalLayout>
           </AOSProvider>
           <ToastProvider />
         </ReduxProvider>

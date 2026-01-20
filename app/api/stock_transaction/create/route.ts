@@ -104,30 +104,90 @@ async function handleUsedTransaction(data: UsedTransactionData) {
   let updatedMtoItem;
   try {
     await prisma.$transaction(async (tx) => {
-      // Atomically decrease inventory (guard against negative)
-      const dec = await tx.item.updateMany({
+      let remainingQuantity = quantity;
+
+      // Check if there are any reservations for this item from this specific MTO
+      const reservations = await tx.reserve_item_stock.findMany({
         where: {
-          id: item_id,
           organization_id: organizationId,
-          quantity: { gte: quantity },
+          item_id: item_id,
+          mto_id: mtoItem.id, // Only get reservations for this specific MTO item
         },
-        data: {
-          quantity: { decrement: quantity },
+        orderBy: {
+          createdAt: "asc", // Use oldest reservations first (FIFO)
         },
       });
 
-      if (dec.count === 0) {
-        const current = await tx.item.findFirst({
+      // Use from reservations first - consume entire reservation and delete it
+      for (const reservation of reservations) {
+        if (remainingQuantity <= 0) break;
+
+        // Calculate available quantity in this reservation (total - already used)
+        const availableInReservation =
+          reservation.quantity - reservation.used_quantity;
+
+        if (availableInReservation <= 0) {
+          // This reservation is already fully consumed, delete it
+          await tx.reserve_item_stock.delete({
+            where: { id: reservation.id },
+          });
+          continue;
+        }
+
+        // Use as much as we can from this reservation
+        const quantityToUseFromReservation = Math.min(
+          availableInReservation,
+          remainingQuantity,
+        );
+
+        // If we're using all the available quantity, delete the reservation
+        // Otherwise, update the used_quantity
+        if (quantityToUseFromReservation >= availableInReservation) {
+          // Fully consumed - delete the reservation entry
+          await tx.reserve_item_stock.delete({
+            where: { id: reservation.id },
+          });
+        } else {
+          // Partially consumed - update used_quantity
+          await tx.reserve_item_stock.update({
+            where: { id: reservation.id },
+            data: {
+              used_quantity: {
+                increment: quantityToUseFromReservation,
+              },
+            },
+          });
+        }
+
+        remainingQuantity -= quantityToUseFromReservation;
+      }
+
+      // If still need more quantity, use from regular stock
+      if (remainingQuantity > 0) {
+        const dec = await tx.item.updateMany({
           where: {
             id: item_id,
             organization_id: organizationId,
+            quantity: { gte: remainingQuantity },
           },
-          select: { quantity: true },
+          data: {
+            quantity: { decrement: remainingQuantity },
+          },
         });
-        const available = current?.quantity ?? 0;
-        throw new Error(
-          `INSUFFICIENT_INVENTORY:${item_id}:${quantity}:${available}`
-        );
+
+        if (dec.count === 0) {
+          const current = await tx.item.findFirst({
+            where: {
+              id: item_id,
+              organization_id: organizationId,
+            },
+            select: { quantity: true },
+          });
+          const available = current?.quantity ?? 0;
+          throw new Error(
+            `INSUFFICIENT_INVENTORY:${item_id}:${remainingQuantity}:${available}`,
+          );
+        }
       }
 
       // Update materials_to_order_item's quantity_used
@@ -174,7 +234,7 @@ async function handleUsedTransaction(data: UsedTransactionData) {
 
         if (updatedMto) {
           const allItemsUsed = (updatedMto.items || []).every(
-            (it) => (it.quantity_used || 0) >= it.quantity
+            (it) => (it.quantity_used || 0) >= it.quantity,
           );
 
           if (allItemsUsed && !updatedMto.used_material_completed) {
@@ -323,10 +383,10 @@ async function handleAddedTransaction(data: AddedTransactionData) {
     }
 
     const allItemsReceived = updatedPO.items.every(
-      (item) => (item.quantity_received || 0) >= item.quantity
+      (item) => (item.quantity_received || 0) >= item.quantity,
     );
     const someItemsReceived = updatedPO.items.some(
-      (item) => (item.quantity_received || 0) > 0
+      (item) => (item.quantity_received || 0) > 0,
     );
 
     let newStatus = updatedPO.status;
@@ -462,7 +522,7 @@ async function handleManualUsedTransaction(data: ManualUsedTransactionData) {
         });
         const available = current?.quantity ?? 0;
         throw new Error(
-          `INSUFFICIENT_INVENTORY:${item_id}:${quantity}:${available}`
+          `INSUFFICIENT_INVENTORY:${item_id}:${quantity}:${available}`,
         );
       }
 
@@ -553,7 +613,7 @@ async function handleWastedTransaction(data: WastedTransactionData) {
         });
         const available = current?.quantity ?? 0;
         throw new Error(
-          `INSUFFICIENT_INVENTORY:${item_id}:${quantity}:${available}`
+          `INSUFFICIENT_INVENTORY:${item_id}:${quantity}:${available}`,
         );
       }
 
@@ -635,7 +695,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "item_id, quantity, and type are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -645,7 +705,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "quantity must be non-negative",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -684,7 +744,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "purchase_order_id is required for ADDED transactions",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       result = await handleAddedTransaction({
@@ -707,7 +767,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "type must be either 'ADDED', 'USED', or 'WASTED'",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -719,7 +779,7 @@ export async function POST(request: NextRequest) {
           message: result?.message || "Request failed",
           data: result?.data,
         },
-        { status: result?.statusCode || 400 }
+        { status: result?.statusCode || 400 },
       );
     }
 
@@ -733,12 +793,12 @@ export async function POST(request: NextRequest) {
         "stock_transaction",
         logEntityId,
         "CREATE",
-        `Stock transaction created successfully: ${type} for item: ${item_id}`
+        `Stock transaction created successfully: ${type} for item: ${item_id}`,
       );
 
       if (!logged) {
         console.error(
-          `Failed to log stock transaction creation: ${logEntityId}`
+          `Failed to log stock transaction creation: ${logEntityId}`,
         );
       }
     }
@@ -752,13 +812,13 @@ export async function POST(request: NextRequest) {
           : { warning: "Note: Creation succeeded but logging failed" }),
         data: result.data,
       },
-      { status: result.statusCode }
+      { status: result.statusCode },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/stock_transaction/create:", error);
@@ -767,7 +827,7 @@ export async function POST(request: NextRequest) {
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

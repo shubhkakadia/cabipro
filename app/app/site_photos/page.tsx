@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 // import { AdminRoute } from "@/components/ProtectedRoute";
 // import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { toast } from "react-toastify";
 import heic2any from "heic2any";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
@@ -110,15 +110,6 @@ interface UserData {
   [key: string]: unknown;
 }
 
-interface UseUploadProgressReturn {
-  showProgressToast: (fileCount: number) => void;
-  completeUpload: (fileCount: number) => void;
-  dismissProgressToast: () => void;
-  getUploadProgressHandler: (
-    fileCount: number
-  ) => (progressEvent: { loaded: number; total?: number }) => void;
-}
-
 export default function SitePhotosPage() {
   const router = useRouter();
   const {
@@ -126,7 +117,14 @@ export default function SitePhotosPage() {
     completeUpload,
     dismissProgressToast,
     getUploadProgressHandler,
-  } = useUploadProgress() as UseUploadProgressReturn;
+  } = useUploadProgress() as {
+    showProgressToast: (fileCount: number) => void;
+    completeUpload: (fileCount: number) => void;
+    dismissProgressToast: () => void;
+    getUploadProgressHandler: (
+      fileCount: number,
+    ) => (progressEvent: AxiosProgressEvent) => void;
+  };
   const [lots, setLots] = useState<Lot[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // Store all lots for filtering
   const [loading, setLoading] = useState<boolean>(true);
@@ -143,7 +141,7 @@ export default function SitePhotosPage() {
   >({});
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
   const [pendingUploads, setPendingUploads] = useState<PendingUploads | null>(
-    null
+    null,
   );
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [employeeRole, setEmployeeRole] = useState<string | null>(null);
@@ -242,8 +240,8 @@ export default function SitePhotosPage() {
             // Check if user is assigned to any stage
             const isAssignedToStage = lot.stages?.some((stage: Stage) =>
               stage.assigned_to?.some(
-                (assignment) => assignment.employee_id === employeeId
-              )
+                (assignment) => assignment.employee_id === employeeId,
+              ),
             );
             return isAssignedToStage;
           });
@@ -279,7 +277,7 @@ export default function SitePhotosPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to fetch active lots. Please try again."
+            "Failed to fetch active lots. Please try again.",
         );
       } else {
         toast.error("Failed to fetch active lots. Please try again.");
@@ -321,7 +319,7 @@ export default function SitePhotosPage() {
       setLots(allLots);
     } else {
       const filtered = allLots.filter((lot: Lot) =>
-        lot.project?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        lot.project?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
       setLots(filtered);
     }
@@ -373,7 +371,7 @@ export default function SitePhotosPage() {
         {},
         {
           withCredentials: true,
-        }
+        },
       );
       // Clear localStorage
       localStorage.removeItem("userData");
@@ -396,7 +394,7 @@ export default function SitePhotosPage() {
     // Format phone number for WhatsApp (remove spaces, parentheses, and add country code)
     const phoneNumber = "61452669964"; // Australian number format
     const message = encodeURIComponent(
-      "Hello, I need support with the site photos application."
+      "Hello, I need support with the site photos application.",
     );
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
     setShowSupportDropdown(false);
@@ -411,7 +409,7 @@ export default function SitePhotosPage() {
       if (response.data.status) {
         const lotData = response.data.data as Lot;
         setLots((prevLots) =>
-          prevLots.map((lot: Lot) => (lot.id === lotId ? lotData : lot))
+          prevLots.map((lot: Lot) => (lot.id === lotId ? lotData : lot)),
         );
 
         // Update file notes state
@@ -469,7 +467,7 @@ export default function SitePhotosPage() {
   };
 
   const convertHeicToJpeg = async (
-    file: globalThis.File
+    file: globalThis.File,
   ): Promise<globalThis.File> => {
     try {
       const convertedBlob = await heic2any({
@@ -514,7 +512,7 @@ export default function SitePhotosPage() {
   const handleFileSelect = async (
     lot: Lot,
     tabKind: string,
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (!event.target.files) return;
     const files = Array.from(event.target.files);
@@ -523,7 +521,7 @@ export default function SitePhotosPage() {
     try {
       // Check for HEIC files
       const heicFiles = files.filter((file: globalThis.File) =>
-        isHeicFile(file)
+        isHeicFile(file),
       );
       if (heicFiles.length > 0) {
         toast.info(`Converting ${heicFiles.length} HEIC file(s) to JPEG...`);
@@ -536,7 +534,7 @@ export default function SitePhotosPage() {
             return await convertHeicToJpeg(file);
           }
           return file;
-        })
+        }),
       );
 
       // Create previews for all files
@@ -549,7 +547,7 @@ export default function SitePhotosPage() {
             preview,
             id: `${Date.now()}-${Math.random()}`,
           };
-        })
+        }),
       );
 
       // Show preview modal
@@ -579,7 +577,7 @@ export default function SitePhotosPage() {
     lot: Lot,
     tabKind: string,
     files: globalThis.File[],
-    notesMap: Record<string | number, string> = {}
+    notesMap: Record<string | number, string> = {},
   ) => {
     const uploadKey = `${lot.id}_${tabKind}`;
     try {
@@ -633,14 +631,14 @@ export default function SitePhotosPage() {
                         headers: {
                           "Content-Type": "application/json",
                         },
-                      }
+                      },
                     );
                   } catch (err) {
                     console.error("Error saving notes for file:", err);
                   }
                 }
-              }
-            )
+              },
+            ),
           );
         }
 
@@ -650,7 +648,7 @@ export default function SitePhotosPage() {
       } else {
         dismissProgressToast();
         toast.error(
-          response.data.message || "Failed to upload files. Please try again."
+          response.data.message || "Failed to upload files. Please try again.",
         );
       }
     } catch (err) {
@@ -659,7 +657,7 @@ export default function SitePhotosPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to upload files. Please try again."
+            "Failed to upload files. Please try again.",
         );
       } else {
         toast.error("Failed to upload files. Please try again.");
@@ -726,7 +724,7 @@ export default function SitePhotosPage() {
     setPendingUploads({
       ...pendingUploads,
       files: pendingUploads.files.map((fileItem: PendingFile) =>
-        fileItem.id === fileId ? { ...fileItem, notes } : fileItem
+        fileItem.id === fileId ? { ...fileItem, notes } : fileItem,
       ),
     });
   };
@@ -764,7 +762,7 @@ export default function SitePhotosPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -785,7 +783,7 @@ export default function SitePhotosPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to save notes. Please try again."
+            "Failed to save notes. Please try again.",
         );
       } else {
         toast.error("Failed to save notes. Please try again.");
@@ -822,7 +820,7 @@ export default function SitePhotosPage() {
 
     if (
       !confirm(
-        "Are you sure you want to delete this file? This action cannot be undone."
+        "Are you sure you want to delete this file? This action cannot be undone.",
       )
     ) {
       return;
@@ -862,7 +860,7 @@ export default function SitePhotosPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to delete file. Please try again."
+            "Failed to delete file. Please try again.",
         );
       } else {
         toast.error("Failed to delete file. Please try again.");

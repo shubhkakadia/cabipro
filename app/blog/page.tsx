@@ -4,14 +4,16 @@ import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Blog - CabiPro",
-  description: "Read articles about cloud security, job management, and best practices for cabinet makers, manufacturers, and joinery workshops.",
+  description:
+    "Read articles about cloud security, job management, and best practices for cabinet makers, manufacturers, and joinery workshops.",
 };
 
 const blogPosts = [
   {
     slug: "how-cabinet-makers-manage-materials-cut-waste",
     title: "How Cabinet Makers Manage Materials and Cut Waste",
-    preview: "Learn proven strategies for material management and waste reduction in cabinet making. Discover cutting optimization techniques, inventory management tips, and cost-saving practices.",
+    preview:
+      "Learn proven strategies for material management and waste reduction in cabinet making. Discover cutting optimization techniques, inventory management tips, and cost-saving practices.",
     date: "January 10, 2026",
     readTime: "10 min read",
     image: "/manage-material.png",
@@ -19,7 +21,8 @@ const blogPosts = [
   {
     slug: "cabinet-maker-software-vs-spreadsheets",
     title: "Cabinet Maker Software vs Spreadsheets: Cost, Errors & Time Lost",
-    preview: "Compare cabinet maker software vs spreadsheets for cost, accuracy, and time management. Learn how dedicated software reduces errors and saves hours every week.",
+    preview:
+      "Compare cabinet maker software vs spreadsheets for cost, accuracy, and time management. Learn how dedicated software reduces errors and saves hours every week.",
     date: "January 10, 2026",
     readTime: "8 min read",
     image: "/software-vs-excel.png",
@@ -27,7 +30,8 @@ const blogPosts = [
   {
     slug: "cloud-software-security-for-cabinet-makers",
     title: "How Safe Is Your Business Data When Using Cloud Software?",
-    preview: "Learn about cloud security, the shared responsibility model, and how to vet cloud software providers to keep your business data safe.",
+    preview:
+      "Learn about cloud security, the shared responsibility model, and how to vet cloud software providers to keep your business data safe.",
     date: "December 27, 2025",
     readTime: "5 min read",
     image: "/cloud-software-security.png",
@@ -52,7 +56,8 @@ export default function Blog() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Insights, tips, and best practices for cabinet makers, manufacturers, and joinery workshops
+              Insights, tips, and best practices for cabinet makers,
+              manufacturers, and joinery workshops
             </p>
           </div>
         </div>
@@ -66,25 +71,55 @@ export default function Blog() {
           <div className="absolute top-20 left-10 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl animate-float-1"></div>
           <div className="absolute top-60 right-20 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl animate-float-2"></div>
           <div className="absolute bottom-40 left-1/4 w-72 h-72 bg-indigo-200/20 rounded-full blur-3xl animate-float-3"></div>
-          
+
           {/* Grid pattern */}
-          <svg className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            className="absolute inset-0 w-full h-full opacity-5"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
-              <pattern id="grid-blog" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
+              <pattern
+                id="grid-blog"
+                width="40"
+                height="40"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 40 0 L 0 0 0 40"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#grid-blog)" className="animate-grid-move" />
+            <rect
+              width="100%"
+              height="100%"
+              fill="url(#grid-blog)"
+              className="animate-grid-move"
+            />
           </svg>
-          
+
           {/* Geometric shapes */}
           <div className="absolute top-1/4 right-1/4 w-32 h-32 border-2 border-gray-300/30 rounded-lg rotate-45 animate-spin-slow"></div>
           <div className="absolute bottom-1/3 left-1/3 w-24 h-24 border-2 border-gray-300/30 rounded-full animate-pulse-slow"></div>
-          <svg className="absolute top-1/2 left-1/2 w-48 h-48 text-gray-300/20 animate-rotate-slow" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" strokeDasharray="5,5" />
+          <svg
+            className="absolute top-1/2 left-1/2 w-48 h-48 text-gray-300/20 animate-rotate-slow"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+            />
           </svg>
         </div>
-        
+
         <div className="relative mx-auto max-w-7xl z-10">
           {blogPosts.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">

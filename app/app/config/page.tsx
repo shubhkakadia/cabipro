@@ -7,6 +7,7 @@ import { Plus, Search, Trash2, X, Loader2 } from "lucide-react";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import AppHeader from "@/components/AppHeader";
 import PaginationFooter from "@/components/PaginationFooter";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface ConfigItem {
@@ -64,7 +65,7 @@ export default function ConfigPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -101,7 +102,7 @@ export default function ConfigPage() {
     return data.filter(
       (item: ConfigItem) =>
         item.value?.toLowerCase().includes(searchLower) ||
-        item.category?.toLowerCase().includes(searchLower)
+        item.category?.toLowerCase().includes(searchLower),
     );
   }, [data, search]);
 
@@ -146,7 +147,7 @@ export default function ConfigPage() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -224,12 +225,15 @@ export default function ConfigPage() {
       <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
-            <div className="px-4 py-2">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-4 py-2 shrink-0">
               {/* Header */}
-              <h1 className="text-2xl font-bold text-slate-800">
-                Configuration Management
-              </h1>
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-slate-800">
+                  Configuration Management
+                </h1>
+                <SearchBar />
+              </div>
             </div>
             <div className="px-4 py-2">
               <div className="bg-white rounded-lg shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-8rem)] overflow-hidden">
@@ -277,10 +281,10 @@ export default function ConfigPage() {
                       {activeTab === "role"
                         ? "Role"
                         : activeTab === "hardware"
-                        ? "Hardware"
-                        : activeTab === "measuring_unit"
-                        ? "Measuring Unit"
-                        : "Finish"}
+                          ? "Hardware"
+                          : activeTab === "measuring_unit"
+                            ? "Measuring Unit"
+                            : "Finish"}
                     </button>
                   </div>
                 </div>
@@ -347,7 +351,7 @@ export default function ConfigPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                                 {item.createdAt
                                   ? new Date(
-                                      item.createdAt
+                                      item.createdAt,
                                     ).toLocaleDateString()
                                   : "N/A"}
                               </td>
@@ -403,10 +407,10 @@ export default function ConfigPage() {
                 {activeTab === "role"
                   ? "Role"
                   : activeTab === "hardware"
-                  ? "Hardware"
-                  : activeTab === "measuring_unit"
-                  ? "Measuring Unit"
-                  : "Finish"}
+                    ? "Hardware"
+                    : activeTab === "measuring_unit"
+                      ? "Measuring Unit"
+                      : "Finish"}
               </h2>
               <button
                 onClick={closeModals}
@@ -461,10 +465,10 @@ export default function ConfigPage() {
           activeTab === "role"
             ? "Role"
             : activeTab === "hardware"
-            ? "Hardware"
-            : activeTab === "measuring_unit"
-            ? "Measuring Unit"
-            : "Finish"
+              ? "Hardware"
+              : activeTab === "measuring_unit"
+                ? "Measuring Unit"
+                : "Finish"
         }`}
         message={`Are you sure you want to delete "${selectedItem?.value}"? This action cannot be undone.`}
         isDeleting={isDeleting}

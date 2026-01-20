@@ -20,8 +20,11 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!first_name || !last_name || !email || !password || !role) {
       return NextResponse.json(
-        { error: "First name, last name, email, password, and role are required" },
-        { status: 400 }
+        {
+          error:
+            "First name, last name, email, password, and role are required",
+        },
+        { status: 400 },
       );
     }
     const roleMap: Record<string, Role> = {
@@ -36,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!validRoles.includes(role)) {
       return NextResponse.json(
         { error: "Role must be one of: superadmin, admin, manager, staff" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (existingAdmin) {
       return NextResponse.json(
         { error: "Admin with this email already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
       if (image_file.size > 5 * 1024 * 1024) {
         return NextResponse.json(
           { error: "Image size must be less than 5MB" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
       if (!image_file.type || !allowedTypes.includes(image_file.type)) {
         return NextResponse.json(
           { error: "Image must be an image file (PNG, JPG, GIF, or WebP)" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
         console.error("Error uploading image file:", error);
         return NextResponse.json(
           { error: "Failed to upload image. Please try again." },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -153,7 +156,9 @@ export async function POST(request: NextRequest) {
 
     // Set admin authentication cookie
     const proto = request.headers.get("x-forwarded-proto");
-    const secure = proto ? proto === "https" : request.nextUrl.protocol === "https:";
+    const secure = proto
+      ? proto === "https"
+      : request.nextUrl.protocol === "https:";
     setAdminAuthCookie(token, response, expiresAt, secure);
 
     return response;
@@ -165,15 +170,14 @@ export async function POST(request: NextRequest) {
       if (error.code === "P2002") {
         return NextResponse.json(
           { error: "Email already exists" },
-          { status: 409 }
+          { status: 409 },
         );
       }
     }
 
     return NextResponse.json(
       { error: "An error occurred during admin signup. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

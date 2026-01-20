@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "items array is required and must not be empty",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "Each item must have an item_id",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       if (item.new_quantity === undefined || item.new_quantity === null) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "Each item must have a new_quantity",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       if (item.new_quantity < 0) {
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "new_quantity must be non-negative",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
       "stock_tally",
       tallyId,
       "CREATE",
-      `Stock tally completed: ${results.length} items updated, ${errors.length} errors`
+      `Stock tally completed: ${results.length} items updated, ${errors.length} errors`,
     );
 
     return NextResponse.json(
@@ -181,13 +181,13 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Stock tally error:", error);
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

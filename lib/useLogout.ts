@@ -31,7 +31,7 @@ export function useLogout() {
       // Always clear client-side state regardless of API success
       // Clear Redux store
       dispatch(clearUser());
-      
+
       // Clear localStorage
       if (typeof window !== "undefined") {
         localStorage.removeItem(USER_STORAGE_KEY);
@@ -45,4 +45,3 @@ export function useLogout() {
 
   return { logout };
 }
-

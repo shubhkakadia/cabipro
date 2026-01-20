@@ -52,6 +52,7 @@ model organization {
   suppliers           supplier[]
   users               users[]              @relation("OrganizationUsers")
   image               media[]
+  reserve_item_stock  reserve_item_stock[]
 
   @@index([name])
   @@index([slug])
@@ -121,10 +122,10 @@ model admin_sessions {
   updatedAt  DateTime @updatedAt
   admin      Admin    @relation(fields: [admin_id], references: [id], onDelete: Cascade)
 
+  @@unique([token])
   @@index([admin_id])
   @@index([admin_type])
   @@index([expires_at])
-  @@unique([token])
 }
 
 model users {
@@ -624,6 +625,7 @@ model item {
   sheet                    sheet?
   stock_transactions       stock_transaction[]
   supplier                 supplier?                 @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
+  reserve_item_stock       reserve_item_stock[]
 
   @@index([category])
   @@index([supplier_id], map: "item_supplier_id_fkey")
@@ -819,6 +821,7 @@ model materials_to_order_item {
   item                item                  @relation(fields: [item_id], references: [id], onDelete: Cascade)
   mto                 materials_to_order    @relation(fields: [mto_id], references: [id], onDelete: Cascade)
   ordered_items       purchase_order_item[]
+  reserve_item_stock  reserve_item_stock[]
 
   @@index([mto_id])
   @@index([item_id])
@@ -939,9 +942,9 @@ model media {
   materials_to_order    materials_to_order? @relation(fields: [materials_to_orderId], references: [id], onDelete: Cascade)
   organization          organization        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
-@@unique([organization_id, employee_id])
-@@unique([organization_id, item_id])
-@@unique([organization_id, material_selection_id])
+  @@unique([organization_id, employee_id])
+  @@unique([organization_id, item_id])
+  @@unique([organization_id, material_selection_id])
   @@index([materials_to_orderId], map: "media_materials_to_orderId_fkey")
   @@index([material_selection_id], map: "media_material_selection_id_fkey")
   @@index([organization_id])
@@ -980,4 +983,19 @@ enum LogAction {
   ASSIGN
   UPLOAD
   OTHER
+}
+
+model reserve_item_stock {
+  id              String                  @id @default(uuid())
+  item_id         String
+  organization_id String
+  quantity        Int
+  used_quantity   Int
+  mto_id          String
+  item            item                    @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  mto             materials_to_order_item @relation(fields: [mto_id], references: [id], onDelete: Cascade)
+  organization    organization            @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  user_id         String
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
 }

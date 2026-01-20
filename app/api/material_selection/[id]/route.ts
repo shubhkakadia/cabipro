@@ -4,7 +4,7 @@ import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -15,7 +15,7 @@ export async function GET(
     if (!id) {
       return NextResponse.json(
         { status: false, message: "Material selection ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,7 +75,7 @@ export async function GET(
     if (!materialSelection) {
       return NextResponse.json(
         { status: false, message: "Material selection not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -100,19 +100,19 @@ export async function GET(
         message: "Material selection fetched successfully",
         data: materialSelectionWithMedia,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error fetching material selection:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -173,7 +173,7 @@ export default function PurchaseOrderForm({
 
       // Find MTO - ID could be string (UUID) or number
       const mto = materialsToOrder.find(
-        (m) => m.id === mtoId || String(m.id) === String(mtoId)
+        (m) => m.id === mtoId || String(m.id) === String(mtoId),
       );
       if (!mto) {
         console.error("MTO not found:", mtoId);
@@ -216,7 +216,7 @@ export default function PurchaseOrderForm({
         toast.warning("No items found in selected Materials to Order");
       }
     },
-    [materialsToOrder]
+    [materialsToOrder],
   );
 
   // Preselect MTO when provided by parent
@@ -230,8 +230,8 @@ export default function PurchaseOrderForm({
       prev.map((item) =>
         item.id === itemId
           ? { ...item, quantity: parseInt(newQuantity) || 0 }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -240,8 +240,8 @@ export default function PurchaseOrderForm({
       prev.map((item) =>
         item.id === itemId
           ? { ...item, unit_price: parseFloat(newPrice) || 0 }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -373,7 +373,7 @@ export default function PurchaseOrderForm({
 
       if (validItems.length === 0) {
         toast.error(
-          "No valid items found. All items are missing required information."
+          "No valid items found. All items are missing required information.",
         );
         return;
       }
@@ -382,7 +382,7 @@ export default function PurchaseOrderForm({
         toast.warning(
           `${
             poItems.length - validItems.length
-          } item(s) were removed due to missing information.`
+          } item(s) were removed due to missing information.`,
         );
       }
 
@@ -392,7 +392,7 @@ export default function PurchaseOrderForm({
           sum +
           (parseFloat(String(item.quantity)) || 0) *
             (parseFloat(String(item.unit_price)) || 0),
-        0
+        0,
       );
 
       // Use manually entered total if provided, otherwise use calculated
@@ -434,7 +434,7 @@ export default function PurchaseOrderForm({
             quantity: parseFloat(String(item.quantity)) || 0,
             unit_price: parseFloat(String(item.unit_price)) || 0,
             notes: "", // Optional notes per item
-          })
+          }),
         )
         .join(",");
       formData.append("items", itemsString);
@@ -452,7 +452,7 @@ export default function PurchaseOrderForm({
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (response.data.status) {
@@ -467,7 +467,7 @@ export default function PurchaseOrderForm({
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "An error occurred while creating purchase order"
+            "An error occurred while creating purchase order",
         );
       } else {
         toast.error("An error occurred while creating purchase order");
@@ -511,7 +511,7 @@ export default function PurchaseOrderForm({
                       onClick={() =>
                         window.open(
                           `/admin/suppliers/${supplier?.supplier_id}`,
-                          "_blank"
+                          "_blank",
                         )
                       }
                       className="cursor-pointer hover:bg-slate-100 rounded p-1.5 transition-colors"
@@ -641,7 +641,7 @@ export default function PurchaseOrderForm({
                           ? mto.items.filter(
                               (it: MTOItem) =>
                                 (parseFloat(String(it.quantity_ordered_po)) ||
-                                  0) < (parseFloat(String(it.quantity)) || 0)
+                                  0) < (parseFloat(String(it.quantity)) || 0),
                             ).length
                           : 0}{" "}
                         remaining item(s)
@@ -858,8 +858,8 @@ export default function PurchaseOrderForm({
                                   item.stock_on_hand <= 0
                                     ? "text-red-600"
                                     : item.stock_on_hand < 10
-                                    ? "text-yellow-600"
-                                    : "text-green-600"
+                                      ? "text-yellow-600"
+                                      : "text-green-600"
                                 }`}
                               >
                                 {item.stock_on_hand} {item.measurement_unit}
@@ -944,7 +944,7 @@ export default function PurchaseOrderForm({
                                   sum +
                                   (parseFloat(String(item.quantity)) || 0) *
                                     (parseFloat(String(item.unit_price)) || 0),
-                                0
+                                0,
                               )
                               .toFixed(2)}
                           </p>

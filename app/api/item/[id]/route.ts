@@ -11,7 +11,7 @@ import { getOrganizationSlugFromRequest } from "@/lib/tenant";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -33,13 +33,35 @@ export async function GET(
         supplier: true,
         materials_to_order_items: true,
         purchase_order_item: true,
+        reserve_item_stock: {
+          include: {
+            mto: {
+              include: {
+                mto: {
+                  include: {
+                    project: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                    lots: {
+                      select: {
+                        lot_id: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
     if (!item) {
       return NextResponse.json(
         { status: false, message: "Item not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -89,26 +111,26 @@ export async function GET(
         message: "Item fetched successfully",
         data: itemWithTransactions,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/item/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -127,7 +149,7 @@ export async function PATCH(
           message: "Failed to parse form data",
           error: errorMessage,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -168,7 +190,7 @@ export async function PATCH(
     if (!existingItem) {
       return NextResponse.json(
         { status: false, message: "Item does not exist" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -272,7 +294,7 @@ export async function PATCH(
             // Log but continue - old media might already be deleted
             console.error(
               "Error deleting old media record (non-critical):",
-              deleteError
+              deleteError,
             );
           }
         }
@@ -305,7 +327,7 @@ export async function PATCH(
             // Log but don't fail the entire operation if old file deletion fails
             console.error(
               "Error deleting old image file (non-critical):",
-              deleteError
+              deleteError,
             );
           }
         }
@@ -332,7 +354,7 @@ export async function PATCH(
             message: "Failed to upload image",
             error: errorMessage,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -446,13 +468,35 @@ export async function PATCH(
         edging_tape: true,
         materials_to_order_items: true,
         purchase_order_item: true,
+        reserve_item_stock: {
+          include: {
+            mto: {
+              include: {
+                mto: {
+                  include: {
+                    project: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                    lots: {
+                      select: {
+                        lot_id: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
     if (!completeItem) {
       return NextResponse.json(
         { status: false, message: "Item not found after update" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -501,11 +545,11 @@ export async function PATCH(
       "item",
       id,
       "UPDATE",
-      `Item updated successfully: ${completeItem.description || id}`
+      `Item updated successfully: ${completeItem.description || id}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log item update: ${id} - ${completeItem.description || id}`
+        `Failed to log item update: ${id} - ${completeItem.description || id}`,
       );
     }
 
@@ -518,26 +562,26 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/item/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -554,14 +598,14 @@ export async function DELETE(
     if (!item) {
       return NextResponse.json(
         { status: false, message: "Item not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (item.is_deleted) {
       return NextResponse.json(
         { status: false, message: "Item already deleted" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -590,11 +634,11 @@ export async function DELETE(
       "item",
       id,
       "DELETE",
-      `Item deleted successfully: ${item.description || id}`
+      `Item deleted successfully: ${item.description || id}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log item deletion: ${id} - ${item.description || id}`
+        `Failed to log item deletion: ${id} - ${item.description || id}`,
       );
     }
 
@@ -607,19 +651,19 @@ export async function DELETE(
           ? {}
           : { warning: "Note: Deletion succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/item/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

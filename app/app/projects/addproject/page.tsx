@@ -90,7 +90,7 @@ export default function AddProjectPage() {
       const filtered = clients.filter(
         (client: Client) =>
           client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-          client.id.toLowerCase().includes(clientSearchTerm.toLowerCase())
+          client.id.toLowerCase().includes(clientSearchTerm.toLowerCase()),
       );
       setFilteredClients(filtered);
     }
@@ -172,7 +172,7 @@ export default function AddProjectPage() {
   const handleLotChange = (
     index: number,
     field: keyof LotData,
-    value: string
+    value: string,
   ) => {
     const updatedLots = [...lots];
     updatedLots[index] = {
@@ -511,12 +511,12 @@ export default function AddProjectPage() {
                                     type="text"
                                     value={lot.lotId}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleLotChange(
                                         index,
                                         "lotId",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
@@ -541,12 +541,12 @@ export default function AddProjectPage() {
                                     type="text"
                                     value={lot.clientName}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleLotChange(
                                         index,
                                         "clientName",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
@@ -562,12 +562,12 @@ export default function AddProjectPage() {
                                     type="date"
                                     value={lot.installationDueDate}
                                     onChange={(
-                                      e: React.ChangeEvent<HTMLInputElement>
+                                      e: React.ChangeEvent<HTMLInputElement>,
                                     ) =>
                                       handleLotChange(
                                         index,
                                         "installationDueDate",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     className="w-full text-sm text-slate-800 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 focus:outline-none"
@@ -581,12 +581,12 @@ export default function AddProjectPage() {
                                 <textarea
                                   value={lot.notes}
                                   onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>
+                                    e: React.ChangeEvent<HTMLTextAreaElement>,
                                   ) =>
                                     handleLotChange(
                                       index,
                                       "notes",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   rows={3}

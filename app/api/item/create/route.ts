@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!category || !CATEGORIES.includes(category)) {
       return NextResponse.json(
         { status: false, message: "Invalid category" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -220,7 +220,7 @@ export async function POST(request: NextRequest) {
             message: "Failed to upload image",
             error: errorMessage,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -246,11 +246,11 @@ export async function POST(request: NextRequest) {
       "item",
       createdItem.id,
       "CREATE",
-      `Item created successfully: ${itemDescription}`
+      `Item created successfully: ${itemDescription}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log item creation: ${createdItem.id} - ${itemDescription}`
+        `Failed to log item creation: ${createdItem.id} - ${itemDescription}`,
       );
     }
 
@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
           : { warning: "Note: Creation succeeded but logging failed" }),
         data: updatedItem,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Create item error:", error);
@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
         status: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

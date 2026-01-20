@@ -17,6 +17,7 @@ import {
 import axios from "axios";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Log {
@@ -39,7 +40,7 @@ export default function LogsPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "relevance">(
-    "desc"
+    "desc",
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -67,7 +68,7 @@ export default function LogsPage() {
       "Username",
       "ID",
     ],
-    []
+    [],
   );
 
   // Initialize selected columns with all columns
@@ -100,7 +101,7 @@ export default function LogsPage() {
       ...new Set(
         logs
           .map((log: Log) => log.entity_type)
-          .filter((type): type is string => Boolean(type))
+          .filter((type): type is string => Boolean(type)),
       ),
     ];
     return types.sort();
@@ -112,7 +113,7 @@ export default function LogsPage() {
       ...new Set(
         logs
           .map((log: Log) => log.action)
-          .filter((action): action is string => Boolean(action))
+          .filter((action): action is string => Boolean(action)),
       ),
     ];
     return actions.sort();
@@ -288,7 +289,7 @@ export default function LogsPage() {
       setSelectedEntityTypes((prev) =>
         prev.includes(type)
           ? prev.filter((t: string) => t !== type)
-          : [...prev, type]
+          : [...prev, type],
       );
     }
   };
@@ -304,7 +305,7 @@ export default function LogsPage() {
       setSelectedActions((prev) =>
         prev.includes(action)
           ? prev.filter((a: string) => a !== action)
-          : [...prev, action]
+          : [...prev, action],
       );
     }
   };
@@ -334,7 +335,7 @@ export default function LogsPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -419,11 +420,11 @@ export default function LogsPage() {
     return {
       "Date/Time": (log: Log) => formatDateTime(log.createdAt),
       "Entity Type": (log: Log) => log.entity_type || "",
-      "Action": (log: Log) => log.action || "",
-      "Description": (log: Log) => log.description || "",
+      Action: (log: Log) => log.action || "",
+      Description: (log: Log) => log.description || "",
       "Entity ID": (log: Log) => log.entity_id || "",
-      "Username": (log: Log) => log.user?.username || "",
-      "ID": (log: Log) => log.id || "",
+      Username: (log: Log) => log.user?.username || "",
+      ID: (log: Log) => log.id || "",
     };
   }, []);
 
@@ -448,7 +449,7 @@ export default function LogsPage() {
         return "bg-slate-100 text-slate-700 border-slate-200";
     }
   };
-  
+
   return (
     <div className="bg-tertiary">
       <AppHeader />
@@ -485,6 +486,7 @@ export default function LogsPage() {
                 <div className="px-4 py-2 shrink-0">
                   <div className="flex justify-between items-center">
                     <h1 className="text-xl font-bold text-slate-700">Logs</h1>
+                    <SearchBar />
                   </div>
                 </div>
 
@@ -520,7 +522,7 @@ export default function LogsPage() {
                             <button
                               onClick={() =>
                                 setShowDateFilterDropdown(
-                                  !showDateFilterDropdown
+                                  !showDateFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -584,7 +586,7 @@ export default function LogsPage() {
                             <button
                               onClick={() =>
                                 setShowEntityTypeFilterDropdown(
-                                  !showEntityTypeFilterDropdown
+                                  !showEntityTypeFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -628,7 +630,7 @@ export default function LogsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedEntityTypes.includes(
-                                          type
+                                          type,
                                         )}
                                         onChange={() =>
                                           handleEntityTypeToggle(type)
@@ -646,7 +648,7 @@ export default function LogsPage() {
                             <button
                               onClick={() =>
                                 setShowActionFilterDropdown(
-                                  !showActionFilterDropdown
+                                  !showActionFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -689,7 +691,7 @@ export default function LogsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedActions.includes(
-                                          action
+                                          action,
                                         )}
                                         onChange={() =>
                                           handleActionToggle(action)
@@ -740,7 +742,9 @@ export default function LogsPage() {
                           </div>
                           <div className="relative dropdown-container flex items-center">
                             <button
-                              onClick={() => exportToExcel(filteredAndSortedLogs)}
+                              onClick={() =>
+                                exportToExcel(filteredAndSortedLogs)
+                              }
                               disabled={
                                 isExporting ||
                                 filteredAndSortedLogs.length === 0 ||
@@ -806,7 +810,7 @@ export default function LogsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -914,7 +918,7 @@ export default function LogsPage() {
                                   <td className="px-4 py-3 text-sm">
                                     <span
                                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border ${getActionColor(
-                                        log.action
+                                        log.action,
                                       )}`}
                                     >
                                       {log.action || "-"}

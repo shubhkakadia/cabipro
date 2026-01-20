@@ -6,7 +6,7 @@ import { withLogging } from "@/lib/withLogging";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -31,32 +31,32 @@ export async function GET(
     if (!targetUser) {
       return NextResponse.json(
         { status: false, message: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { status: true, message: "User fetched successfully", data: targetUser },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/user/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -84,7 +84,7 @@ export async function PATCH(
     if (!existingUser) {
       return NextResponse.json(
         { status: false, message: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -93,17 +93,17 @@ export async function PATCH(
       if (typeof old_password !== "string" || typeof password !== "string") {
         return NextResponse.json(
           { status: false, message: "Invalid password format" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       const isValidPassword = await bcrypt.compare(
         old_password,
-        existingUser.password
+        existingUser.password,
       );
       if (!isValidPassword) {
         return NextResponse.json(
           { status: false, message: "Current password is incorrect" },
-          { status: 401 }
+          { status: 401 },
         );
       }
     }
@@ -156,7 +156,7 @@ export async function PATCH(
       if (typeof module_access !== "object" || Array.isArray(module_access)) {
         return NextResponse.json(
           { status: false, message: "Invalid module_access format" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -241,7 +241,7 @@ export async function PATCH(
     if (!completeUser) {
       return NextResponse.json(
         { status: false, message: "Failed to fetch updated user" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -250,7 +250,7 @@ export async function PATCH(
       "user",
       id,
       "UPDATE",
-      `User updated successfully: ${completeUser.first_name} ${completeUser.last_name}`
+      `User updated successfully: ${completeUser.first_name} ${completeUser.last_name}`,
     );
     if (!logged) {
       console.error(`Failed to log user update: ${id}`);
@@ -264,26 +264,26 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in PATCH /api/user/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -308,7 +308,7 @@ export async function DELETE(
     if (!existingUser) {
       return NextResponse.json(
         { status: false, message: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -330,11 +330,11 @@ export async function DELETE(
       "user",
       id,
       "DELETE",
-      `User deleted successfully: ${deletedUser.first_name} ${deletedUser.last_name}`
+      `User deleted successfully: ${deletedUser.first_name} ${deletedUser.last_name}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log user deletion: ${id} - ${deletedUser.first_name} ${deletedUser.last_name}`
+        `Failed to log user deletion: ${id} - ${deletedUser.first_name} ${deletedUser.last_name}`,
       );
       return NextResponse.json(
         {
@@ -343,24 +343,24 @@ export async function DELETE(
           data: deletedUser,
           warning: "Note: Deletion succeeded but logging failed",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
     return NextResponse.json(
       { status: true, message: "User deleted successfully", data: deletedUser },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/user/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -11,4 +11,3 @@ export function generateSlug(name: string): string {
     .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
     .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
 }
-

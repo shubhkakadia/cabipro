@@ -11,7 +11,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Joinery() {
-
   const solutions = [
     {
       title: "Custom Joinery Project Management",
@@ -121,7 +120,8 @@ export default function Joinery() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Built for joinery manufacturers who need to manage complex projects, track specialized materials, and coordinate multi-stage production.
+            Built for joinery manufacturers who need to manage complex projects,
+            track specialized materials, and coordinate multi-stage production.
           </p>
           <div
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 sm:gap-x-6 px-2"
@@ -159,7 +159,9 @@ export default function Joinery() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Custom joinery manufacturing comes with unique challenges. CabiPro is designed to help joinery workshops manage complexity with confidence.
+              Custom joinery manufacturing comes with unique challenges. CabiPro
+              is designed to help joinery workshops manage complexity with
+              confidence.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2">
@@ -197,7 +199,8 @@ export default function Joinery() {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              Powerful features designed specifically for custom joinery manufacturing operations.
+              Powerful features designed specifically for custom joinery
+              manufacturing operations.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-2">
@@ -262,7 +265,8 @@ export default function Joinery() {
                 Handles Complexity
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Manage complex joinery projects with multiple components, custom specifications, and varying production stages with ease.
+                Manage complex joinery projects with multiple components, custom
+                specifications, and varying production stages with ease.
               </p>
             </div>
             <div
@@ -274,7 +278,8 @@ export default function Joinery() {
                 Specialized Material Tracking
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Track different timber grades, hardware types, and specialized joinery materials with detailed specifications.
+                Track different timber grades, hardware types, and specialized
+                joinery materials with detailed specifications.
               </p>
             </div>
             <div
@@ -286,7 +291,8 @@ export default function Joinery() {
                 Multi-Stage Production
               </h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Coordinate machining, assembly, and finishing stages across specialized teams while maintaining quality and workflow.
+                Coordinate machining, assembly, and finishing stages across
+                specialized teams while maintaining quality and workflow.
               </p>
             </div>
           </div>
@@ -307,9 +313,14 @@ export default function Joinery() {
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            Join joinery workshops who are using CabiPro to manage complex projects more efficiently.
+            Join joinery workshops who are using CabiPro to manage complex
+            projects more efficiently.
           </p>
-          <div className="mt-8 sm:mt-10" data-aos="fade-up" data-aos-delay="200">
+          <div
+            className="mt-8 sm:mt-10"
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
             <Link
               href="/waitlist"
               className="inline-block rounded-lg bg-white px-6 py-3 sm:px-8 sm:py-4 text-sm sm:text-base font-medium text-gray-900 hover:bg-gray-200 transition-colors touch-manipulation"

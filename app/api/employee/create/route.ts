@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           message:
             "Employee already exists by this employee id: " + employee_id,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
           console.error("Error parsing availability JSON:", error);
           return NextResponse.json(
             { status: false, message: "Invalid availability data format" },
-            { status: 400 }
+            { status: 400 },
           );
         }
       } else if (typeof availability === "object" && availability !== null) {
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     if (!employee_id || !first_name || !role || !email || !phone) {
       return NextResponse.json(
         { status: false, message: "Required fields are missing" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -203,11 +203,11 @@ export async function POST(request: NextRequest) {
       "employee",
       employee.id,
       "CREATE",
-      `Employee created successfully: ${employee.first_name} ${employee.last_name}`
+      `Employee created successfully: ${employee.first_name} ${employee.last_name}`,
     );
     if (!logged) {
       console.error(
-        `Failed to log employee creation: ${employee.id} - ${employee.first_name} ${employee.last_name}`
+        `Failed to log employee creation: ${employee.id} - ${employee.first_name} ${employee.last_name}`,
       );
     }
 
@@ -220,13 +220,13 @@ export async function POST(request: NextRequest) {
           : { warning: "Note: Creation succeeded but logging failed" }),
         data: updatedEmployee,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error in POST /api/employee/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

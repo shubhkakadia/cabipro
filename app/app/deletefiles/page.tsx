@@ -30,6 +30,7 @@ import {
   Database,
 } from "lucide-react";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface DeletedMediaFile {
@@ -88,9 +89,9 @@ export default function DeleteFilesPage() {
   const [selectedFiles, setSelectedFiles] = useState<DeletedMediaFile[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [recoveringRecordId, setRecoveringRecordId] = useState<string | null>(
-    null
+    null,
   );
-  
+
   // Media types available
   const mediaTypes = ["Image", "Video", "PDF", "File"];
 
@@ -114,7 +115,7 @@ export default function DeleteFilesPage() {
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "Failed to fetch deleted media. Please try again."
+            "Failed to fetch deleted media. Please try again.",
         );
       } else {
         setError("Failed to fetch deleted media. Please try again.");
@@ -138,7 +139,7 @@ export default function DeleteFilesPage() {
         setDeletedRecords(response.data.data || []);
       } else {
         setRecordsError(
-          response.data.message || "Failed to fetch deleted records"
+          response.data.message || "Failed to fetch deleted records",
         );
       }
     } catch (err) {
@@ -146,7 +147,7 @@ export default function DeleteFilesPage() {
       if (axios.isAxiosError(err)) {
         setRecordsError(
           err.response?.data?.message ||
-            "Failed to fetch deleted records. Please try again."
+            "Failed to fetch deleted records. Please try again.",
         );
       } else {
         setRecordsError("Failed to fetch deleted records. Please try again.");
@@ -192,7 +193,7 @@ export default function DeleteFilesPage() {
         },
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -207,7 +208,7 @@ export default function DeleteFilesPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to recover record. Please try again."
+            "Failed to recover record. Please try again.",
         );
       } else {
         toast.error("Failed to recover record. Please try again.");
@@ -266,7 +267,7 @@ export default function DeleteFilesPage() {
         `/api/deletedmedia/${encodeURIComponent(filename)}`,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status) {
@@ -283,7 +284,7 @@ export default function DeleteFilesPage() {
       if (axios.isAxiosError(err)) {
         toast.error(
           err.response?.data?.message ||
-            "Failed to delete media. Please try again."
+            "Failed to delete media. Please try again.",
         );
       } else {
         toast.error("Failed to delete media. Please try again.");
@@ -358,12 +359,12 @@ export default function DeleteFilesPage() {
               error: errorMessage,
             };
           }
-        }
+        },
       );
 
       const results = await Promise.allSettled(fetchPromises);
       const successful = results.filter(
-        (r) => r.status === "fulfilled" && r.value.success
+        (r) => r.status === "fulfilled" && r.value.success,
       ).length;
       const failed = results.length - successful;
 
@@ -389,7 +390,7 @@ export default function DeleteFilesPage() {
 
       if (failed > 0) {
         toast.warning(
-          `Downloaded ${successful} file(s), ${failed} file(s) failed.`
+          `Downloaded ${successful} file(s), ${failed} file(s) failed.`,
         );
       } else {
         toast.success(`Successfully downloaded ${successful} file(s) as zip.`);
@@ -409,7 +410,7 @@ export default function DeleteFilesPage() {
 
       // Extract filenames from selected files
       const filenames = selectedFiles.map(
-        (file: DeletedMediaFile) => file.filename
+        (file: DeletedMediaFile) => file.filename,
       );
 
       // Call batch delete endpoint
@@ -426,14 +427,14 @@ export default function DeleteFilesPage() {
           toast.success(
             `Successfully deleted ${successfulCount} file(s)${
               failedCount > 0 ? `, ${failedCount} failed` : ""
-            }`
+            }`,
           );
         } else {
           toast.error("Failed to delete files. Please try again.");
         }
       } else {
         toast.error(
-          response.data.message || "Failed to delete files. Please try again."
+          response.data.message || "Failed to delete files. Please try again.",
         );
       }
 
@@ -576,7 +577,7 @@ export default function DeleteFilesPage() {
       }
     } else {
       setSelectedMediaTypes((prev) =>
-        prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+        prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
       );
     }
   };
@@ -597,7 +598,7 @@ export default function DeleteFilesPage() {
     const totalFiles = filteredMedia.length;
     const totalSpace = filteredMedia.reduce(
       (sum, file) => sum + (file.size || 0),
-      0
+      0,
     );
     return {
       totalFiles,
@@ -656,6 +657,7 @@ export default function DeleteFilesPage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Deleted Files & Records
                     </h1>
+                    <SearchBar />
                   </div>
                 </div>
 
@@ -807,7 +809,7 @@ export default function DeleteFilesPage() {
                                           <input
                                             type="checkbox"
                                             checked={selectedMediaTypes.includes(
-                                              type
+                                              type,
                                             )}
                                             onChange={() =>
                                               handleMediaTypeToggle(type)
@@ -864,7 +866,7 @@ export default function DeleteFilesPage() {
                         {/* Scrollable Content Section */}
                         <div className="flex-1 overflow-auto p-4">
                           {loading ? (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center min-h-100">
                               <div className="text-center">
                                 <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
                                 <p className="text-slate-600">
@@ -873,7 +875,7 @@ export default function DeleteFilesPage() {
                               </div>
                             </div>
                           ) : error ? (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center min-h-100">
                               <div className="text-center max-w-md">
                                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <p className="text-red-600 mb-4">{error}</p>
@@ -886,7 +888,7 @@ export default function DeleteFilesPage() {
                               </div>
                             </div>
                           ) : filteredMedia.length === 0 ? (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center min-h-100">
                               <div className="text-center">
                                 <File className="w-16 h-16 text-slate-400 mx-auto mb-4" />
                                 <p className="text-slate-600 text-lg">
@@ -924,7 +926,7 @@ export default function DeleteFilesPage() {
                               )}
                               {filteredMedia.map((file: DeletedMediaFile) => {
                                 const isSelected = selectedFiles.some(
-                                  (f) => f.id === file.id
+                                  (f) => f.id === file.id,
                                 );
                                 return (
                                   <div
@@ -1034,7 +1036,7 @@ export default function DeleteFilesPage() {
                         {/* Records Table */}
                         <div className="flex-1 overflow-auto p-4">
                           {recordsLoading ? (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center min-h-100">
                               <div className="text-center">
                                 <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
                                 <p className="text-slate-600">
@@ -1043,7 +1045,7 @@ export default function DeleteFilesPage() {
                               </div>
                             </div>
                           ) : recordsError ? (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center min-h-100">
                               <div className="text-center max-w-md">
                                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <p className="text-red-600 mb-4">
@@ -1058,7 +1060,7 @@ export default function DeleteFilesPage() {
                               </div>
                             </div>
                           ) : deletedRecords.length === 0 ? (
-                            <div className="flex items-center justify-center min-h-[400px]">
+                            <div className="flex items-center justify-center min-h-100">
                               <div className="text-center">
                                 <Database className="w-16 h-16 text-slate-400 mx-auto mb-4" />
                                 <p className="text-slate-600 text-lg">
@@ -1140,7 +1142,7 @@ export default function DeleteFilesPage() {
                                           </button>
                                         </td>
                                       </tr>
-                                    )
+                                    ),
                                   )}
                                 </tbody>
                               </table>

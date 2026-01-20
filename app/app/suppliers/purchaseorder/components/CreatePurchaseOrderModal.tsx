@@ -2,7 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 // import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { X, FileText, Eye, Trash2, Package, Search, Plus, ChevronDown } from "lucide-react";
+import {
+  X,
+  FileText,
+  Eye,
+  Trash2,
+  Package,
+  Search,
+  Plus,
+  ChevronDown,
+} from "lucide-react";
 import Image from "next/image";
 import ViewMedia, { ViewFile } from "@/components/ViewMedia";
 import AddItemModal from "./AddItemModal";
@@ -68,11 +77,15 @@ interface CreatePurchaseOrderModalProps {
   onSuccess?: () => void;
 }
 
-export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: CreatePurchaseOrderModalProps) {
-
+export default function CreatePurchaseOrderModal({
+  setShowModal,
+  onSuccess,
+}: CreatePurchaseOrderModalProps) {
   // Data States
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+    null,
+  );
   const [supplierItems, setSupplierItems] = useState<Item[]>([]);
   const [itemSearch, setItemSearch] = useState("");
 
@@ -88,7 +101,8 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
   const [poInvoiceFile, setPoInvoiceFile] = useState<File | null>(null);
   const [poInvoicePreview, setPoInvoicePreview] = useState<string | null>(null);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
-  const [selectedInvoiceFile, setSelectedInvoiceFile] = useState<ViewFile | null>(null);
+  const [selectedInvoiceFile, setSelectedInvoiceFile] =
+    useState<ViewFile | null>(null);
 
   // UI States
   const [loading, setLoading] = useState(false);
@@ -171,7 +185,10 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (supplierDropdownRef.current && !supplierDropdownRef.current.contains(target)) {
+      if (
+        supplierDropdownRef.current &&
+        !supplierDropdownRef.current.contains(target)
+      ) {
         setIsSupplierDropdownOpen(false);
       }
     };
@@ -182,16 +199,20 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
   }, []);
 
   const filteredSuppliers = suppliers.filter((supplier: Supplier) =>
-    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+    supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase()),
   );
 
-  const handleSupplierSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSupplierSearchChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setSupplierSearchTerm(e.target.value);
     setIsSupplierDropdownOpen(true);
   };
 
   const handleSupplierSelect = (supplierId: string, supplierName: string) => {
-    const supplier = suppliers.find((s: Supplier) => s.supplier_id === supplierId);
+    const supplier = suppliers.find(
+      (s: Supplier) => s.supplier_id === supplierId,
+    );
     setSelectedSupplier(supplier || null);
     setSupplierSearchTerm(supplierName);
     setIsSupplierDropdownOpen(false);
@@ -205,30 +226,36 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
     const searchLower = itemSearch.toLowerCase();
 
     // Check various fields
-    const matchesCategory = item.category?.toLowerCase().includes(searchLower);
-    const matchesDesc = item.description?.toLowerCase().includes(searchLower);
+    const matchesCategory = (item.category || "")
+      .toLowerCase()
+      .includes(searchLower);
+    const matchesDesc = (item.description || "")
+      .toLowerCase()
+      .includes(searchLower);
 
     let matchesDetails = false;
     if (item.sheet) {
       matchesDetails =
-        item.sheet.brand?.toLowerCase().includes(searchLower) ||
-        item.sheet.color?.toLowerCase().includes(searchLower) ||
-        item.sheet.finish?.toLowerCase().includes(searchLower);
+        (item.sheet.brand || "").toLowerCase().includes(searchLower) ||
+        (item.sheet.color || "").toLowerCase().includes(searchLower) ||
+        (item.sheet.finish || "").toLowerCase().includes(searchLower);
     } else if (item.handle) {
       matchesDetails =
-        item.handle.brand?.toLowerCase().includes(searchLower) ||
-        item.handle.color?.toLowerCase().includes(searchLower) ||
-        item.handle.type?.toLowerCase().includes(searchLower);
+        (item.handle.brand || "").toLowerCase().includes(searchLower) ||
+        (item.handle.color || "").toLowerCase().includes(searchLower) ||
+        (item.handle.type || "").toLowerCase().includes(searchLower);
     } else if (item.hardware) {
       matchesDetails =
-        item.hardware.brand?.toLowerCase().includes(searchLower) ||
-        item.hardware.name?.toLowerCase().includes(searchLower);
+        (item.hardware.brand || "").toLowerCase().includes(searchLower) ||
+        (item.hardware.name || "").toLowerCase().includes(searchLower);
     } else if (item.accessory) {
-      matchesDetails = item.accessory.name?.toLowerCase().includes(searchLower);
+      matchesDetails = (item.accessory.name || "")
+        .toLowerCase()
+        .includes(searchLower);
     } else if (item.edging_tape) {
       matchesDetails =
-        item.edging_tape.brand?.toLowerCase().includes(searchLower) ||
-        item.edging_tape.color?.toLowerCase().includes(searchLower);
+        (item.edging_tape.brand || "").toLowerCase().includes(searchLower) ||
+        (item.edging_tape.color || "").toLowerCase().includes(searchLower);
     }
 
     return matchesCategory || matchesDesc || matchesDetails;
@@ -241,33 +268,49 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
       return;
     }
 
-    setSelectedItems((prev: SelectedItem[]) => [...prev, {
-      ...item,
-      item_id: item.item_id,
-      order_quantity: 1, // Default quantity
-      order_unit_price: item.price || 0, // Default price
-    }]);
+    setSelectedItems((prev: SelectedItem[]) => [
+      ...prev,
+      {
+        ...item,
+        item_id: item.item_id,
+        order_quantity: 1, // Default quantity
+        order_unit_price: item.price || 0, // Default price
+      },
+    ]);
     setItemSearch("");
     setShowItemSearchResults(false);
   };
 
-  const handleUpdateItem = (itemId: string, field: string, value: string | number) => {
-    setSelectedItems((prev: SelectedItem[]) => prev.map((item: SelectedItem) => {
-      if (item.item_id === itemId) {
-        return { ...item, [field]: value };
-      }
-      return item;
-    }));
+  const handleUpdateItem = (
+    itemId: string,
+    field: string,
+    value: string | number,
+  ) => {
+    setSelectedItems((prev: SelectedItem[]) =>
+      prev.map((item: SelectedItem) => {
+        if (item.item_id === itemId) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      }),
+    );
   };
 
   const handleRemoveItem = (itemId: string) => {
-    setSelectedItems((prev: SelectedItem[]) => prev.filter((item: SelectedItem) => item.item_id !== itemId));
+    setSelectedItems((prev: SelectedItem[]) =>
+      prev.filter((item: SelectedItem) => item.item_id !== itemId),
+    );
   };
 
   const [isDragging, setIsDragging] = useState(false);
 
   const validateAndSetFile = (file: File) => {
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
     if (!allowedTypes.includes(file.type)) {
       toast.error("Only PDF and image files are allowed");
       return;
@@ -337,7 +380,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
     }
 
     // Validate quantities
-    const invalidItems = selectedItems.some((item: SelectedItem) => !item.order_quantity || item.order_quantity <= 0);
+    const invalidItems = selectedItems.some(
+      (item: SelectedItem) => !item.order_quantity || item.order_quantity <= 0,
+    );
     if (invalidItems) {
       toast.error("All items must have a quantity greater than 0");
       return;
@@ -358,8 +403,11 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
       }
 
       const calculatedTotal = selectedItems.reduce(
-        (sum: number, item: SelectedItem) => sum + (parseFloat(String(item.order_quantity)) || 0) * (parseFloat(String(item.order_unit_price)) || 0),
-        0
+        (sum: number, item: SelectedItem) =>
+          sum +
+          (parseFloat(String(item.order_quantity)) || 0) *
+            (parseFloat(String(item.order_unit_price)) || 0),
+        0,
       );
 
       const finalTotal = poTotal ? parseFloat(poTotal) : calculatedTotal;
@@ -381,23 +429,29 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
         item_id: item.item_id,
         quantity: parseFloat(String(item.order_quantity)),
         unit_price: parseFloat(String(item.order_unit_price)),
-        notes: ""
+        notes: "",
       }));
 
       // The API expects a string of JSON objects separated by comma
-      const itemsString = itemsData.map((item) => JSON.stringify(item)).join(",");
+      const itemsString = itemsData
+        .map((item) => JSON.stringify(item))
+        .join(",");
       formData.append("items", itemsString);
 
       if (poInvoiceFile) {
         formData.append("invoice", poInvoiceFile);
       }
 
-      const response = await axios.post("/api/purchase_order/create", formData, {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
+      const response = await axios.post(
+        "/api/purchase_order/create",
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
-      });
+      );
 
       if (response.data.status) {
         toast.success("Purchase Order Created Successfully");
@@ -406,11 +460,12 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
       } else {
         toast.error(response.data.message || "Failed to create Purchase Order");
       }
-
     } catch (err) {
       console.error("Error creating purchase order:", err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to create Purchase Order");
+        toast.error(
+          err.response?.data?.message || "Failed to create Purchase Order",
+        );
       } else {
         toast.error("Failed to create Purchase Order");
       }
@@ -420,23 +475,35 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
   };
 
   const getItemDisplayName = (item: Item | SelectedItem): string => {
-    if (item.sheet) return `${item.sheet.brand || ""} ${item.sheet.color || ""} ${item.sheet.finish || ""}`.trim();
-    if (item.handle) return `${item.handle.brand || ""} ${item.handle.color || ""} ${item.handle.type || ""}`.trim();
-    if (item.hardware) return `${item.hardware.brand || ""} ${item.hardware.name || ""}`.trim();
+    if (item.sheet)
+      return `${item.sheet.brand || ""} ${item.sheet.color || ""} ${item.sheet.finish || ""}`.trim();
+    if (item.handle)
+      return `${item.handle.brand || ""} ${item.handle.color || ""} ${item.handle.type || ""}`.trim();
+    if (item.hardware)
+      return `${item.hardware.brand || ""} ${item.hardware.name || ""}`.trim();
     if (item.accessory) return item.accessory.name || "";
-    if (item.edging_tape) return `${item.edging_tape.brand || ""} ${item.edging_tape.color || ""}`.trim();
+    if (item.edging_tape)
+      return `${item.edging_tape.brand || ""} ${item.edging_tape.color || ""}`.trim();
     return item.description || "Item";
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs bg-black/50">
-      <div className="absolute inset-0 bg-slate-900/40" onClick={() => setShowModal(false)} />
+      <div
+        className="absolute inset-0 bg-slate-900/40"
+        onClick={() => setShowModal(false)}
+      />
 
       <div className="relative bg-white w-full max-w-6xl mx-4 rounded-xl shadow-xl border border-slate-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-800">Create Purchase Order</h2>
-          <button onClick={() => setShowModal(false)} className="cursor-pointer p-2 hover:bg-slate-100 rounded-lg transition-colors">
+          <h2 className="text-xl font-semibold text-slate-800">
+            Create Purchase Order
+          </h2>
+          <button
+            onClick={() => setShowModal(false)}
+            className="cursor-pointer p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
             <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
@@ -462,15 +529,18 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 />
                 <button
                   type="button"
-                  onClick={() => setIsSupplierDropdownOpen(!isSupplierDropdownOpen)}
+                  onClick={() =>
+                    setIsSupplierDropdownOpen(!isSupplierDropdownOpen)
+                  }
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {loadingSuppliers ? (
                     <div className="animate-spin h-4 w-4 border-2 border-slate-400 border-t-transparent rounded-full"></div>
                   ) : (
                     <ChevronDown
-                      className={`w-5 h-5 transition-transform duration-200 ${isSupplierDropdownOpen ? "rotate-180" : ""
-                        }`}
+                      className={`w-5 h-5 transition-transform duration-200 ${
+                        isSupplierDropdownOpen ? "rotate-180" : ""
+                      }`}
                     />
                   )}
                 </button>
@@ -486,15 +556,13 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                         onClick={() =>
                           handleSupplierSelect(
                             supplier.supplier_id,
-                            supplier.name
+                            supplier.name,
                           )
                         }
                         className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
                       >
                         <div>
-                          <div className="font-medium">
-                            {supplier.name}
-                          </div>
+                          <div className="font-medium">{supplier.name}</div>
                           <div className="text-xs text-slate-500">
                             id: {supplier.supplier_id}
                           </div>
@@ -530,7 +598,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 Total Amount (Optional)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-slate-500">$</span>
+                <span className="absolute left-3 top-2.5 text-slate-500">
+                  $
+                </span>
                 <input
                   type="number"
                   value={poTotal}
@@ -549,7 +619,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 Delivery Charge (Optional)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-slate-500">$</span>
+                <span className="absolute left-3 top-2.5 text-slate-500">
+                  $
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -578,7 +650,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
           {/* Item Selection & List */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Items</h3>
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                Items
+              </h3>
             </div>
             {/* Search Bar */}
             <div className="relative mb-6" ref={searchRef}>
@@ -586,7 +660,11 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder={selectedSupplier ? "Search items by name, category, brand..." : "Select a supplier to search items"}
+                  placeholder={
+                    selectedSupplier
+                      ? "Search items by name, category, brand..."
+                      : "Select a supplier to search items"
+                  }
                   value={itemSearch}
                   onChange={(e) => {
                     setItemSearch(e.target.value);
@@ -602,7 +680,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
               {showItemSearchResults && itemSearch && selectedSupplier && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
                   {loadingItems ? (
-                    <div className="p-4 text-center text-slate-500 text-sm">Loading items...</div>
+                    <div className="p-4 text-center text-slate-500 text-sm">
+                      Loading items...
+                    </div>
                   ) : filteredItems.length === 0 ? (
                     <div className="p-4 text-center space-y-3">
                       <p className="text-slate-500 text-sm">No items found</p>
@@ -623,14 +703,25 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                       >
                         <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 shrink-0 flex items-center justify-center overflow-hidden">
                           {item.image?.url ? (
-                            <Image src={`/${item.image.url}`} alt="Item" width={40} height={40} className="w-full h-full object-cover" />
+                            <Image
+                              src={`/${item.image.url}`}
+                              alt="Item"
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <Package className="w-5 h-5 text-slate-400" />
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-slate-800">{getItemDisplayName(item)}</p>
-                          <p className="text-xs text-slate-500">{item.category} • Stock: {item.quantity} {item.measurement_unit}</p>
+                          <p className="text-sm font-medium text-slate-800">
+                            {getItemDisplayName(item)}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {item.category} • Stock: {item.quantity}{" "}
+                            {item.measurement_unit}
+                          </p>
                         </div>
                         <Plus className="w-4 h-4 text-primary ml-auto" />
                       </div>
@@ -645,20 +736,39 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Image</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Category</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Details</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Stock</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Quantity</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Unit Price (including GST)</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Total</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Image
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Category
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Details
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Stock
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Quantity
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Unit Price (including GST)
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                      Total
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {selectedItems.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-4 py-8 text-center text-slate-500 text-sm">
+                      <td
+                        colSpan={8}
+                        className="px-4 py-8 text-center text-slate-500 text-sm"
+                      >
                         No items selected. Search and add items above.
                       </td>
                     </tr>
@@ -669,7 +779,13 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                         <td className="px-4 py-3">
                           <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 shrink-0 flex items-center justify-center overflow-hidden">
                             {item.image?.url ? (
-                              <Image src={`/${item.image.url}`} alt="Item" width={40} height={40} className="w-full h-full object-cover" />
+                              <Image
+                                src={`/${item.image.url}`}
+                                alt="Item"
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <Package className="w-5 h-5 text-slate-400" />
                             )}
@@ -688,44 +804,109 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                           <div className="text-xs text-slate-600 space-y-1">
                             {item.sheet && (
                               <>
-                                <div><span className="font-medium">Color:</span> {item.sheet.color}</div>
-                                <div><span className="font-medium">Finish:</span> {item.sheet.finish}</div>
-                                <div><span className="font-medium">Face:</span> {item.sheet.face || "-"}</div>
-                                <div><span className="font-medium">Dimensions:</span> {item.sheet.dimensions}</div>
+                                <div>
+                                  <span className="font-medium">Color:</span>{" "}
+                                  {item.sheet.color}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Finish:</span>{" "}
+                                  {item.sheet.finish}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Face:</span>{" "}
+                                  {item.sheet.face || "-"}
+                                </div>
+                                <div>
+                                  <span className="font-medium">
+                                    Dimensions:
+                                  </span>{" "}
+                                  {item.sheet.dimensions}
+                                </div>
                               </>
                             )}
                             {item.handle && (
                               <>
-                                <div><span className="font-medium">Color:</span> {item.handle.color}</div>
-                                <div><span className="font-medium">Type:</span> {item.handle.type}</div>
-                                <div><span className="font-medium">Dimensions:</span> {item.handle.dimensions}</div>
-                                <div><span className="font-medium">Material:</span> {item.handle.material || "-"}</div>
+                                <div>
+                                  <span className="font-medium">Color:</span>{" "}
+                                  {item.handle.color}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Type:</span>{" "}
+                                  {item.handle.type}
+                                </div>
+                                <div>
+                                  <span className="font-medium">
+                                    Dimensions:
+                                  </span>{" "}
+                                  {item.handle.dimensions}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Material:</span>{" "}
+                                  {item.handle.material || "-"}
+                                </div>
                               </>
                             )}
                             {item.hardware && (
                               <>
-                                <div><span className="font-medium">Name:</span> {item.hardware.name}</div>
-                                <div><span className="font-medium">Type:</span> {item.hardware.type}</div>
-                                <div><span className="font-medium">Dimensions:</span> {item.hardware.dimensions}</div>
-                                <div><span className="font-medium">Sub Category:</span> {item.hardware.sub_category}</div>
+                                <div>
+                                  <span className="font-medium">Name:</span>{" "}
+                                  {item.hardware.name}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Type:</span>{" "}
+                                  {item.hardware.type}
+                                </div>
+                                <div>
+                                  <span className="font-medium">
+                                    Dimensions:
+                                  </span>{" "}
+                                  {item.hardware.dimensions}
+                                </div>
+                                <div>
+                                  <span className="font-medium">
+                                    Sub Category:
+                                  </span>{" "}
+                                  {item.hardware.sub_category}
+                                </div>
                               </>
                             )}
                             {item.accessory && (
                               <>
-                                <div><span className="font-medium">Name:</span> {item.accessory.name}</div>
+                                <div>
+                                  <span className="font-medium">Name:</span>{" "}
+                                  {item.accessory.name}
+                                </div>
                               </>
                             )}
                             {item.edging_tape && (
                               <>
-                                <div><span className="font-medium">Brand:</span> {item.edging_tape.brand || "-"}</div>
-                                <div><span className="font-medium">Color:</span> {item.edging_tape.color || "-"}</div>
-                                <div><span className="font-medium">Finish:</span> {item.edging_tape.finish || "-"}</div>
-                                <div><span className="font-medium">Dimensions:</span> {item.edging_tape.dimensions || "-"}</div>
+                                <div>
+                                  <span className="font-medium">Brand:</span>{" "}
+                                  {item.edging_tape.brand || "-"}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Color:</span>{" "}
+                                  {item.edging_tape.color || "-"}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Finish:</span>{" "}
+                                  {item.edging_tape.finish || "-"}
+                                </div>
+                                <div>
+                                  <span className="font-medium">
+                                    Dimensions:
+                                  </span>{" "}
+                                  {item.edging_tape.dimensions || "-"}
+                                </div>
                               </>
                             )}
-                            {!item.sheet && !item.handle && !item.hardware && !item.accessory && !item.edging_tape && (
-                              <div>{item.description || "-"}</div>
-                            )}
+                            {!item.sheet &&
+                              !item.handle &&
+                              !item.hardware &&
+                              !item.accessory &&
+                              !item.edging_tape && (
+                                <div>{item.description || "-"}</div>
+                              )}
                           </div>
                         </td>
 
@@ -740,30 +921,51 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                             type="number"
                             min="1"
                             value={item.order_quantity}
-                            onChange={(e) => handleUpdateItem(item.item_id, "order_quantity", e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateItem(
+                                item.item_id,
+                                "order_quantity",
+                                e.target.value,
+                              )
+                            }
                             className="w-20 p-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-primary outline-none"
                           />
                         </td>
 
                         {/* Unit Price Column */}
                         <td className="px-4 py-3">
-                          <div className="flex items-center"> {/* Added flex container */}
-                            <span className="text-sm text-slate-500 mr-1">$</span> {/* Dollar sign outside */}
+                          <div className="flex items-center">
+                            {" "}
+                            {/* Added flex container */}
+                            <span className="text-sm text-slate-500 mr-1">
+                              $
+                            </span>{" "}
+                            {/* Dollar sign outside */}
                             <input
                               type="number"
                               min="0"
                               step="0.01"
                               value={item.order_unit_price}
-                              onChange={(e) => handleUpdateItem(item.item_id, "order_unit_price", e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateItem(
+                                  item.item_id,
+                                  "order_unit_price",
+                                  e.target.value,
+                                )
+                              }
                               className="w-24 p-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-primary outline-none" // Removed pl-5
                             />
                           </div>
                         </td>
 
                         {/* Total Column */}
-                      <td className="px-4 py-3 text-sm font-medium text-slate-800">
-                        ${((parseFloat(String(item.order_quantity)) || 0) * (parseFloat(String(item.order_unit_price)) || 0)).toFixed(2)}
-                      </td>
+                        <td className="px-4 py-3 text-sm font-medium text-slate-800">
+                          $
+                          {(
+                            (parseFloat(String(item.order_quantity)) || 0) *
+                            (parseFloat(String(item.order_unit_price)) || 0)
+                          ).toFixed(2)}
+                        </td>
 
                         {/* Actions Column */}
                         <td className="px-4 py-3 text-center">
@@ -781,9 +983,24 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 {selectedItems.length > 0 && (
                   <tfoot className="bg-slate-50 font-medium">
                     <tr>
-                      <td colSpan="6" className="px-4 py-3 text-right text-sm text-slate-600">Calculated Total:</td>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-3 text-right text-sm text-slate-600"
+                      >
+                        Calculated Total:
+                      </td>
                       <td className="px-4 py-3 text-sm text-slate-900">
-                        ${selectedItems.reduce((sum: number, item: SelectedItem) => sum + (parseFloat(String(item.order_quantity)) || 0) * (parseFloat(String(item.order_unit_price)) || 0), 0).toFixed(2)}
+                        $
+                        {selectedItems
+                          .reduce(
+                            (sum: number, item: SelectedItem) =>
+                              sum +
+                              (parseFloat(String(item.order_quantity)) || 0) *
+                                (parseFloat(String(item.order_unit_price)) ||
+                                  0),
+                            0,
+                          )
+                          .toFixed(2)}
                       </td>
                       <td></td>
                     </tr>
@@ -804,10 +1021,11 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
               </label>
               {!poInvoiceFile ? (
                 <div
-                  className={`border-2 border-dashed rounded-lg py-8 transition-all ${isDragging
-                    ? "border-primary bg-blue-50"
-                    : "border-slate-300 hover:border-primary hover:bg-slate-50"
-                    }`}
+                  className={`border-2 border-dashed rounded-lg py-8 transition-all ${
+                    isDragging
+                      ? "border-primary bg-blue-50"
+                      : "border-slate-300 hover:border-primary hover:bg-slate-50"
+                  }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
@@ -819,10 +1037,19 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                     onChange={handleInvoiceFileChange}
                     className="hidden"
                   />
-                  <label htmlFor="invoice-upload" className="cursor-pointer flex flex-col items-center text-center w-full h-full">
-                    <FileText className={`w-8 h-8 mb-2 ${isDragging ? "text-primary" : "text-slate-400"}`} />
-                    <p className={`text-sm font-medium ${isDragging ? "text-primary" : "text-slate-700"}`}>
-                      {isDragging ? "Drop file here" : "Click to upload or drag and drop"}
+                  <label
+                    htmlFor="invoice-upload"
+                    className="cursor-pointer flex flex-col items-center text-center w-full h-full"
+                  >
+                    <FileText
+                      className={`w-8 h-8 mb-2 ${isDragging ? "text-primary" : "text-slate-400"}`}
+                    />
+                    <p
+                      className={`text-sm font-medium ${isDragging ? "text-primary" : "text-slate-700"}`}
+                    >
+                      {isDragging
+                        ? "Drop file here"
+                        : "Click to upload or drag and drop"}
                     </p>
                   </label>
                 </div>
@@ -830,47 +1057,67 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between bg-slate-50">
                   <div className="flex items-center gap-3 overflow-hidden">
                     {poInvoicePreview ? (
-                      <Image src={poInvoicePreview} alt="Preview" width={40} height={40} className="w-10 h-10 rounded object-cover border border-slate-200" />
+                      <Image
+                        src={poInvoicePreview}
+                        alt="Preview"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded object-cover border border-slate-200"
+                      />
                     ) : (
                       <div className="w-10 h-10 bg-white rounded border border-slate-200 flex items-center justify-center">
                         <FileText className="w-5 h-5 text-slate-400" />
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{poInvoiceFile.name}</p>
-                      <p className="text-xs text-slate-500">{(poInvoiceFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-sm font-medium text-slate-800 truncate">
+                        {poInvoiceFile.name}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {(poInvoiceFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => {
-                      if (poInvoiceFile) {
-                        const fileUrl = poInvoiceFile.type.startsWith("image/") && poInvoicePreview
-                          ? poInvoicePreview
-                          : poInvoiceFile.type === "application/pdf"
-                          ? URL.createObjectURL(poInvoiceFile)
-                          : null;
-                        setSelectedInvoiceFile({
-                          name: poInvoiceFile.name,
-                          url: fileUrl || "",
-                          type: poInvoiceFile.type,
-                          size: poInvoiceFile.size,
-                          isExisting: false,
-                        });
-                        setShowInvoicePreview(true);
-                      }
-                    }}
-                      className="cursor-pointer p-1.5 hover:bg-white rounded border border-transparent hover:border-slate-200 transition-colors">
+                    <button
+                      onClick={() => {
+                        if (poInvoiceFile) {
+                          const fileUrl =
+                            poInvoiceFile.type.startsWith("image/") &&
+                            poInvoicePreview
+                              ? poInvoicePreview
+                              : poInvoiceFile.type === "application/pdf"
+                                ? URL.createObjectURL(poInvoiceFile)
+                                : null;
+                          setSelectedInvoiceFile({
+                            name: poInvoiceFile.name,
+                            url: fileUrl || "",
+                            type: poInvoiceFile.type,
+                            size: poInvoiceFile.size,
+                            isExisting: false,
+                          });
+                          setShowInvoicePreview(true);
+                        }
+                      }}
+                      className="cursor-pointer p-1.5 hover:bg-white rounded border border-transparent hover:border-slate-200 transition-colors"
+                    >
                       <Eye className="w-4 h-4 text-slate-600" />
                     </button>
-                    <button onClick={() => { 
-                      setPoInvoiceFile(null); 
-                      setPoInvoicePreview(null);
-                      if (selectedInvoiceFile && !selectedInvoiceFile.isExisting) {
-                        URL.revokeObjectURL(selectedInvoiceFile.url);
-                      }
-                      setSelectedInvoiceFile(null);
-                    }}
-                      className="cursor-pointer p-1.5 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-colors">
+                    <button
+                      onClick={() => {
+                        setPoInvoiceFile(null);
+                        setPoInvoicePreview(null);
+                        if (
+                          selectedInvoiceFile &&
+                          !selectedInvoiceFile.isExisting &&
+                          selectedInvoiceFile.url
+                        ) {
+                          URL.revokeObjectURL(selectedInvoiceFile.url);
+                        }
+                        setSelectedInvoiceFile(null);
+                      }}
+                      className="cursor-pointer p-1.5 hover:bg-red-50 rounded border border-transparent hover:border-red-100 transition-colors"
+                    >
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </button>
                   </div>
@@ -913,7 +1160,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
                 <div className="cursor-pointer animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                 Creating...
               </>
-            ) : "Create Purchase Order"}
+            ) : (
+              "Create Purchase Order"
+            )}
           </button>
         </div>
       </div>
@@ -922,7 +1171,9 @@ export default function CreatePurchaseOrderModal({ setShowModal, onSuccess }: Cr
       {showInvoicePreview && selectedInvoiceFile && (
         <ViewMedia
           selectedFile={selectedInvoiceFile}
-          setSelectedFile={(file: ViewFile | null) => setSelectedInvoiceFile(file)}
+          setSelectedFile={(file: ViewFile | null) =>
+            setSelectedInvoiceFile(file)
+          }
           setViewFileModal={setShowInvoicePreview}
         />
       )}

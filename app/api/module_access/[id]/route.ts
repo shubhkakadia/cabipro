@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { validateAdminAuth } from "@/lib/validators/authFromToken";
+import { requireAuth } from "@/lib/auth-middleware";
 import { withLogging } from "@/lib/withLogging";
 
-export async function GET(request, { params }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const authError = await validateAdminAuth(request);
-    if (authError) return authError;
+    const user = await requireAuth(request);
     const { id } = await params;
     const moduleAccess = await prisma.module_access.findUnique({
-      where: { user_id: id },
+      where: { user_id: id, organizationId: user.organizationId },
     });
     return NextResponse.json(
       {
@@ -17,27 +19,29 @@ export async function GET(request, { params }) {
         message: "Module access fetched successfully",
         data: moduleAccess,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /api/module_access/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function PATCH(request, { params }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
-    const authError = await validateAdminAuth(request);
-    if (authError) return authError;
+    const user = await requireAuth(request);
     const { id } = await params;
     const data = await request.json();
     let moduleAccess;
     try {
       moduleAccess = await prisma.module_access.update({
-        where: { user_id: id },
+        where: { user_id: id, organizationId: user.organizationId },
         data: {
           all_clients: data.all_clients,
           add_clients: data.add_clients,
@@ -73,7 +77,7 @@ export async function PATCH(request, { params }) {
           status: false,
           message: "Internal server error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -82,7 +86,7 @@ export async function PATCH(request, { params }) {
       "module_access",
       id,
       "UPDATE",
-      `Module access updated successfully: ${moduleAccess.user_id}`
+      `Module access updated successfully: ${moduleAccess.user_id}`,
     );
     if (!logged) {
       console.error(`Failed to log module access update: ${id}`);
@@ -92,15 +96,17 @@ export async function PATCH(request, { params }) {
         status: true,
         message: "Module access updated successfully",
         data: moduleAccess,
-        ...(logged ? {} : { warning: "Note: Update succeeded but logging failed" })
+        ...(logged
+          ? {}
+          : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in PATCH /api/module_access/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

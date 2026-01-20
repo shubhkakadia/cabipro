@@ -1,6 +1,11 @@
 "use client";
 
-import { animate, motion, useMotionValue, useMotionValueEvent } from "motion/react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+} from "motion/react";
 import { useEffect, useState, useRef } from "react";
 
 interface AnimatedCounterProps {
@@ -26,7 +31,7 @@ export default function AnimatedCounter({
     // On first mount, start from 0. On subsequent changes, start from current value
     const startValue = isFirstMount.current ? 0 : count.get();
     isFirstMount.current = false;
-    
+
     count.set(startValue);
     const controls = animate(count, value, { duration });
     return () => controls.stop();
@@ -38,4 +43,3 @@ export default function AnimatedCounter({
     </motion.span>
   );
 }
-

@@ -7,9 +7,17 @@ import { formatPhoneToNational } from "@/components/validators";
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth(request);
-    const { name, email, phone, address, notes, website, abn_number, contacts } =
-      await request.json();
-    
+    const {
+      name,
+      email,
+      phone,
+      address,
+      notes,
+      website,
+      abn_number,
+      contacts,
+    } = await request.json();
+
     // Check if supplier already exists in this organization (unique constraint: name + organization_id)
     const existingSupplier = await prisma.supplier.findFirst({
       where: {
@@ -24,7 +32,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "Supplier already exists by this name: " + name,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -38,7 +46,7 @@ export async function POST(request: NextRequest) {
               status: false,
               message: "First Name and Last Name are required for all contacts",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -76,7 +84,8 @@ export async function POST(request: NextRequest) {
               email: contact.email || null,
               phone: formatPhone(contact.phone),
               role: contact.role || null,
-              preferred_contact_method: contact.preferred_contact_method || null,
+              preferred_contact_method:
+                contact.preferred_contact_method || null,
               notes: contact.notes || null,
               supplier_id: supplier.id,
             },
@@ -96,7 +105,7 @@ export async function POST(request: NextRequest) {
       "supplier",
       supplier.id,
       "CREATE",
-      `Supplier created successfully: ${supplier.name}`
+      `Supplier created successfully: ${supplier.name}`,
     );
 
     // Log contact creations
@@ -106,7 +115,7 @@ export async function POST(request: NextRequest) {
         "contact",
         contact.id,
         "CREATE",
-        `Contact created successfully: ${contact.first_name} ${contact.last_name} for supplier: ${supplier.name}`
+        `Contact created successfully: ${contact.first_name} ${contact.last_name} for supplier: ${supplier.name}`,
       );
     }
 
@@ -122,23 +131,28 @@ export async function POST(request: NextRequest) {
 
     if (!logged) {
       console.error(
-        `Failed to log supplier creation: ${supplier.id} - ${supplier.name}`
+        `Failed to log supplier creation: ${supplier.id} - ${supplier.name}`,
       );
-      responseData.warning = "Note: Creation succeeded but logging failed";
     }
 
-    return NextResponse.json(responseData, { status: 201 });
+    return NextResponse.json({
+      status: 201,
+      ...(logged
+        ? {}
+        : { warning: "Note: Creation succeeded but logging failed" }),
+      data: responseData,
+    });
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/supplier/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

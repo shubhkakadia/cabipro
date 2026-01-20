@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     // Try admin token first
     const adminToken = extractAdminToken(request);
-    
+
     if (adminToken) {
       // Try admin authentication
       const adminPayload = await verifyAdminToken(adminToken);
@@ -32,8 +32,11 @@ export async function GET(request: NextRequest) {
 
         if (!adminSession) {
           return NextResponse.json(
-            { error: "Admin session not found. Please log in again.", sessionExpired: true },
-            { status: 401 }
+            {
+              error: "Admin session not found. Please log in again.",
+              sessionExpired: true,
+            },
+            { status: 401 },
           );
         }
 
@@ -51,8 +54,11 @@ export async function GET(request: NextRequest) {
 
           // Return response with sessionExpired flag and delete admin cookie
           const response = NextResponse.json(
-            { error: "Session expired. Please log in again.", sessionExpired: true },
-            { status: 401 }
+            {
+              error: "Session expired. Please log in again.",
+              sessionExpired: true,
+            },
+            { status: 401 },
           );
           deleteAdminAuthCookie(response);
           return response;
@@ -61,8 +67,11 @@ export async function GET(request: NextRequest) {
         // Verify admin session matches the token payload
         if (adminSession.admin_id !== adminPayload.adminId) {
           return NextResponse.json(
-            { error: "Admin session mismatch. Please log in again.", sessionExpired: true },
-            { status: 401 }
+            {
+              error: "Admin session mismatch. Please log in again.",
+              sessionExpired: true,
+            },
+            { status: 401 },
           );
         }
 
@@ -84,7 +93,7 @@ export async function GET(request: NextRequest) {
         if (!admin) {
           return NextResponse.json(
             { error: "Admin not found." },
-            { status: 404 }
+            { status: 404 },
           );
         }
 
@@ -92,7 +101,7 @@ export async function GET(request: NextRequest) {
         if (!admin.is_active || admin.is_deleted) {
           return NextResponse.json(
             { error: "Admin account is inactive. Please contact support." },
-            { status: 403 }
+            { status: 403 },
           );
         }
 
@@ -116,15 +125,18 @@ export async function GET(request: NextRequest) {
     if (!userToken) {
       return NextResponse.json(
         { error: "Authentication required. Please provide a valid token." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const userPayload = await verifyToken(userToken);
     if (!userPayload) {
       return NextResponse.json(
-        { error: "Invalid or expired token. Please log in again.", sessionExpired: true },
-        { status: 401 }
+        {
+          error: "Invalid or expired token. Please log in again.",
+          sessionExpired: true,
+        },
+        { status: 401 },
       );
     }
 
@@ -141,8 +153,11 @@ export async function GET(request: NextRequest) {
 
     if (!userSession) {
       return NextResponse.json(
-        { error: "Session not found. Please log in again.", sessionExpired: true },
-        { status: 401 }
+        {
+          error: "Session not found. Please log in again.",
+          sessionExpired: true,
+        },
+        { status: 401 },
       );
     }
 
@@ -160,8 +175,11 @@ export async function GET(request: NextRequest) {
 
       // Return response with sessionExpired flag and delete user cookie
       const response = NextResponse.json(
-        { error: "Session expired. Please log in again.", sessionExpired: true },
-        { status: 401 }
+        {
+          error: "Session expired. Please log in again.",
+          sessionExpired: true,
+        },
+        { status: 401 },
       );
       deleteAuthCookie(response);
       return response;
@@ -173,8 +191,11 @@ export async function GET(request: NextRequest) {
       userSession.organization_id !== userPayload.organizationId
     ) {
       return NextResponse.json(
-        { error: "Session mismatch. Please log in again.", sessionExpired: true },
-        { status: 401 }
+        {
+          error: "Session mismatch. Please log in again.",
+          sessionExpired: true,
+        },
+        { status: 401 },
       );
     }
 
@@ -192,7 +213,7 @@ export async function GET(request: NextRequest) {
     if (!organization || !organization.is_active || organization.is_deleted) {
       return NextResponse.json(
         { error: "Organization is inactive. Please contact cabipro." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -211,17 +232,16 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
     // Check if user account is active
     if (!user.is_active) {
       return NextResponse.json(
-        { error: "User account is inactive. Please contact your administrator." },
-        { status: 403 }
+        {
+          error: "User account is inactive. Please contact your administrator.",
+        },
+        { status: 403 },
       );
     }
 
@@ -235,18 +255,19 @@ export async function GET(request: NextRequest) {
         userType: user.user_type,
         organizationId: user.organization_id,
       },
-      organization: organization ? {
-        name: organization.name,
-        logo: organization.logo,
-      } : null,
+      organization: organization
+        ? {
+            name: organization.name,
+            logo: organization.logo,
+          }
+        : null,
       isAdmin: false,
     });
   } catch (error) {
     console.error("Error in /api/me:", error);
     return NextResponse.json(
       { error: "An error occurred while fetching user information." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!lot_id) {
       return NextResponse.json(
         { status: false, message: "lot_id is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "Lot not found",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "Project not found",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
     }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "Quote not found",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
     }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
               status: false,
               message: `Area at index ${i} is missing required field: area_name`,
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
                   status: false,
                   message: `Item at index ${j} in area "${area.area_name}" is missing required field: name`,
                 },
-                { status: 400 }
+                { status: 400 },
               );
             }
           }
@@ -228,7 +228,11 @@ export async function POST(request: NextRequest) {
           };
 
           // Add nested items if provided
-          if (area.items && Array.isArray(area.items) && area.items.length > 0) {
+          if (
+            area.items &&
+            Array.isArray(area.items) &&
+            area.items.length > 0
+          ) {
             areaData.items = {
               create: area.items.map(
                 (item: {
@@ -240,15 +244,17 @@ export async function POST(request: NextRequest) {
                   name: item.name,
                   category: item.category || null,
                   is_applicable:
-                    item.is_applicable !== undefined ? item.is_applicable : false,
+                    item.is_applicable !== undefined
+                      ? item.is_applicable
+                      : false,
                   item_notes: item.item_notes || null,
-                })
+                }),
               ),
             };
           }
 
           return areaData;
-        }
+        },
       );
 
       // Create the new version with nested areas and items
@@ -342,12 +348,12 @@ export async function POST(request: NextRequest) {
       "material_selection",
       result.material_selection.id,
       "CREATE",
-      `Material selection and version created successfully for lot: ${lot.name} for project: ${lot.project.name}`
+      `Material selection and version created successfully for lot: ${lot.name} for project: ${lot.project.name}`,
     );
 
     if (!logged) {
       console.error(
-        `Failed to log material selection creation: ${result.material_selection.id}`
+        `Failed to log material selection creation: ${result.material_selection.id}`,
       );
     }
 
@@ -360,19 +366,19 @@ export async function POST(request: NextRequest) {
           ? {}
           : { warning: "Note: Creation succeeded but logging failed" }),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error creating material selection version:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

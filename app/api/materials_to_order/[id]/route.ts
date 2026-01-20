@@ -5,7 +5,7 @@ import { withLogging } from "@/lib/withLogging";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -34,6 +34,7 @@ export async function GET(
                 image: true,
               },
             },
+            reserve_item_stock: true,
           },
         },
         project: {
@@ -47,7 +48,7 @@ export async function GET(
     if (!mto) {
       return NextResponse.json(
         { status: false, message: "Materials to order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -72,26 +73,26 @@ export async function GET(
         message: "Materials to order fetched successfully",
         data: mtoWithMedia,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in GET /api/materials_to_order/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -110,7 +111,7 @@ export async function PATCH(
     if (!existingMto) {
       return NextResponse.json(
         { status: false, message: "Materials to order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -136,7 +137,7 @@ export async function PATCH(
             item_id: item.item_id,
             quantity: item.quantity,
             notes: item.notes || null,
-          })
+          }),
         ),
       };
     }
@@ -169,7 +170,11 @@ export async function PATCH(
     };
 
     type MtoWithIncludes = Awaited<
-      ReturnType<typeof prisma.materials_to_order.findFirst<{ include: typeof includeMto }>>
+      ReturnType<
+        typeof prisma.materials_to_order.findFirst<{
+          include: typeof includeMto;
+        }>
+      >
     >;
 
     let mto: MtoWithIncludes | null = null;
@@ -244,7 +249,7 @@ export async function PATCH(
             });
             const available = current?.quantity ?? 0;
             throw new Error(
-              `INSUFFICIENT_INVENTORY:${it.item_id}:${remaining}:${available}`
+              `INSUFFICIENT_INVENTORY:${it.item_id}:${remaining}:${available}`,
             );
           }
 
@@ -280,7 +285,7 @@ export async function PATCH(
     if (!mto) {
       return NextResponse.json(
         { status: false, message: "Failed to fetch updated MTO" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -306,7 +311,7 @@ export async function PATCH(
       "materials_to_order",
       id,
       "UPDATE",
-      `Materials to order updated successfully for project: ${projectName}`
+      `Materials to order updated successfully for project: ${projectName}`,
     );
 
     if (!logged) {
@@ -322,13 +327,13 @@ export async function PATCH(
           ? {}
           : { warning: "Note: Update succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
 
@@ -342,7 +347,7 @@ export async function PATCH(
           status: false,
           message: `Not enough quantity in inventory. Available: ${available}, Requested: ${requested}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -353,28 +358,28 @@ export async function PATCH(
           message:
             "This MTO is already completed for used material and cannot be moved back to active.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (errorMessage === "Materials to order not found") {
       return NextResponse.json(
         { status: false, message: errorMessage },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     console.error("Error in PATCH /api/materials_to_order/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
@@ -394,7 +399,7 @@ export async function DELETE(
     if (!mtoForLogging) {
       return NextResponse.json(
         { status: false, message: "Materials to order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -425,7 +430,9 @@ export async function DELETE(
       "materials_to_order",
       id,
       "DELETE",
-      `Materials to order deleted successfully for project: ${mtoForLogging?.project?.name || "Unknown"}`
+      `Materials to order deleted successfully for project: ${
+        mtoForLogging?.project?.name || "Unknown"
+      }`,
     );
 
     if (!logged) {
@@ -441,19 +448,19 @@ export async function DELETE(
           ? {}
           : { warning: "Note: Deletion succeeded but logging failed" }),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in DELETE /api/materials_to_order/[id]:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

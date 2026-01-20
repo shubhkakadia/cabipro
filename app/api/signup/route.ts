@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
 import { generateToken } from "@/lib/auth";
-import { setAuthCookie, setOrganizationSlugCookie, getSessionExpiryDate } from "@/lib/cookies";
+import {
+  setAuthCookie,
+  setOrganizationSlugCookie,
+  getSessionExpiryDate,
+} from "@/lib/cookies";
 import { uploadFile } from "@/lib/filehandler";
 import { generateSlug, generateUniqueSlug } from "@/lib/unique-slug";
-
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,21 +32,21 @@ export async function POST(request: NextRequest) {
       | string
       | null;
     const organization_logo_file = formData.get(
-      "organization_logo"
+      "organization_logo",
     ) as File | null;
 
     // Validate required fields
     if (!first_name || !last_name || !email || !password) {
       return NextResponse.json(
         { error: "First name, last name, email, and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!organization_name) {
       return NextResponse.json(
         { error: "Organization name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { error: "User with this email already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
     if (existingOrg) {
       return NextResponse.json(
         { error: "Organization with this name already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
       if (logoFile.size > 5 * 1024 * 1024) {
         return NextResponse.json(
           { error: "Logo size must be less than 5MB" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
       if (!logoFile.type || !allowedTypes.includes(logoFile.type)) {
         return NextResponse.json(
           { error: "Logo must be an image file (PNG, JPG, GIF, or WebP)" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -136,7 +139,7 @@ export async function POST(request: NextRequest) {
         if (normalizedPath.startsWith("/public/")) {
           normalizedPath = normalizedPath.replace("/public", "");
         }
-        
+
         logoUploadResult = {
           relativePath: normalizedPath,
           filename: uploadResult.filename,
@@ -149,7 +152,7 @@ export async function POST(request: NextRequest) {
         console.error("Error uploading logo file:", error);
         return NextResponse.json(
           { error: "Failed to upload logo. Please try again." },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -285,9 +288,16 @@ export async function POST(request: NextRequest) {
 
     // Set authentication cookie
     const proto = request.headers.get("x-forwarded-proto");
-    const secure = proto ? proto === "https" : request.nextUrl.protocol === "https:";
+    const secure = proto
+      ? proto === "https"
+      : request.nextUrl.protocol === "https:";
     setAuthCookie(token, response, undefined, expiresAt, secure);
-    setOrganizationSlugCookie(result.organization.slug, response, expiresAt, secure);
+    setOrganizationSlugCookie(
+      result.organization.slug,
+      response,
+      expiresAt,
+      secure,
+    );
 
     return response;
   } catch (error) {
@@ -298,13 +308,13 @@ export async function POST(request: NextRequest) {
       if (error.code === "P2002") {
         return NextResponse.json(
           { error: "Email or organization name already exists" },
-          { status: 409 }
+          { status: 409 },
         );
       }
     }
     return NextResponse.json(
       { error: "An error occurred during signup. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

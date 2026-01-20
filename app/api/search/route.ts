@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (!search || typeof search !== "string" || search.trim() === "") {
       return NextResponse.json(
         { status: false, message: "Search term is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     // Search items - handle enums separately to avoid invalid Prisma filters
     const categoryMatch = Object.values(Category).find(
-      (c) => c === searchTermUpper
+      (c) => c === searchTermUpper,
     ) as Category | undefined;
 
     const itemSearchOR: Array<Record<string, unknown>> = [
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
     }));
 
     const transformedProjects = projects.map((project) => ({
-      project_id: project.project_id,
+      project_id: project.id,
       project_name: project.name,
       number_of_lots: project.lots.length,
     }));
@@ -293,13 +293,13 @@ export async function POST(request: NextRequest) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     console.error("Error in POST /api/search:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

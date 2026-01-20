@@ -5,13 +5,14 @@ import { verifyAdminToken, AdminJWTPayload } from "./admin-auth";
 import { prisma } from "./db";
 import { COOKIE_NAMES } from "./cookies";
 
-
-
 /**
  * Custom error class for authentication errors
  */
 export class AuthenticationError extends Error {
-  constructor(message: string, public statusCode: number = 401) {
+  constructor(
+    message: string,
+    public statusCode: number = 401,
+  ) {
     super(message);
     this.name = "AuthenticationError";
   }
@@ -54,7 +55,7 @@ async function validateUserAuth(token: string): Promise<JWTPayload> {
   if (!payload) {
     throw new AuthenticationError(
       "Invalid or expired token. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -72,7 +73,7 @@ async function validateUserAuth(token: string): Promise<JWTPayload> {
   if (!session) {
     throw new AuthenticationError(
       "Session not found. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -88,7 +89,7 @@ async function validateUserAuth(token: string): Promise<JWTPayload> {
   ) {
     throw new AuthenticationError(
       "Session mismatch. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -104,7 +105,7 @@ async function validateUserAuth(token: string): Promise<JWTPayload> {
   if (!organization || !organization.is_active || organization.is_deleted) {
     throw new AuthenticationError(
       "Organization is inactive. Please contact cabipro.",
-      403
+      403,
     );
   }
 
@@ -119,7 +120,7 @@ async function validateUserAuth(token: string): Promise<JWTPayload> {
   if (!user || !user.is_active) {
     throw new AuthenticationError(
       "User account is inactive. Please contact your administrator.",
-      403
+      403,
     );
   }
 
@@ -159,7 +160,7 @@ export async function requireAuth(request: NextRequest): Promise<JWTPayload> {
   if (!token) {
     throw new AuthenticationError(
       "Authentication required. Please provide a valid token.",
-      401
+      401,
     );
   }
 
@@ -191,14 +192,14 @@ export async function requireAuth(request: NextRequest): Promise<JWTPayload> {
  * @throws AuthenticationError if token is missing or invalid
  */
 export async function requireAuthFromCookies(
-  cookieStore: ReadonlyRequestCookies
+  cookieStore: ReadonlyRequestCookies,
 ): Promise<JWTPayload> {
   const token = cookieStore.get(COOKIE_NAMES.AUTH_TOKEN)?.value;
 
   if (!token) {
     throw new AuthenticationError(
       "Authentication required. Please provide a valid token.",
-      401
+      401,
     );
   }
 
@@ -262,7 +263,7 @@ async function validateAdminAuth(token: string): Promise<AdminJWTPayload> {
   if (!payload) {
     throw new AuthenticationError(
       "Invalid or expired admin token. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -279,7 +280,7 @@ async function validateAdminAuth(token: string): Promise<AdminJWTPayload> {
   if (!session) {
     throw new AuthenticationError(
       "Admin session not found. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -287,7 +288,7 @@ async function validateAdminAuth(token: string): Promise<AdminJWTPayload> {
   if (session.expires_at < new Date()) {
     throw new AuthenticationError(
       "Admin session expired. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -295,7 +296,7 @@ async function validateAdminAuth(token: string): Promise<AdminJWTPayload> {
   if (session.admin_id !== payload.adminId) {
     throw new AuthenticationError(
       "Admin session mismatch. Please log in again.",
-      401
+      401,
     );
   }
 
@@ -311,7 +312,7 @@ async function validateAdminAuth(token: string): Promise<AdminJWTPayload> {
   if (!admin || !admin.is_active || admin.is_deleted) {
     throw new AuthenticationError(
       "Admin account is inactive. Please contact support.",
-      403
+      403,
     );
   }
 
@@ -346,14 +347,14 @@ async function validateAdminAuth(token: string): Promise<AdminJWTPayload> {
  * @throws AuthenticationError if token is missing or invalid
  */
 export async function requireAdminAuth(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<AdminJWTPayload> {
   const token = extractAdminToken(request);
 
   if (!token) {
     throw new AuthenticationError(
       "Admin authentication required. Please provide a valid token.",
-      401
+      401,
     );
   }
 
@@ -385,14 +386,14 @@ export async function requireAdminAuth(
  * @throws AuthenticationError if token is missing or invalid
  */
 export async function requireAdminAuthFromCookies(
-  cookieStore: ReadonlyRequestCookies
+  cookieStore: ReadonlyRequestCookies,
 ): Promise<AdminJWTPayload> {
   const token = cookieStore.get(COOKIE_NAMES.ADMIN_AUTH_TOKEN)?.value;
 
   if (!token) {
     throw new AuthenticationError(
       "Admin authentication required. Please provide a valid token.",
-      401
+      401,
     );
   }
 
@@ -408,7 +409,7 @@ export async function requireAdminAuthFromCookies(
  * @returns Promise resolving to user JWT payload or null
  */
 export async function checkUserAuthFromCookies(
-  cookieStore: ReadonlyRequestCookies
+  cookieStore: ReadonlyRequestCookies,
 ): Promise<JWTPayload | null> {
   const token = cookieStore.get(COOKIE_NAMES.AUTH_TOKEN)?.value;
 
@@ -432,7 +433,7 @@ export async function checkUserAuthFromCookies(
  * @returns Promise resolving to admin JWT payload or null
  */
 export async function checkAdminAuthFromCookies(
-  cookieStore: ReadonlyRequestCookies
+  cookieStore: ReadonlyRequestCookies,
 ): Promise<AdminJWTPayload | null> {
   const token = cookieStore.get(COOKIE_NAMES.ADMIN_AUTH_TOKEN)?.value;
 
@@ -455,7 +456,7 @@ export async function checkAdminAuthFromCookies(
  * @returns Object with isAuthenticated, isAdmin, and isClient flags
  */
 export async function getAuthStatusFromCookies(
-  cookieStore: ReadonlyRequestCookies
+  cookieStore: ReadonlyRequestCookies,
 ): Promise<{
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -503,7 +504,7 @@ export function createAuthErrorResponse(error: unknown): NextResponse {
   if (error instanceof AuthenticationError) {
     return NextResponse.json(
       { error: error.message },
-      { status: error.statusCode }
+      { status: error.statusCode },
     );
   }
 
@@ -512,6 +513,6 @@ export function createAuthErrorResponse(error: unknown): NextResponse {
     error instanceof Error ? error.message : "Internal server error";
   return NextResponse.json(
     { error: "Authentication failed", details: errorMessage },
-    { status: 500 }
+    { status: 500 },
   );
 }

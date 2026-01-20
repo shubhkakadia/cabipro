@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
           status: false,
           message: "Project already exists by this project id: " + project_id,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
             status: false,
             message: "Client not found",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
               status: false,
               message: "Lot ID and Client Name are required for all lots",
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       "project",
       project.id,
       "CREATE",
-      `Project created successfully: ${project.name}`
+      `Project created successfully: ${project.name}`,
     );
 
     // Log lot creations
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         "lot",
         lot.id,
         "CREATE",
-        `Lot created successfully: ${lot.name} for project: ${project.name}`
+        `Lot created successfully: ${lot.name} for project: ${project.name}`,
       );
     }
 
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 
     if (!logged) {
       console.error(
-        `Failed to log project creation: ${project.id} - ${project.name}`
+        `Failed to log project creation: ${project.id} - ${project.name}`,
       );
       responseData.warning = "Note: Creation succeeded but logging failed";
     }
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { status: false, message: error.message },
-        { status: error.statusCode }
+        { status: error.statusCode },
       );
     }
     const errorMessage =
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in POST /api/project/create:", error);
     return NextResponse.json(
       { status: false, message: "Internal server error", error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

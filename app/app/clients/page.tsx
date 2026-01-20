@@ -19,6 +19,7 @@ import PaginationFooter from "@/components/PaginationFooter";
 import "react-toastify/dist/ReactToastify.css";
 import AppHeader from "@/components/AppHeader";
 import { useExcelExport } from "@/hooks/useExcelExport";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Project {
@@ -60,7 +61,7 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "relevance">(
-    "asc"
+    "asc",
   );
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -99,7 +100,7 @@ export default function ClientsPage() {
       "Client Created At",
       "Client Updated At",
     ],
-    []
+    [],
   );
 
   // Helper functions used in memoized values
@@ -208,7 +209,7 @@ export default function ClientsPage() {
           ...new Set(
             response.data.data
               .map((client: Client) => client.type || "")
-              .filter(Boolean)
+              .filter(Boolean),
           ),
         ] as string[];
         setDistinctClientType(types);
@@ -221,7 +222,7 @@ export default function ClientsPage() {
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message ||
-            "Failed to fetch clients. Please try again."
+            "Failed to fetch clients. Please try again.",
         );
       } else {
         setError("Failed to fetch clients. Please try again.");
@@ -262,7 +263,7 @@ export default function ClientsPage() {
     if (selectedColumns.length === 0) {
       setSelectedColumns([...availableColumns]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Column mapping for Excel export
@@ -351,7 +352,7 @@ export default function ClientsPage() {
       setSelectedClientType((prev) =>
         prev.includes(clientType)
           ? prev.filter((type: string) => type !== clientType)
-          : [...prev, clientType]
+          : [...prev, clientType],
       );
     }
   };
@@ -369,7 +370,7 @@ export default function ClientsPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -454,13 +455,16 @@ export default function ClientsPage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Clients
                     </h1>
-                    <button
-                      onClick={() => router.push("/app/clients/addclient")}
-                      className="cursor-pointer hover:bg-emerald-500 transition-all duration-200 bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Client
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() => router.push("/app/clients/addclient")}
+                        className="cursor-pointer hover:bg-emerald-500 transition-all duration-200 bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Client
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -497,7 +501,7 @@ export default function ClientsPage() {
                             <button
                               onClick={() =>
                                 setShowClientTypeFilterDropdown(
-                                  !showClientTypeFilterDropdown
+                                  !showClientTypeFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -541,7 +545,7 @@ export default function ClientsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedClientType.includes(
-                                          role
+                                          role,
                                         )}
                                         onChange={() =>
                                           handleClientTypeToggle(role)
@@ -678,7 +682,7 @@ export default function ClientsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)

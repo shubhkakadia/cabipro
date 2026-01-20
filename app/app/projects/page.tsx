@@ -18,6 +18,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import AppHeader from "@/components/AppHeader";
+import SearchBar from "@/components/SearchBar";
 
 // Type definitions
 interface Lot {
@@ -47,7 +48,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("client_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "relevance">(
-    "asc"
+    "asc",
   );
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -79,7 +80,7 @@ export default function ProjectsPage() {
       "Created At",
       "Updated At",
     ],
-    []
+    [],
   );
 
   // Initialize selected columns with all columns
@@ -98,7 +99,7 @@ export default function ProjectsPage() {
         } else {
           // Project must have at least one ACTIVE lot
           const hasActiveLot = project.lots.some(
-            (lot: Lot) => lot.status === "ACTIVE"
+            (lot: Lot) => lot.status === "ACTIVE",
           );
           if (!hasActiveLot) return false;
         }
@@ -108,7 +109,7 @@ export default function ProjectsPage() {
           return false; // Projects with no lots are not shown in completed
         }
         const allCompleted = project.lots.every(
-          (lot: Lot) => lot.status === "COMPLETED"
+          (lot: Lot) => lot.status === "COMPLETED",
         );
         if (!allCompleted) return false;
       } else if (activeTab === "cancelled") {
@@ -117,7 +118,7 @@ export default function ProjectsPage() {
           return false; // Projects with no lots are not shown in cancelled
         }
         const allCancelled = project.lots.every(
-          (lot: Lot) => lot.status === "CANCELLED"
+          (lot: Lot) => lot.status === "CANCELLED",
         );
         if (!allCancelled) return false;
       }
@@ -216,14 +217,14 @@ export default function ProjectsPage() {
           return (aValue as number) < (bValue as number)
             ? -1
             : (aValue as number) > (bValue as number)
-            ? 1
-            : 0;
+              ? 1
+              : 0;
         } else if (sortOrder === "desc") {
           return (aValue as number) > (bValue as number)
             ? -1
             : (aValue as number) < (bValue as number)
-            ? 1
-            : 0;
+              ? 1
+              : 0;
         }
       }
       return 0;
@@ -246,7 +247,7 @@ export default function ProjectsPage() {
   const endIndex = itemsPerPage === 0 ? totalItems : startIndex + itemsPerPage;
   const paginatedProjects = filteredAndSortedProjects.slice(
     startIndex,
-    endIndex
+    endIndex,
   );
 
   useEffect(() => {
@@ -282,8 +283,8 @@ export default function ProjectsPage() {
             projectsData
               .map((project: Project) => project.client?.client_name)
               .filter((name: string | undefined): name is string =>
-                Boolean(name)
-              )
+                Boolean(name),
+              ),
           ),
         ];
         const types: string[] = [
@@ -291,14 +292,14 @@ export default function ProjectsPage() {
             projectsData
               .map((project: Project) => project.client?.client_type)
               .filter((type: string | undefined): type is string =>
-                Boolean(type)
-              )
+                Boolean(type),
+              ),
           ),
         ];
 
         // Add "Unassigned" option if there are projects without clients
         const hasUnassignedProjects = projectsData.some(
-          (project: Project) => !project.client?.client_name
+          (project: Project) => !project.client?.client_name,
         );
 
         if (hasUnassignedProjects) {
@@ -358,7 +359,7 @@ export default function ProjectsPage() {
       setSelectedClientName((prev) =>
         prev.includes(clientName)
           ? prev.filter((name: string) => name !== clientName)
-          : [...prev, clientName]
+          : [...prev, clientName],
       );
     }
   };
@@ -376,7 +377,7 @@ export default function ProjectsPage() {
       setSelectedClientType((prev) =>
         prev.includes(clientType)
           ? prev.filter((type: string) => type !== clientType)
-          : [...prev, clientType]
+          : [...prev, clientType],
       );
     }
   };
@@ -394,7 +395,7 @@ export default function ProjectsPage() {
       setSelectedColumns((prev) =>
         prev.includes(column)
           ? prev.filter((c: string) => c !== column)
-          : [...prev, column]
+          : [...prev, column],
       );
     }
   };
@@ -513,13 +514,16 @@ export default function ProjectsPage() {
                     <h1 className="text-xl font-bold text-slate-700">
                       Projects
                     </h1>
-                    <button
-                      onClick={() => router.push("/app/projects/addproject")}
-                      className="cursor-pointer hover:bg-primary transition-all duration-200 bg-primary/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Project
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <SearchBar />
+                      <button
+                        onClick={() => router.push("/app/projects/addproject")}
+                        className="cursor-pointer hover:bg-primary transition-all duration-200 bg-primary/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Project
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -556,7 +560,7 @@ export default function ProjectsPage() {
                             <button
                               onClick={() =>
                                 setShowClientTypeFilterDropdown(
-                                  !showClientTypeFilterDropdown
+                                  !showClientTypeFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -600,7 +604,7 @@ export default function ProjectsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedClientType.includes(
-                                          role
+                                          role,
                                         )}
                                         onChange={() =>
                                           handleClientTypeToggle(role)
@@ -618,7 +622,7 @@ export default function ProjectsPage() {
                             <button
                               onClick={() =>
                                 setShowClientNameFilterDropdown(
-                                  !showClientNameFilterDropdown
+                                  !showClientNameFilterDropdown,
                                 )
                               }
                               className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-all duration-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg text-sm font-medium"
@@ -662,7 +666,7 @@ export default function ProjectsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedClientName.includes(
-                                          name
+                                          name,
                                         )}
                                         onChange={() =>
                                           handleClientNameToggle(name)
@@ -788,7 +792,7 @@ export default function ProjectsPage() {
                                       <input
                                         type="checkbox"
                                         checked={selectedColumns.includes(
-                                          column
+                                          column,
                                         )}
                                         onChange={() =>
                                           handleColumnToggle(column)
@@ -924,7 +928,7 @@ export default function ProjectsPage() {
                                     key={project.id}
                                     onClick={() => {
                                       router.push(
-                                        `/app/projects/${project.id}`
+                                        `/app/projects/${project.id}`,
                                       );
                                     }}
                                     className="cursor-pointer hover:bg-slate-50 transition-colors duration-200"
