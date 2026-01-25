@@ -33,7 +33,7 @@ Email: ${email}`;
 
     const data = await mg.messages.create("cabipro.com", {
       from: "CabiPro Newsletter <postmaster@cabipro.com>",
-      to: ["shubhkakadia@gmail.com"],
+      to: ["cabipro16@gmail.com"],
       subject: `New Newsletter Subscription: ${email}`,
       text: emailText,
       html: emailHtml,
