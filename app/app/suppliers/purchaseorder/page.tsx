@@ -212,7 +212,7 @@ export default function PurchaseOrderPage() {
     "Accessory Name",
     "Category",
     "Quantity",
-    "Unit Price (including GST)",
+    "Unit Price (excluding GST)", // Renamed from including
     "Total",
   ];
 
@@ -613,7 +613,7 @@ export default function PurchaseOrderPage() {
       return newDelivery > 0 && (item.item?.item_id || item.item_id);
     });
 
-    if (itemsToProcess?.length === 0) {
+    if (!itemsToProcess || itemsToProcess.length === 0) {
       toast.warning("No items with new delivery quantities to process", {
         position: "top-right",
         autoClose: 3000,
@@ -623,67 +623,29 @@ export default function PurchaseOrderPage() {
 
     setIsSubmitting(true);
     try {
-      // Create stock transactions for each item with new delivery
-      const transactionPromises = itemsToProcess?.map((item: POItem) => {
-        const newDelivery = parseFloat(String(quantityReceived[item.id] || 0));
-        const itemId = item.item?.item_id || item.item_id;
+      // Prepare payload for bulk receive
+      const payload = {
+        purchase_order_id: selectedPOId,
+        items: itemsToProcess.map((item) => ({
+          item_id: item.item?.item_id || item.item_id,
+          quantity: quantityReceived[item.id] || 0,
+        })),
+      };
 
-        if (!itemId) {
-          return Promise.reject(new Error("Missing item_id"));
-        }
-
-        return axios.post(
-          `/api/stock_transaction/create`,
-          {
-            item_id: itemId,
-            quantity: newDelivery,
-            type: "ADDED",
-            purchase_order_id: selectedPOId,
+      const response = await axios.post(
+        "/api/purchase_order/received_items",
+        payload,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
           },
-          {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
-        );
-      });
+        },
+      );
 
-      // Execute all transactions in parallel with better error handling
-      const results = await Promise.allSettled(transactionPromises || []);
-
-      // Process results
-      const responses = results.map((result: PromiseSettledResult<unknown>) => {
-        if (result.status === "fulfilled") {
-          return result.value as {
-            data: { status: boolean; message?: string };
-          };
-        } else {
-          const reason = result.reason as {
-            response?: { data?: { message?: string } };
-            message?: string;
-          };
-          return {
-            data: {
-              status: false,
-              message:
-                reason?.response?.data?.message ||
-                reason?.message ||
-                "Transaction failed",
-            },
-          };
-        }
-      });
-
-      // Check if all transactions succeeded
-      const allSucceeded = responses.every((res) => res.data?.status);
-      const failedCount = responses.filter((res) => !res.data?.status).length;
-
-      if (allSucceeded) {
+      if (response.data.status) {
         toast.success(
-          `Materials received updated successfully for ${
-            itemsToProcess?.length || 0
-          } item(s)`,
+          response.data.message || "Materials received updated successfully",
           {
             position: "top-right",
             autoClose: 3000,
@@ -697,17 +659,10 @@ export default function PurchaseOrderPage() {
         setIsPODropdownOpen(false);
         fetchPOs(); // Refresh the list
       } else {
-        toast.error(
-          `Failed to update ${failedCount} of ${
-            itemsToProcess?.length || 0
-          } item(s)`,
-          {
-            position: "top-right",
-            autoClose: 3000,
-          },
-        );
-        // Still refresh to show partial updates
-        fetchPOs();
+        toast.error(response.data.message || "Failed to update materials", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     } catch (err) {
       console.error("Error updating received quantities:", err);
@@ -1077,7 +1032,7 @@ export default function PurchaseOrderPage() {
         row.item?.item?.accessory?.name || "",
       Category: (row: ExportRow) => row.item?.item?.category || "",
       Quantity: (row: ExportRow) => row.item?.quantity ?? "",
-      "Unit Price (including GST)": (row: ExportRow) =>
+      "Unit Price (excluding GST)": (row: ExportRow) =>
         row.item?.unit_price ?? "",
       Total: (row: ExportRow) => {
         if (!row.item) return "";
@@ -1116,7 +1071,7 @@ export default function PurchaseOrderPage() {
       "Accessory Name": 16,
       Category: 12,
       Quantity: 10,
-      "Unit Price (including GST)": 12,
+      "Unit Price (excluding GST)": 12,
       Total: 12,
     };
   }, []);
@@ -1388,7 +1343,7 @@ export default function PurchaseOrderPage() {
                               onClick={() => handleSort("order")}
                             >
                               <div className="flex items-center gap-2">
-                                Order / Supplier
+                                Supplier / Order
                                 {getSortIcon("order")}
                               </div>
                             </th>
@@ -1460,10 +1415,10 @@ export default function PurchaseOrderPage() {
                                     <td className="px-3 py-2">
                                       <div className="flex flex-col">
                                         <span className="text-xs font-semibold text-gray-800 truncate">
-                                          {po.order_no}
+                                          {po.supplier?.name || "-"}
                                         </span>
                                         <span className="text-xs text-slate-600 truncate">
-                                          {po.supplier?.name || "-"}
+                                          {po.order_no}
                                         </span>
                                       </div>
                                     </td>
@@ -1490,7 +1445,22 @@ export default function PurchaseOrderPage() {
                                       )}
                                     </td>
                                     <td className="px-3 py-2 text-xs text-slate-700">
-                                      ${formatMoney(po.total_amount)}
+                                      ${" "}
+                                      {formatMoney(
+                                        (parseFloat(String(po.total_amount)) ||
+                                          0) +
+                                          (parseFloat(
+                                            String(po.delivery_charge),
+                                          ) || 0) *
+                                            0.1 + // Add GST on delivery
+                                          (parseFloat(
+                                            String(po.total_amount),
+                                          ) || 0) *
+                                            0.1 + // Add GST on items
+                                          (parseFloat(
+                                            String(po.delivery_charge),
+                                          ) || 0), // Add delivery charge
+                                      )}
                                     </td>
                                     <td className="px-3 py-2">
                                       <span
@@ -1560,38 +1530,6 @@ export default function PurchaseOrderPage() {
                                                       {new Date(
                                                         po.ordered_at,
                                                       ).toLocaleDateString()}
-                                                    </span>
-                                                  </div>
-                                                )}
-                                                {po.total_amount && (
-                                                  <div className="flex items-center gap-1.5">
-                                                    <FileText className="w-4 h-4" />
-                                                    <span>
-                                                      <span className="font-medium">
-                                                        Total:
-                                                      </span>{" "}
-                                                      <span className="font-semibold">
-                                                        $
-                                                        {formatMoney(
-                                                          po.total_amount,
-                                                        )}
-                                                      </span>
-                                                    </span>
-                                                  </div>
-                                                )}
-                                                {po.delivery_charge && (
-                                                  <div className="flex items-center gap-1.5">
-                                                    <FileText className="w-4 h-4" />
-                                                    <span>
-                                                      <span className="font-medium">
-                                                        Delivery Charge:
-                                                      </span>{" "}
-                                                      <span className="font-semibold">
-                                                        $
-                                                        {formatMoney(
-                                                          po.delivery_charge,
-                                                        )}
-                                                      </span>
                                                     </span>
                                                   </div>
                                                 )}
@@ -1882,7 +1820,10 @@ export default function PurchaseOrderPage() {
                                                       Remaining/Received
                                                     </th>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                      Unit Price (including GST)
+                                                      Remaining/Received
+                                                    </th>
+                                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                      Unit Price (excluding GST)
                                                     </th>
                                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                       Total
@@ -1915,6 +1856,17 @@ export default function PurchaseOrderPage() {
                                                         item.item
                                                           ?.measurement_unit ||
                                                         "";
+
+                                                      const unitPrice =
+                                                        parseFloat(
+                                                          String(
+                                                            item.unit_price ||
+                                                              0,
+                                                          ),
+                                                        );
+                                                      const lineTotal =
+                                                        orderedQty * unitPrice;
+
                                                       return (
                                                         <tr
                                                           key={item.id}
@@ -1929,7 +1881,8 @@ export default function PurchaseOrderPage() {
                                                                   src={`/${item.item.image.url}`}
                                                                   alt={
                                                                     item.item
-                                                                      .item_id
+                                                                      .item_id ||
+                                                                    "Item Image"
                                                                   }
                                                                   className="w-10 h-10 object-cover rounded border border-slate-200"
                                                                   width={40}
@@ -2249,27 +2202,16 @@ export default function PurchaseOrderPage() {
                                                           <td className="px-3 py-2 whitespace-nowrap">
                                                             <span className="text-xs text-gray-600">
                                                               $
-                                                              {parseFloat(
-                                                                String(
-                                                                  item.unit_price,
-                                                                ),
-                                                              ).toFixed(2)}
+                                                              {formatMoney(
+                                                                unitPrice,
+                                                              )}
                                                             </span>
                                                           </td>
                                                           <td className="px-3 py-2 whitespace-nowrap">
                                                             <span className="text-xs font-semibold text-gray-900">
                                                               $
                                                               {formatMoney(
-                                                                parseFloat(
-                                                                  String(
-                                                                    item.quantity,
-                                                                  ),
-                                                                ) *
-                                                                  parseFloat(
-                                                                    String(
-                                                                      item.unit_price,
-                                                                    ),
-                                                                  ),
+                                                                lineTotal,
                                                               )}
                                                             </span>
                                                           </td>
@@ -2278,6 +2220,90 @@ export default function PurchaseOrderPage() {
                                                     },
                                                   )}
                                                 </tbody>
+                                                <tfoot className="bg-slate-100 border-t-2 border-slate-300">
+                                                  <tr>
+                                                    <td
+                                                      colSpan={6}
+                                                      className="px-3 py-2 text-right text-xs font-medium text-slate-700"
+                                                    >
+                                                      Subtotal (excl. GST):
+                                                    </td>
+                                                    <td className="px-3 py-2 text-xs font-semibold text-slate-900">
+                                                      $
+                                                      {formatMoney(
+                                                        po.total_amount || 0,
+                                                      )}
+                                                    </td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td
+                                                      colSpan={6}
+                                                      className="px-3 py-2 text-right text-xs font-medium text-slate-700"
+                                                    >
+                                                      GST (10%):
+                                                    </td>
+                                                    <td className="px-3 py-2 text-xs font-semibold text-slate-900">
+                                                      $
+                                                      {formatMoney(
+                                                        ((parseFloat(
+                                                          String(
+                                                            po.total_amount,
+                                                          ),
+                                                        ) || 0) +
+                                                          (parseFloat(
+                                                            String(
+                                                              po.delivery_charge,
+                                                            ),
+                                                          ) || 0)) *
+                                                          0.1,
+                                                      )}
+                                                    </td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td
+                                                      colSpan={6}
+                                                      className="px-3 py-2 text-right text-xs font-medium text-slate-700"
+                                                    >
+                                                      Delivery Charge:
+                                                    </td>
+                                                    <td className="px-3 py-2 text-xs font-semibold text-slate-900">
+                                                      $
+                                                      {formatMoney(
+                                                        po.delivery_charge || 0,
+                                                      )}
+                                                    </td>
+                                                  </tr>
+                                                  <tr className="border-t-2 border-slate-400">
+                                                    <td
+                                                      colSpan={6}
+                                                      className="px-3 py-2 text-right text-sm font-bold text-slate-800"
+                                                    >
+                                                      Grand Total:
+                                                    </td>
+                                                    <td className="px-3 py-2 text-sm font-bold text-slate-900">
+                                                      $
+                                                      {formatMoney(
+                                                        (parseFloat(
+                                                          String(
+                                                            po.total_amount,
+                                                          ),
+                                                        ) || 0) +
+                                                          (parseFloat(
+                                                            String(
+                                                              po.delivery_charge,
+                                                            ),
+                                                          ) || 0) *
+                                                            1.1 +
+                                                          (parseFloat(
+                                                            String(
+                                                              po.total_amount,
+                                                            ),
+                                                          ) || 0) *
+                                                            0.1,
+                                                      )}
+                                                    </td>
+                                                  </tr>
+                                                </tfoot>
                                               </table>
                                             </div>
                                           )}
@@ -2486,7 +2512,11 @@ export default function PurchaseOrderPage() {
                                     <Image
                                       loading="lazy"
                                       src={`/${item.item.image.url}`}
-                                      alt={item.item.item_id}
+                                      alt={
+                                        item.item.item_id ||
+                                        item.item.description ||
+                                        "Item Image"
+                                      }
                                       className="w-12 h-12 object-cover rounded border border-slate-200"
                                       width={48}
                                       height={48}

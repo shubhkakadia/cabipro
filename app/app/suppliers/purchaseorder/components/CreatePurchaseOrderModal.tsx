@@ -18,13 +18,13 @@ import AddItemModal from "./AddItemModal";
 
 // Type definitions
 interface Supplier {
-  supplier_id: string;
+  id: string;
   name: string;
   [key: string]: unknown;
 }
 
 interface Item {
-  item_id: string;
+  id: string; // Changed from item_id
   category?: string;
   description?: string;
   quantity?: number;
@@ -116,6 +116,12 @@ export default function CreatePurchaseOrderModal({
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
   const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
   const supplierDropdownRef = useRef<HTMLDivElement>(null);
+
+  const formatCurrency = (value: string | number | undefined) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value) || 0);
 
   const fetchSuppliers = useCallback(async () => {
     try {
@@ -210,9 +216,7 @@ export default function CreatePurchaseOrderModal({
   };
 
   const handleSupplierSelect = (supplierId: string, supplierName: string) => {
-    const supplier = suppliers.find(
-      (s: Supplier) => s.supplier_id === supplierId,
-    );
+    const supplier = suppliers.find((s: Supplier) => s.id === supplierId);
     setSelectedSupplier(supplier || null);
     setSupplierSearchTerm(supplierName);
     setIsSupplierDropdownOpen(false);
@@ -263,7 +267,7 @@ export default function CreatePurchaseOrderModal({
 
   const handleAddItem = (item: Item) => {
     // Check if already added
-    if (selectedItems.some((i: SelectedItem) => i.item_id === item.item_id)) {
+    if (selectedItems.some((i: SelectedItem) => i.id === item.id)) {
       toast.info("Item already added");
       return;
     }
@@ -272,7 +276,7 @@ export default function CreatePurchaseOrderModal({
       ...prev,
       {
         ...item,
-        item_id: item.item_id,
+        id: item.id, // Changed from item_id
         order_quantity: 1, // Default quantity
         order_unit_price: item.price || 0, // Default price
       },
@@ -288,7 +292,8 @@ export default function CreatePurchaseOrderModal({
   ) => {
     setSelectedItems((prev: SelectedItem[]) =>
       prev.map((item: SelectedItem) => {
-        if (item.item_id === itemId) {
+        if (item.id === itemId) {
+          // Changed from item_id
           return { ...item, [field]: value };
         }
         return item;
@@ -297,8 +302,9 @@ export default function CreatePurchaseOrderModal({
   };
 
   const handleRemoveItem = (itemId: string) => {
-    setSelectedItems((prev: SelectedItem[]) =>
-      prev.filter((item: SelectedItem) => item.item_id !== itemId),
+    setSelectedItems(
+      (prev: SelectedItem[]) =>
+        prev.filter((item: SelectedItem) => item.id !== itemId), // Changed from item_id
     );
   };
 
@@ -413,7 +419,7 @@ export default function CreatePurchaseOrderModal({
       const finalTotal = poTotal ? parseFloat(poTotal) : calculatedTotal;
 
       const formData = new FormData();
-      formData.append("supplier_id", selectedSupplier.supplier_id);
+      formData.append("supplier_id", selectedSupplier.id);
       formData.append("order_no", poOrderNo);
       formData.append("orderedBy_id", userId);
       formData.append("total_amount", finalTotal.toString());
@@ -425,12 +431,21 @@ export default function CreatePurchaseOrderModal({
       }
       formData.append("notes", poNotes);
 
-      const itemsData = selectedItems.map((item: SelectedItem) => ({
-        item_id: item.item_id,
-        quantity: parseFloat(String(item.order_quantity)),
-        unit_price: parseFloat(String(item.order_unit_price)),
-        notes: "",
-      }));
+      const itemsData = selectedItems.map((item: SelectedItem) => {
+        const qty = parseFloat(String(item.order_quantity));
+        const unitPrice = parseFloat(String(item.order_unit_price));
+        const totalBeforeGst = qty * unitPrice;
+        const gst = Math.ceil(totalBeforeGst * 0.1 * 100) / 100;
+
+        return {
+          item_id: item.id, // Changed from item_id
+          quantity: qty,
+          unit_price: unitPrice,
+          gst: gst,
+          total_amount: totalBeforeGst,
+          notes: "",
+        };
+      });
 
       // The API expects a string of JSON objects separated by comma
       const itemsString = itemsData
@@ -511,9 +526,9 @@ export default function CreatePurchaseOrderModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Top Section: Supplier & Order Details */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex grid-cols-1 md:grid-cols-4 gap-6">
             {/* Supplier */}
-            <div className="relative" ref={supplierDropdownRef}>
+            <div className="w-full relative" ref={supplierDropdownRef}>
               <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1.5 font-medium">
                 Select Supplier <span className="text-red-500">*</span>
               </label>
@@ -551,20 +566,17 @@ export default function CreatePurchaseOrderModal({
                   {filteredSuppliers.length > 0 ? (
                     filteredSuppliers.map((supplier) => (
                       <button
-                        key={supplier.supplier_id}
+                        key={supplier.id}
                         type="button"
                         onClick={() =>
-                          handleSupplierSelect(
-                            supplier.supplier_id,
-                            supplier.name,
-                          )
+                          handleSupplierSelect(supplier.id, supplier.name)
                         }
                         className="cursor-pointer w-full text-left px-4 py-3 text-sm text-slate-800 hover:bg-slate-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
                       >
                         <div>
                           <div className="font-medium">{supplier.name}</div>
                           <div className="text-xs text-slate-500">
-                            id: {supplier.supplier_id}
+                            id: {supplier.id}
                           </div>
                         </div>
                       </button>
@@ -579,7 +591,7 @@ export default function CreatePurchaseOrderModal({
             </div>
 
             {/* Order No */}
-            <div>
+            <div className="w-3/4">
               <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1.5 font-medium">
                 Order Number <span className="text-red-500">*</span>
               </label>
@@ -593,7 +605,7 @@ export default function CreatePurchaseOrderModal({
             </div>
 
             {/* Total Amount */}
-            <div>
+            <div className="w-3/4">
               <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1.5 font-medium">
                 Total Amount (Optional)
               </label>
@@ -610,30 +622,9 @@ export default function CreatePurchaseOrderModal({
                 />
               </div>
             </div>
-          </div>
 
-          {/* Delivery Charge and Invoice Date */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1.5 font-medium">
-                Delivery Charge (Optional)
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-slate-500">
-                  $
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={poDeliveryCharge}
-                  onChange={(e) => setPoDeliveryCharge(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full px-4 py-3 pl-7 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                />
-              </div>
-            </div>
-            <div>
+            {/* Invoice Date */}
+            <div className="w-3/4">
               <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1.5 font-medium">
                 Invoice Date (Optional)
               </label>
@@ -697,7 +688,7 @@ export default function CreatePurchaseOrderModal({
                   ) : (
                     filteredItems.map((item: Item) => (
                       <div
-                        key={item.item_id}
+                        key={item.id} // Changed from item_id
                         onClick={() => handleAddItem(item)}
                         className="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3"
                       >
@@ -752,7 +743,7 @@ export default function CreatePurchaseOrderModal({
                       Quantity
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
-                      Unit Price (including GST)
+                      Unit Price (excluding GST)
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                       Total
@@ -774,7 +765,9 @@ export default function CreatePurchaseOrderModal({
                     </tr>
                   ) : (
                     selectedItems.map((item: SelectedItem) => (
-                      <tr key={item.item_id} className="hover:bg-slate-50">
+                      <tr key={item.id} className="hover:bg-slate-50">
+                        {" "}
+                        {/* Changed from item_id */}
                         {/* Image Column */}
                         <td className="px-4 py-3">
                           <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 shrink-0 flex items-center justify-center overflow-hidden">
@@ -791,14 +784,12 @@ export default function CreatePurchaseOrderModal({
                             )}
                           </div>
                         </td>
-
                         {/* Category Column */}
                         <td className="px-4 py-3 whitespace-nowrap">
                           <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
                             {item.category}
                           </span>
                         </td>
-
                         {/* Details Column */}
                         <td className="px-4 py-3">
                           <div className="text-xs text-slate-600 space-y-1">
@@ -909,12 +900,10 @@ export default function CreatePurchaseOrderModal({
                               )}
                           </div>
                         </td>
-
                         {/* Stock Column */}
                         <td className="px-4 py-3 text-sm text-slate-600">
                           {item.quantity} {item.measurement_unit}
                         </td>
-
                         {/* Quantity Column */}
                         <td className="px-4 py-3">
                           <input
@@ -923,7 +912,7 @@ export default function CreatePurchaseOrderModal({
                             value={item.order_quantity}
                             onChange={(e) =>
                               handleUpdateItem(
-                                item.item_id,
+                                item.id, // Changed from item_id
                                 "order_quantity",
                                 e.target.value,
                               )
@@ -931,7 +920,6 @@ export default function CreatePurchaseOrderModal({
                             className="w-20 p-1.5 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-primary outline-none"
                           />
                         </td>
-
                         {/* Unit Price Column */}
                         <td className="px-4 py-3">
                           <div className="flex items-center">
@@ -948,7 +936,7 @@ export default function CreatePurchaseOrderModal({
                               value={item.order_unit_price}
                               onChange={(e) =>
                                 handleUpdateItem(
-                                  item.item_id,
+                                  item.id, // Changed from item_id
                                   "order_unit_price",
                                   e.target.value,
                                 )
@@ -957,20 +945,18 @@ export default function CreatePurchaseOrderModal({
                             />
                           </div>
                         </td>
-
                         {/* Total Column */}
                         <td className="px-4 py-3 text-sm font-medium text-slate-800">
                           $
-                          {(
+                          {formatCurrency(
                             (parseFloat(String(item.order_quantity)) || 0) *
-                            (parseFloat(String(item.order_unit_price)) || 0)
-                          ).toFixed(2)}
+                              (parseFloat(String(item.order_unit_price)) || 0),
+                          )}
                         </td>
-
                         {/* Actions Column */}
                         <td className="px-4 py-3 text-center">
                           <button
-                            onClick={() => handleRemoveItem(item.item_id)}
+                            onClick={() => handleRemoveItem(item.id)} // Changed from item_id
                             className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -980,32 +966,115 @@ export default function CreatePurchaseOrderModal({
                     ))
                   )}
                 </tbody>
-                {selectedItems.length > 0 && (
-                  <tfoot className="bg-slate-50 font-medium">
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-3 text-right text-sm text-slate-600"
-                      >
-                        Calculated Total:
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-900">
-                        $
-                        {selectedItems
-                          .reduce(
-                            (sum: number, item: SelectedItem) =>
+                <tfoot className="bg-slate-50">
+                  <tr className="border-t border-slate-200">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-2 text-right text-sm text-slate-600 font-medium"
+                    >
+                      Order Total:
+                    </td>
+                    <td className="px-4 py-2 text-sm text-slate-900 font-medium">
+                      $
+                      {formatCurrency(
+                        selectedItems.reduce(
+                          (sum, item) =>
+                            sum +
+                            (parseFloat(String(item.order_quantity)) || 0) *
+                              (parseFloat(String(item.order_unit_price)) || 0),
+                          0,
+                        ),
+                      )}
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-2 text-right text-sm text-slate-600 font-medium"
+                    >
+                      Delivery Charge:
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm text-slate-500">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={poDeliveryCharge}
+                          onChange={(e) => setPoDeliveryCharge(e.target.value)}
+                          placeholder="0.00"
+                          className="w-24 text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
+                        />
+                      </div>
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-2 text-right text-sm text-slate-600 font-medium"
+                    >
+                      GST Amount (10%):
+                    </td>
+                    <td className="px-4 py-2 text-sm text-slate-900 font-medium">
+                      $
+                      {formatCurrency(
+                        Math.ceil(
+                          (selectedItems.reduce(
+                            (sum, item) =>
                               sum +
                               (parseFloat(String(item.order_quantity)) || 0) *
                                 (parseFloat(String(item.order_unit_price)) ||
                                   0),
                             0,
-                          )
-                          .toFixed(2)}
-                      </td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                )}
+                          ) +
+                            (parseFloat(poDeliveryCharge) || 0)) *
+                            0.1 *
+                            100,
+                        ) / 100,
+                      )}
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr className="border-t border-slate-200">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-2 text-right text-sm text-slate-700 font-bold"
+                    >
+                      Grand Total:
+                    </td>
+                    <td className="px-4 py-2 text-sm text-slate-900 font-bold">
+                      $
+                      {formatCurrency(
+                        selectedItems.reduce(
+                          (sum, item) =>
+                            sum +
+                            (parseFloat(String(item.order_quantity)) || 0) *
+                              (parseFloat(String(item.order_unit_price)) || 0),
+                          0,
+                        ) +
+                          (parseFloat(poDeliveryCharge) || 0) +
+                          Math.ceil(
+                            (selectedItems.reduce(
+                              (sum, item) =>
+                                sum +
+                                (parseFloat(String(item.order_quantity)) || 0) *
+                                  (parseFloat(String(item.order_unit_price)) ||
+                                    0),
+                              0,
+                            ) +
+                              (parseFloat(poDeliveryCharge) || 0)) *
+                              0.1 *
+                              100,
+                          ) /
+                            100,
+                      )}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
@@ -1182,11 +1251,11 @@ export default function CreatePurchaseOrderModal({
       {showAddItemModal && selectedSupplier && (
         <AddItemModal
           setShowModal={setShowAddItemModal}
-          supplierId={selectedSupplier.supplier_id}
+          supplierId={selectedSupplier.id}
           onItemAdded={() => {
             // Refresh supplier items after item is added
-            if (selectedSupplier?.supplier_id) {
-              fetchSupplierItems(selectedSupplier.supplier_id);
+            if (selectedSupplier?.id) {
+              fetchSupplierItems(selectedSupplier.id);
             }
           }}
         />

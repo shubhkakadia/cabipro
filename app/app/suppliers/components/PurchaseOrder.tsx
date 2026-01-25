@@ -1078,7 +1078,7 @@ export default function PurchaseOrder({
                                           Received
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                          Unit Price (including GST)
+                                          Unit Price (excluding GST)
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                           Total
@@ -1355,6 +1355,108 @@ export default function PurchaseOrder({
                                         </tr>
                                       ))}
                                     </tbody>
+                                    <tfoot className="bg-slate-50">
+                                      <tr className="border-t border-slate-200">
+                                        <td
+                                          colSpan={6}
+                                          className="px-4 py-3 text-right text-xs font-medium text-gray-700"
+                                        >
+                                          Order Total:
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <span className="text-xs font-semibold text-gray-900">
+                                            $
+                                            {formatMoney(
+                                              po.items.reduce(
+                                                (sum, item) =>
+                                                  sum +
+                                                  parseFloat(
+                                                    String(item.quantity),
+                                                  ) *
+                                                    parseFloat(
+                                                      String(item.unit_price),
+                                                    ),
+                                                0,
+                                              ),
+                                            )}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <td
+                                          colSpan={6}
+                                          className="px-4 py-3 text-right text-xs font-medium text-gray-700"
+                                        >
+                                          GST Amount (10%):
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <span className="text-xs font-semibold text-gray-900">
+                                            $
+                                            {formatMoney(
+                                              Math.ceil(
+                                                po.items.reduce(
+                                                  (sum, item) =>
+                                                    sum +
+                                                    parseFloat(
+                                                      String(item.quantity),
+                                                    ) *
+                                                      parseFloat(
+                                                        String(item.unit_price),
+                                                      ),
+                                                  0,
+                                                ) *
+                                                  0.1 *
+                                                  100,
+                                              ) / 100,
+                                            )}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                      <tr className="border-t border-slate-200">
+                                        <td
+                                          colSpan={6}
+                                          className="px-4 py-3 text-right text-xs font-bold text-gray-700"
+                                        >
+                                          Grand Total:
+                                        </td>
+                                        <td className="px-3 py-2">
+                                          <span className="text-xs font-bold text-gray-900">
+                                            $
+                                            {formatMoney(
+                                              po.items.reduce(
+                                                (sum, item) =>
+                                                  sum +
+                                                  parseFloat(
+                                                    String(item.quantity),
+                                                  ) *
+                                                    parseFloat(
+                                                      String(item.unit_price),
+                                                    ),
+                                                0,
+                                              ) +
+                                                Math.ceil(
+                                                  po.items.reduce(
+                                                    (sum, item) =>
+                                                      sum +
+                                                      parseFloat(
+                                                        String(item.quantity),
+                                                      ) *
+                                                        parseFloat(
+                                                          String(
+                                                            item.unit_price,
+                                                          ),
+                                                        ),
+                                                    0,
+                                                  ) *
+                                                    0.1 *
+                                                    100,
+                                                ) /
+                                                  100,
+                                            )}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    </tfoot>
                                   </table>
                                 </div>
                               )}

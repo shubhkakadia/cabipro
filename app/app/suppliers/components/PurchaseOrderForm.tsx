@@ -198,7 +198,7 @@ export default function PurchaseOrderForm({
 
             return {
               id: item.id,
-              item_id: item.item_id || item.item?.item_id, // Check both locations for item_id
+              item_id: item.item_id || item.item?.id, // Check both locations for item_id
               item: item.item || {},
               // Use remaining for partially ordered lists to continue ordering the balance
               quantity:
@@ -428,14 +428,22 @@ export default function PurchaseOrderForm({
 
       // Add items as comma-separated JSON objects (not an array)
       const itemsString = validItems
-        .map((item: POItem) =>
-          JSON.stringify({
+        .map((item: POItem) => {
+          const qty = parseFloat(String(item.quantity)) || 0;
+          const unitPrice = parseFloat(String(item.unit_price)) || 0; // Price excluding GST
+          const totalBeforeGst = qty * unitPrice;
+          const gst = Math.ceil(totalBeforeGst * 0.1 * 100) / 100;
+
+          return JSON.stringify({
             item_id: item.item_id,
-            quantity: parseFloat(String(item.quantity)) || 0,
-            unit_price: parseFloat(String(item.unit_price)) || 0,
+            mto_item_id: item.id,
+            quantity: qty,
+            unit_price: unitPrice,
+            gst: gst,
+            total_amount: totalBeforeGst,
             notes: "", // Optional notes per item
-          }),
-        )
+          });
+        })
         .join(",");
       formData.append("items", itemsString);
 
@@ -528,7 +536,7 @@ export default function PurchaseOrderForm({
             </div>
 
             {/* Order Details */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1">
                   Order Number <span className="text-red-500">*</span>
@@ -565,32 +573,7 @@ export default function PurchaseOrderForm({
                   Leave empty to use calculated total
                 </p>
               </div>
-            </div>
-
-            {/* Delivery Charge and Invoice Date */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1">
-                  Delivery Charge (Optional)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-slate-600 text-sm">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={poDeliveryCharge || ""}
-                    onChange={(e) =>
-                      setPoDeliveryCharge(parseFloat(e.target.value) || 0)
-                    }
-                    placeholder="0.00"
-                    className="w-full text-sm text-slate-800 px-4 py-3 pl-7 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div>
+                            <div>
                 <label className="block text-xs uppercase tracking-wide text-slate-500 mb-1">
                   Invoice Date (Optional)
                 </label>
@@ -697,7 +680,7 @@ export default function PurchaseOrderForm({
                           Quantity
                         </th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                          Unit Price (including GST)
+                          Unit Price (excluding GST)
                         </th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                           Total
@@ -927,26 +910,120 @@ export default function PurchaseOrderForm({
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-slate-50 border-t border-slate-200">
-                      <tr>
+                    <tfoot className="bg-slate-50">
+                      <tr className="border-t border-slate-200">
                         <td
                           colSpan={7}
                           className="px-4 py-2 text-right text-xs font-medium text-slate-700"
                         >
-                          Grand Total:
+                          Order Total:
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap">
-                          <p className="text-sm font-bold text-slate-900">
+                          <p className="text-sm font-medium text-slate-900">
                             $
                             {poItems
                               .reduce(
-                                (sum: number, item: POItem) =>
+                                (sum, item) =>
                                   sum +
                                   (parseFloat(String(item.quantity)) || 0) *
                                     (parseFloat(String(item.unit_price)) || 0),
                                 0,
                               )
                               .toFixed(2)}
+                          </p>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-4 py-2 text-right text-xs font-medium text-slate-700"
+                        >
+                          Delivery Charge:
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-slate-500">$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={poDeliveryCharge || ""}
+                              onChange={(e) =>
+                                setPoDeliveryCharge(
+                                  parseFloat(e.target.value) || 0,
+                                )
+                              }
+                              placeholder="0.00"
+                              className="w-24 text-sm text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
+                            />
+                          </div>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-4 py-2 text-right text-xs font-medium text-slate-700"
+                        >
+                          GST Amount (10%):
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <p className="text-sm font-medium text-slate-900">
+                            $
+                            {(
+                              Math.ceil(
+                                (poItems.reduce(
+                                  (sum, item) =>
+                                    sum +
+                                    (parseFloat(String(item.quantity)) || 0) *
+                                      (parseFloat(String(item.unit_price)) ||
+                                        0),
+                                  0,
+                                ) +
+                                  (parseFloat(String(poDeliveryCharge)) || 0)) *
+                                  0.1 *
+                                  100,
+                              ) / 100
+                            ).toFixed(2)}
+                          </p>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr className="border-t border-slate-200">
+                        <td
+                          colSpan={7}
+                          className="px-4 py-2 text-right text-xs font-bold text-slate-700"
+                        >
+                          Grand Total:
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <p className="text-sm font-bold text-slate-900">
+                            $
+                            {(
+                              poItems.reduce(
+                                (sum, item) =>
+                                  sum +
+                                  (parseFloat(String(item.quantity)) || 0) *
+                                    (parseFloat(String(item.unit_price)) || 0),
+                                0,
+                              ) +
+                              (parseFloat(String(poDeliveryCharge)) || 0) +
+                              Math.ceil(
+                                (poItems.reduce(
+                                  (sum, item) =>
+                                    sum +
+                                    (parseFloat(String(item.quantity)) || 0) *
+                                      (parseFloat(String(item.unit_price)) ||
+                                        0),
+                                  0,
+                                ) +
+                                  (parseFloat(String(poDeliveryCharge)) || 0)) *
+                                  0.1 *
+                                  100,
+                              ) /
+                                100
+                            ).toFixed(2)}
                           </p>
                         </td>
                         <td></td>
