@@ -447,10 +447,10 @@ export default function TermsOfService() {
               </p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
                 <a
-                  href="mailto:shubhkakadia@gmail.com"
+                  href="mailto:cabipro16@gmail.com"
                   className="text-gray-900 hover:underline font-medium wrap-break-words"
                 >
-                  shubhkakadia@gmail.com
+                  cabipro16@gmail.com
                 </a>
               </p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">

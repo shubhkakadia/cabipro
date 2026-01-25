@@ -128,7 +128,7 @@ interface MTOItem {
   quantity_received?: number;
   reserve_item_stock?: ReservedItemStock[];
   ordered_by?: {
-    username?: string;
+    email?: string;
     employee?: {
       first_name?: string;
       last_name?: string;
@@ -2765,7 +2765,7 @@ export default function MaterialsToOrderPage() {
                                                                               </div>
                                                                               {item
                                                                                 .ordered_by
-                                                                                ?.username &&
+                                                                                ?.email &&
                                                                                 !pendingChangesById[
                                                                                   item
                                                                                     .id
@@ -2776,7 +2776,7 @@ export default function MaterialsToOrderPage() {
                                                                                     {
                                                                                       item
                                                                                         .ordered_by
-                                                                                        .username
+                                                                                        .email
                                                                                     }
                                                                                   </div>
                                                                                 )}

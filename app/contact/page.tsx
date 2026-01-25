@@ -294,10 +294,10 @@ export default function Contact() {
                       </h3>
                       <p className="mt-1 text-sm text-gray-600 wrap-break-words">
                         <a
-                          href="mailto:shubhkakadia@gmail.com"
+                          href="mailto:cabipro16@gmail.com"
                           className="hover:text-gray-900 transition-colors"
                         >
-                          shubhkakadia@gmail.com
+                          cabipro16@gmail.com
                         </a>
                       </p>
                     </div>

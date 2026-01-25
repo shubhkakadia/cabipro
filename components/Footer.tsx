@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Instagram } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -24,6 +24,28 @@ export default function Footer() {
               manufacturers. Track production, manage materials, schedule jobs,
               and optimize your manufacturing operations.
             </p>
+            
+            {/* Social Media Icons */}
+            <div className="flex gap-4 mt-4">
+              <a
+                href="https://www.facebook.com/profile.php?id=61586622536985"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-gray-900 transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-5 w-5 sm:h-6 sm:w-6" />
+              </a>
+              <a
+                href="https://www.instagram.com/cabiprosoftware/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-gray-900 transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5 sm:h-6 sm:w-6" />
+              </a>
+            </div>
           </div>
 
           {/* Product Links */}
@@ -110,10 +132,10 @@ export default function Footer() {
                 <div className="ml-2 sm:ml-3">
                   <p className="text-xs sm:text-sm text-gray-600">
                     <a
-                      href="mailto:shubhkakadia@gmail.com"
+                      href="mailto:cabipro16@gmail.com"
                       className="hover:text-gray-900 transition-colors wrap-break-words"
                     >
-                      shubhkakadia@gmail.com
+                      cabipro16@gmail.com
                     </a>
                   </p>
                 </div>

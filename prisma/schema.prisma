@@ -129,27 +129,29 @@ model admin_sessions {
 }
 
 model users {
-  id                  String               @id @default(uuid())
-  email               String               @unique
-  password            String
-  user_type           String
-  first_name          String
-  last_name           String
-  employee_id         String?              @unique
-  organization_id     String
-  emailVerified       Boolean              @default(false)
-  is_active           Boolean              @default(true)
-  lastLogin           DateTime?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  employee            employees?           @relation(fields: [employee_id], references: [id], onDelete: SetNull)
-  logs                logs[]
-  material_selection  material_selection[]
-  materials_to_orders materials_to_order[] @relation("MaterialsToBeOrderedCreatedBy")
-  module_access       module_access?
-  organization        organization         @relation("OrganizationUsers", fields: [organization_id], references: [id], onDelete: Cascade)
-  purchase_order      purchase_order[]     @relation("PurchaseOrderOrderedBy")
-  sessions            sessions[]
+  id                       String                    @id @default(uuid())
+  email                    String                    @unique
+  password                 String
+  user_type                String
+  first_name               String
+  last_name                String
+  employee_id              String?                   @unique
+  organization_id          String
+  emailVerified            Boolean                   @default(false)
+  is_active                Boolean                   @default(true)
+  lastLogin                DateTime?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  employee                 employees?                @relation(fields: [employee_id], references: [id], onDelete: SetNull)
+  logs                     logs[]
+  material_selection       material_selection[]
+  materials_to_orders      materials_to_order[]      @relation("MaterialsToBeOrderedCreatedBy")
+  materials_to_order_items materials_to_order_item[]
+  module_access            module_access?
+  organization             organization              @relation("OrganizationUsers", fields: [organization_id], references: [id], onDelete: Cascade)
+  purchase_order           purchase_order[]          @relation("PurchaseOrderOrderedBy")
+  sessions                 sessions[]
+  meetingParticipants      meeting[]
 
   @@index([email])
   @@index([employee_id])
@@ -358,6 +360,7 @@ model lot {
   project                project             @relation(fields: [project_id], references: [id], onDelete: Cascade)
   stages                 stage[]
   tabs                   lot_tab[]
+  meetingLots            meeting[]
 
   @@unique([lot_id, organization_id])
   @@index([lot_id])
@@ -818,6 +821,8 @@ model materials_to_order_item {
   notes               String?               @db.LongText
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
+  ordered_by_id       String?
+  ordered_by          users?                @relation(fields: [ordered_by_id], references: [id])
   item                item                  @relation(fields: [item_id], references: [id], onDelete: Cascade)
   mto                 materials_to_order    @relation(fields: [mto_id], references: [id], onDelete: Cascade)
   ordered_items       purchase_order_item[]
@@ -998,4 +1003,23 @@ model reserve_item_stock {
   user_id         String
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
+}
+
+// ============================================
+// MEETING MODEL
+// ============================================
+
+model meeting {
+  id                String    @id @default(uuid())
+  date_time         DateTime
+  date_time_end     DateTime?
+  title             String
+  notes             String?
+  remainder         String?
+  participants      users[]
+  lots              lot[]
+  remainder_1h_sent Boolean   @default(false)
+  remainder_1d_sent Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }

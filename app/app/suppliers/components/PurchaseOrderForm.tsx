@@ -510,7 +510,7 @@ export default function PurchaseOrderForm({
                     <button
                       onClick={() =>
                         window.open(
-                          `/admin/suppliers/${supplier?.supplier_id}`,
+                          `/app/suppliers/${supplier?.supplier_id}`,
                           "_blank",
                         )
                       }

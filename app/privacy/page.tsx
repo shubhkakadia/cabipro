@@ -39,10 +39,10 @@ export default function PrivacyPolicy() {
           <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-8 sm:mb-10 lg:mb-12">
             If you have any questions, we&apos;re here to help:{" "}
             <a
-              href="mailto:shubhkakadia@gmail.com"
+              href="mailto:cabipro16@gmail.com"
               className="text-gray-900 hover:underline font-medium wrabreak-words"
             >
-              shubhkakadia@gmail.com
+              cabipro16@gmail.com
             </a>
           </p>
 
@@ -354,10 +354,10 @@ export default function PrivacyPolicy() {
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-3 sm:mb-4">
               <a
-                href="mailto:shubhkakadia@gmail.com"
+                href="mailto:cabipro16@gmail.com"
                 className="text-gray-900 hover:underline font-medium wrap-break-words"
               >
-                shubhkakadia@gmail.com
+                cabipro16@gmail.com
               </a>
             </p>
             <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
@@ -441,10 +441,10 @@ export default function PrivacyPolicy() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-5">
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
                 <a
-                  href="mailto:shubhkakadia@gmail.com"
+                  href="mailto:cabipro16@gmail.com"
                   className="text-gray-900 hover:underline font-medium wrapbreak-words"
                 >
-                  shubhkakadia@gmail.com
+                  cabipro16@gmail.com
                 </a>
               </p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">

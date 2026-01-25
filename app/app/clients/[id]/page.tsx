@@ -1203,7 +1203,7 @@ export default function ClientDetailPage() {
                                         className="px-4 py-2 whitespace-nowrap text-xs text-slate-600 cursor-pointer"
                                         onClick={() =>
                                           router.push(
-                                            `/admin/projects/${project.project_id}`,
+                                            `/app/projects/${project.project_id}`,
                                           )
                                         }
                                       >
@@ -1215,7 +1215,7 @@ export default function ClientDetailPage() {
                                         className="px-4 py-2 whitespace-nowrap text-xs text-slate-600 cursor-pointer"
                                         onClick={() =>
                                           router.push(
-                                            `/admin/projects/${project.project_id}`,
+                                            `/app/projects/${project.project_id}`,
                                           )
                                         }
                                       >
@@ -1228,7 +1228,7 @@ export default function ClientDetailPage() {
                                         className="px-4 py-2 whitespace-nowrap text-xs text-slate-600 cursor-pointer"
                                         onClick={() =>
                                           router.push(
-                                            `/admin/projects/${project.project_id}`,
+                                            `/app/projects/${project.project_id}`,
                                           )
                                         }
                                       >
@@ -1287,7 +1287,7 @@ export default function ClientDetailPage() {
                                                           key={lot.id}
                                                           onClick={() =>
                                                             router.push(
-                                                              `/admin/projects/${project.project_id}`,
+                                                              `/app/projects/${project.project_id}`,
                                                             )
                                                           }
                                                           className="cursor-pointer hover:bg-slate-50 transition-colors"

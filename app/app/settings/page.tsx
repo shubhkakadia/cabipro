@@ -26,7 +26,7 @@ import AppHeader from "@/components/AppHeader";
 // Type definitions
 interface User {
   id: string;
-  username?: string;
+  email?: string;
   user_type?: string;
   is_active?: boolean;
   employee?: Employee;
@@ -669,14 +669,14 @@ export default function SettingsPage() {
                       </div>
 
                       <div className="p-6 space-y-6">
-                        {/* Username */}
+                        {/* Email */}
                         <div>
                           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Username
+                            Email
                           </label>
                           <input
                             type="text"
-                            value={user.username || ""}
+                            value={user.email || ""}
                             disabled
                             className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 cursor-not-allowed"
                           />

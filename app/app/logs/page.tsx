@@ -28,7 +28,7 @@ interface Log {
   entity_id?: string;
   createdAt?: string;
   user?: {
-    username?: string;
+    email?: string;
   };
   [key: string]: unknown;
 }
@@ -65,7 +65,7 @@ export default function LogsPage() {
       "Action",
       "Description",
       "Entity ID",
-      "Username",
+      "User Email",
       "ID",
     ],
     [],
@@ -145,8 +145,8 @@ export default function LogsPage() {
             log.description.toLowerCase().includes(searchLower)) ||
           (log.entity_id &&
             log.entity_id.toLowerCase().includes(searchLower)) ||
-          (log.user?.username &&
-            log.user.username.toLowerCase().includes(searchLower)) ||
+          (log.user?.email &&
+            log.user.email.toLowerCase().includes(searchLower)) ||
           (log.id && log.id.toLowerCase().includes(searchLower));
         if (!matchesSearch) return false;
       }
@@ -423,7 +423,7 @@ export default function LogsPage() {
       Action: (log: Log) => log.action || "",
       Description: (log: Log) => log.description || "",
       "Entity ID": (log: Log) => log.entity_id || "",
-      Username: (log: Log) => log.user?.username || "",
+      "User Email": (log: Log) => log.user?.email || "",
       ID: (log: Log) => log.id || "",
     };
   }, []);
@@ -500,7 +500,7 @@ export default function LogsPage() {
                           <Search className="h-4 w-4 absolute left-3 text-slate-400" />
                           <input
                             type="text"
-                            placeholder="Search logs by description, entity type, action, entity ID, username"
+                            placeholder="Search logs by description, entity type, action, entity ID, user email"
                             className="w-full text-slate-800 p-2 pl-10 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm font-normal"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -867,7 +867,7 @@ export default function LogsPage() {
                                 Entity ID
                               </th>
                               <th className="px-4 py-2 text-left text-sm font-semibold text-slate-600 uppercase tracking-wider">
-                                Username
+                                User Email
                               </th>
                             </tr>
                           </thead>
@@ -938,7 +938,7 @@ export default function LogsPage() {
                                     </div>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                                    {log.user?.username || "-"}
+                                    {log.user?.email || "-"}
                                   </td>
                                 </tr>
                               ))

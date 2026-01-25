@@ -12,6 +12,7 @@ import {
   Trash2,
   FileText,
   Settings2,
+  CalendarDays,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -30,6 +31,13 @@ export default function Sidebar() {
       icon: LayoutDashboard,
       label: "Dashboard",
       href: "/app",
+      access: false,
+      subtabs: [],
+    },
+    {
+      icon: CalendarDays,
+      label: "Calendar",
+      href: "/app/calendar",
       access: false,
       subtabs: [],
     },
@@ -95,7 +103,7 @@ export default function Sidebar() {
         },
       ],
     },
-    // { icon: Landmark, label: "Finance", href: "/admin/finance", subtabs: [] },
+    // { icon: Landmark, label: "Finance", href: "/app/finance", subtabs: [] },
     {
       icon: Trash2,
       label: "Deleted Media",
@@ -127,7 +135,8 @@ export default function Sidebar() {
             {navdata.map((item) => {
               const isActive =
                 pathname === item.href ||
-                (item.subtabs.length === 0 &&
+                (item.href !== "/app" &&
+                  item.subtabs.length === 0 &&
                   pathname.startsWith(item.href + "/"));
               const isParentActive = pathname.startsWith(item.href);
 

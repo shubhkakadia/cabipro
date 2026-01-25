@@ -180,6 +180,8 @@ export async function POST(request: NextRequest) {
       topstagesDue: {},
       projectsCompletedThisMonth: 0,
       averageProjectDuration: 0,
+      upcomingMeetings: [] as any[],
+      recentLogs: [] as any[],
     };
 
     // Build all where clauses first (no database calls yet)
@@ -373,6 +375,8 @@ export async function POST(request: NextRequest) {
       topstagesDue,
       projectsCompletedThisMonth,
       completedProjects,
+      upcomingMeetings,
+      recentLogs,
     ] = await Promise.all([
       prisma.project.count({ where: activeProjectsWhere }),
       prisma.lot.count({ where: activeLotsWhere }),
@@ -443,6 +447,67 @@ export async function POST(request: NextRequest) {
           },
         },
       }),
+      prisma.meeting.findMany({
+        where: {
+          date_time: {
+            gte: new Date(),
+          },
+          participants: {
+            some: {
+              id: user.userId,
+            },
+          },
+        },
+        orderBy: {
+          date_time: "asc",
+        },
+        take: 5,
+        include: {
+          participants: {
+            select: {
+              id: true,
+              email: true,
+              employee: {
+                select: {
+                  first_name: true,
+                  last_name: true,
+                  image: true,
+                },
+              },
+            },
+          },
+          lots: {
+            select: {
+              lot_id: true,
+              project: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.logs.findMany({
+        take: 10,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          user: {
+            select: {
+              email: true,
+              employee: {
+                select: {
+                  first_name: true,
+                  last_name: true,
+                  image: true,
+                },
+              },
+            },
+          },
+        },
+      }),
     ]);
 
     // Calculate total spent from supplier statements
@@ -469,6 +534,8 @@ export async function POST(request: NextRequest) {
     dashboardData.purchaseOrdersByStatus = purchaseOrdersByStatus;
     dashboardData.topstagesDue = topstagesDue;
     dashboardData.projectsCompletedThisMonth = projectsCompletedThisMonth;
+    dashboardData.upcomingMeetings = upcomingMeetings;
+    dashboardData.recentLogs = recentLogs;
 
     // Calculate average project duration
     interface CompletedLot {

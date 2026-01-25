@@ -51,7 +51,7 @@ interface Contact {
 }
 
 interface Supplier {
-  supplier_id: string;
+  id: string;
   name?: string;
   address?: string;
   phone?: string;
@@ -578,7 +578,7 @@ export default function SupplierDetailPage() {
                                   className="text-xl font-bold text-slate-800 px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                                 />
                                 <p className="text-sm text-slate-500">
-                                  Supplier ID: {supplier.supplier_id}
+                                  Supplier ID: {supplier.id}
                                 </p>
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-2">
@@ -703,7 +703,7 @@ export default function SupplierDetailPage() {
                                   </h2>
                                 </div>
                                 <p className="text-xs text-slate-500 mb-3">
-                                  ID: {supplier.supplier_id}
+                                  ID: {supplier.id}
                                 </p>
                                 <div className="space-y-1">
                                   <div className="flex flex-wrap gap-3 text-sm">
@@ -760,7 +760,7 @@ export default function SupplierDetailPage() {
                       onContactsUpdate={(contacts) =>
                         setContacts(contacts as Contact[])
                       }
-                      parentId={supplier?.supplier_id || ""}
+                      parentId={supplier?.id || ""}
                       parentType="supplier"
                       parentName={supplier?.name || ""}
                     />

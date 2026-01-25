@@ -1,7 +1,5 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
-// import CRMLayout from "@/components/tabs";
-// import { AdminRoute } from "@/components/ProtectedRoute";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
@@ -14,11 +12,10 @@ import {
   Package,
   RefreshCcw,
   History,
-  User,
+  User as UserIcon,
   ChevronDown,
   Calendar,
   Clock,
-  RotateCcw,
   Database,
   HardDrive,
   Target,
@@ -34,8 +31,9 @@ import {
   Tooltip,
   Legend,
   Filler,
+  BarElement,
 } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
+import { Doughnut, Bar } from "react-chartjs-2";
 import Sidebar from "@/components/sidebar";
 import AppHeader from "@/components/AppHeader";
 import SearchBar from "@/components/SearchBar";
@@ -51,6 +49,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
+  BarElement,
 );
 
 // Color palette for charts
@@ -66,6 +65,16 @@ const CHART_COLORS = [
 ];
 
 // Type definitions
+interface User {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  userType?: string;
+  organizationId?: string;
+  employee_id?: string; // Optional if available
+}
+
 interface KPICardProps {
   title: string;
   value: number | string;
@@ -95,6 +104,8 @@ interface DashboardData {
   MTOsByStatus?: Array<{ status: string; _count: number }>;
   purchaseOrdersByStatus?: Array<{ status: string; _count: number }>;
   top10items?: Item[];
+  upcomingMeetings?: Meeting[];
+  recentLogs?: Log[];
 }
 
 interface Stage {
@@ -129,6 +140,7 @@ interface Log {
   entity_type?: string;
   createdAt: string;
   user?: {
+    email?: string;
     username?: string;
   };
 }
@@ -139,9 +151,23 @@ interface StorageUsage {
   timestamp?: string;
 }
 
-interface EmployeeData {
-  first_name?: string;
-  last_name?: string;
+interface Participant {
+  id: string;
+  email?: string;
+  username?: string;
+  employee?: {
+    first_name?: string;
+    last_name?: string;
+    image?: string;
+  };
+}
+
+interface Meeting {
+  id: string;
+  title: string;
+  date_time: string;
+  lots: { lot_id: string }[];
+  participants: Participant[];
 }
 
 // KPI Card Component
@@ -189,7 +215,7 @@ const ChartCard: React.FC<ChartCardProps> = ({
   className = "",
 }) => (
   <div
-    className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${className}`}
+    className={`bg-white rounded-xl border border-slate-200 overflow-hidden ${className}`}
   >
     <div className="px-5 py-4 border-b border-slate-100">
       <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
@@ -228,7 +254,6 @@ const getActionColor = (action: string): string => {
 const getDaysLeft = (endDate: string | undefined): number | null => {
   if (!endDate) return null;
   const end = new Date(endDate);
-  // Check if date is invalid
   if (isNaN(end.getTime())) return null;
 
   const now = new Date();
@@ -283,13 +308,12 @@ const getStatusColor = (status: string): string => {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null,
   );
-  const [logsData, setLogsData] = useState<Log[]>([]);
-  const [logsLoading, setLogsLoading] = useState(true);
   const [dashboardYearFilter, setDashboardYearFilter] = useState("all");
   const [dashboardYearDropdownOpen, setDashboardYearDropdownOpen] =
     useState(false);
@@ -299,7 +323,37 @@ export default function DashboardPage() {
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [storageLoading, setStorageLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [employeeData] = useState<EmployeeData | null>(null);
+
+  // Fetch current user
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get("/api/me", { withCredentials: true });
+      if (response.data.user) {
+        // Map API reaction to User interface
+        const userData: User = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          firstName: response.data.user.first_name,
+          lastName: response.data.user.last_name,
+          userType: response.data.user.user_type,
+          organizationId: response.data.user.organization_id,
+        };
+        setCurrentUser(userData);
+      } else if (response.data.admin) {
+        // Handle admin case if needed differently
+        setCurrentUser({
+          id: response.data.admin.id,
+          email: response.data.admin.email,
+          firstName: response.data.admin.first_name,
+          lastName: response.data.admin.last_name,
+          userType: "admin",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      setError("Authentication failed. Please log in.");
+    }
+  };
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -327,7 +381,7 @@ export default function DashboardPage() {
       } else {
         setError(response.data.message || "Failed to fetch dashboard data");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Dashboard API Error:", err);
       if (axios.isAxiosError(err)) {
         setError(
@@ -341,30 +395,6 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }, [dashboardMonthFilter, dashboardYearFilter]);
-
-  const fetchLogs = useCallback(async () => {
-    try {
-      setLogsLoading(true);
-
-      const response = await axios.get("/api/logs", {
-        withCredentials: true,
-      });
-
-      if (response.data.status) {
-        const sortedLogs = (response.data.data || [])
-          .sort(
-            (a: Log, b: Log) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )
-          .slice(0, 10) as Log[];
-        setLogsData(sortedLogs);
-      }
-    } catch (err) {
-      console.error("Logs API Error:", err);
-    } finally {
-      setLogsLoading(false);
-    }
-  }, []);
 
   const fetchStorageUsage = async () => {
     try {
@@ -407,11 +437,18 @@ export default function DashboardPage() {
     });
   };
 
+  // Fetch user first
   useEffect(() => {
-    fetchDashboard();
-    fetchLogs();
-    fetchStorageUsage();
-  }, [fetchDashboard, fetchLogs, dashboardYearFilter, dashboardMonthFilter]);
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch data when user is present or filters change
+  useEffect(() => {
+    if (currentUser) {
+      fetchDashboard();
+      fetchStorageUsage();
+    }
+  }, [currentUser, fetchDashboard, dashboardYearFilter, dashboardMonthFilter]);
 
   // Real-time clock update
   useEffect(() => {
@@ -421,13 +458,6 @@ export default function DashboardPage() {
 
     return () => clearInterval(timer);
   }, []);
-
-  // Fetch employee data when userData is available (commented out)
-  // useEffect(() => {
-  //   if (userData?.user?.employee_id) {
-  //     fetchEmployeeData();
-  //   }
-  // }, [userData?.user?.employee_id, fetchEmployeeData]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -526,7 +556,7 @@ export default function DashboardPage() {
     });
   };
 
-  // Transform lotsByStage for Chart.js doughnut chart (commented out until chart.js is available)
+  // Transform lotsByStage for Chart.js doughnut chart
   const getLotsByStageChartData = () => {
     if (!dashboardData?.lotsByStage || dashboardData.lotsByStage.length === 0)
       return null;
@@ -635,11 +665,11 @@ export default function DashboardPage() {
     }
 
     return filtered.sort((a: Stage, b: Stage) => {
-      const daysLeftA = getDaysLeft(a.endDate);
-      const daysLeftB = getDaysLeft(b.endDate);
-      if (daysLeftA === null) return 1;
-      if (daysLeftB === null) return -1;
-      return daysLeftA - daysLeftB;
+      // Prioritize stages where lot.project.name exists
+      return (
+        (a.lot?.project?.name ? 0 : 1) - (b.lot?.project?.name ? 0 : 1) ||
+        new Date(a.endDate!).getTime() - new Date(b.endDate!).getTime()
+      );
     });
   };
 
@@ -679,14 +709,53 @@ export default function DashboardPage() {
     },
   };
 
+  // Bar chart options
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: "#1e293b",
+        titleFont: { size: 13 },
+        bodyFont: { size: 12 },
+        padding: 12,
+        cornerRadius: 8,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: "#f1f5f9",
+        },
+        ticks: {
+          font: { size: 11 },
+          color: "#64748b",
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: { size: 11 },
+          color: "#64748b",
+        },
+      },
+    },
+  };
+
   return (
     <div className="bg-tertiary">
       <AppHeader />
       <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-y-auto h-full">
+        <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-full w-full overflow-auto">
-            {loading ? (
+            {loading && !dashboardData ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary mx-auto mb-4"></div>
@@ -695,7 +764,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
-            ) : error ? (
+            ) : error && !dashboardData ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
                   <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -705,7 +774,6 @@ export default function DashboardPage() {
                   <button
                     onClick={() => {
                       fetchDashboard();
-                      fetchLogs();
                     }}
                     className="cursor-pointer btn-primary px-4 py-2 text-sm font-medium rounded-lg"
                   >
@@ -714,7 +782,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-4">
                 {/* Header with Greeting */}
                 <div className="flex items-center justify-between mb-8">
                   <div>
@@ -724,18 +792,17 @@ export default function DashboardPage() {
                           {getGreeting()}
                         </h1>
                         <h1 className="text-5xl font-bold text-slate-800">
-                          {employeeData && (
+                          {currentUser && (
                             <span className="text-secondary">
-                              {employeeData.first_name || ""}
-                              {employeeData.last_name &&
-                                ` ${employeeData.last_name}`}
+                              {currentUser.firstName}
+                              {currentUser.lastName &&
+                                ` ${currentUser.lastName}`}
                             </span>
                           )}
                         </h1>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-slate-600">
-                      {/* <Calendar className="w-5 h-5" /> */}
                       <p className="text-base font-medium">
                         {formatDateTime()}
                       </p>
@@ -743,7 +810,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <SearchBar />
-                    {/* Storage Usage - Compact Display */}
+                    {/* Storage Usage */}
                     {storageLoading ? (
                       <div className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500 bg-white border border-slate-200 rounded-lg">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-secondary"></div>
@@ -785,7 +852,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                     ) : null}
-                    {/* Reset Filters Button - Only show when filters are applied */}
+                    {/* Reset Filters */}
                     {(dashboardYearFilter !== "all" ||
                       dashboardMonthFilter !== "all") && (
                       <button
@@ -798,7 +865,7 @@ export default function DashboardPage() {
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                         title="Reset filters to default"
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <RefreshCcw className="w-4 h-4" />
                         Reset
                       </button>
                     )}
@@ -911,7 +978,6 @@ export default function DashboardPage() {
                     <button
                       onClick={() => {
                         fetchDashboard();
-                        fetchLogs();
                       }}
                       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                     >
@@ -921,185 +987,305 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-                  <KPICard
-                    title="Active Projects"
-                    value={dashboardData?.activeProjects || 0}
-                    icon={FolderKanban}
-                    color="bg-linear-to-br from-blue-500 to-blue-600"
-                    subtitle="Currently in progress"
-                    onClick={() => router.push("/admin/projects")}
-                  />
-                  <KPICard
-                    title="Active Lots"
-                    value={dashboardData?.activeLots || 0}
-                    icon={Layers}
-                    color="bg-linear-to-br from-emerald-500 to-emerald-600"
-                    subtitle="Across all projects"
-                    onClick={undefined}
-                  />
-                  <KPICard
-                    title="Active MTOs"
-                    value={dashboardData?.activeMTOs || 0}
-                    icon={ClipboardList}
-                    color="bg-linear-to-br from-violet-500 to-violet-600"
-                    subtitle="Materials to order"
-                    onClick={() =>
-                      router.push("/admin/suppliers/materialstoorder")
-                    }
-                  />
-                  <KPICard
-                    title="Purchase Orders"
-                    value={dashboardData?.activePurchaseOrders || 0}
-                    icon={ShoppingCart}
-                    color="bg-linear-to-br from-amber-500 to-amber-600"
-                    subtitle="Active orders"
-                    onClick={() =>
-                      router.push("/admin/suppliers/purchaseorder")
-                    }
-                  />
-                  <KPICard
-                    title="Projects Completed"
-                    value={dashboardData?.projectsCompletedThisMonth || 0}
-                    icon={Target}
-                    color="bg-linear-to-br from-green-500 to-green-600"
-                    subtitle="This month"
-                    onClick={undefined}
-                  />
-                  <KPICard
-                    title="Avg Project Duration"
-                    value={
-                      dashboardData &&
-                      dashboardData.averageProjectDuration &&
-                      dashboardData.averageProjectDuration > 0
-                        ? dashboardData.averageProjectDuration
-                        : 0
-                    }
-                    icon={Clock}
-                    color="bg-linear-to-br from-rose-500 to-rose-600"
-                    subtitle={
-                      dashboardData &&
-                      dashboardData.averageProjectDuration &&
-                      dashboardData.averageProjectDuration > 0
-                        ? `${dashboardData.averageProjectDuration} days`
-                        : "No completed projects"
-                    }
-                    onClick={undefined}
-                  />
+                <div className="flex gap-4">
+                  <div className="flex-3 space-y-4">
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                      <KPICard
+                        title="Active Projects"
+                        value={dashboardData?.activeProjects || 0}
+                        icon={FolderKanban}
+                        color="bg-gradient-to-br from-blue-500 to-blue-600"
+                        subtitle="Currently in progress"
+                        onClick={() => router.push("/app/projects")}
+                      />
+                      <KPICard
+                        title="Active Lots"
+                        value={dashboardData?.activeLots || 0}
+                        icon={Layers}
+                        color="bg-gradient-to-br from-emerald-500 to-emerald-600"
+                        subtitle="Across all projects"
+                      />
+                      <KPICard
+                        title="Active MTOs"
+                        value={dashboardData?.activeMTOs || 0}
+                        icon={ClipboardList}
+                        color="bg-gradient-to-br from-violet-500 to-violet-600"
+                        subtitle="Materials to order"
+                        onClick={() =>
+                          router.push("/app/suppliers/materialstoorder")
+                        }
+                      />
+                      <KPICard
+                        title="Purchase Orders"
+                        value={dashboardData?.activePurchaseOrders || 0}
+                        icon={ShoppingCart}
+                        color="bg-gradient-to-br from-amber-500 to-amber-600"
+                        subtitle="Active orders"
+                        onClick={() =>
+                          router.push("/app/suppliers/purchaseorder")
+                        }
+                      />
+                      <KPICard
+                        title="Projects Completed"
+                        value={dashboardData?.projectsCompletedThisMonth || 0}
+                        icon={Target}
+                        color="bg-gradient-to-br from-green-500 to-green-600"
+                        subtitle="This month"
+                      />
+                    </div>
+
+                    {/* Stages Due */}
+                    <ChartCard title="Upcoming Stage Deadlines">
+                      {sortedStagesDue.length > 0 ? (
+                        <div className="overflow-x-auto max-h-75 overflow-y-auto">
+                          <table className="w-full">
+                            <thead className="sticky top-0 bg-white">
+                              <tr className="border-b border-slate-100">
+                                <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                  Stage
+                                </th>
+                                <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                  Project / Lot
+                                </th>
+                                <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                  Status
+                                </th>
+                                <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                  Due Date
+                                </th>
+                                <th className="text-right py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                  Time Left
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sortedStagesDue.map((stage) => {
+                                const daysLeft = getDaysLeft(stage.endDate);
+                                const badge = getDaysLeftBadge(daysLeft);
+                                return (
+                                  <tr
+                                    key={stage.stage_id}
+                                    className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                                  >
+                                    <td className="py-3 px-3">
+                                      <span className="inline-flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-slate-400" />
+                                        <span className="text-sm font-medium text-slate-700 capitalize">
+                                          {stage.name}
+                                        </span>
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-3 text-sm text-slate-600">
+                                      {stage.lot?.project?.name ? (
+                                        <span>
+                                          <span className="font-medium">
+                                            {stage.lot.project.name}
+                                          </span>
+                                          <span className="text-slate-400 mx-1">
+                                            /
+                                          </span>
+                                          <span>{stage.lot_id}</span>
+                                        </span>
+                                      ) : (
+                                        stage.lot_id
+                                      )}
+                                    </td>
+                                    <td className="py-3 px-3">
+                                      <span
+                                        className={`text-[10px] font-semibold px-2 py-1 rounded-full uppercase ${getStatusColor(
+                                          stage.status,
+                                        )}`}
+                                      >
+                                        {stage.status?.replace(/_/g, " ")}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-3 text-sm text-slate-600">
+                                      {stage.endDate &&
+                                      new Date(stage.endDate).getFullYear() >
+                                        2000
+                                        ? new Date(
+                                            stage.endDate,
+                                          ).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          })
+                                        : "-"}
+                                    </td>
+                                    <td className="py-3 px-3 text-right">
+                                      <span
+                                        className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${badge.color}`}
+                                      >
+                                        <Clock className="w-3 h-3" />
+                                        {badge.text}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="py-12 text-center text-slate-400 text-sm">
+                          No upcoming stage deadlines
+                        </div>
+                      )}
+                    </ChartCard>
+                  </div>
+
+                  <div className="flex-1">
+                    {/* Upcoming Meetings */}
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col h-full">
+                      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-slate-700">
+                          Upcoming Meetings
+                        </h3>
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-125">
+                        {dashboardData?.upcomingMeetings &&
+                        dashboardData.upcomingMeetings.length > 0 ? (
+                          dashboardData.upcomingMeetings.map((meeting) => (
+                            <div
+                              key={meeting.id}
+                              className="p-4 hover:bg-slate-50 transition-colors"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="shrink-0 w-10 text-center bg-slate-100 rounded-lg p-1">
+                                  <span className="block text-[10px] font-bold text-slate-500 uppercase">
+                                    {new Date(
+                                      meeting.date_time,
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                    })}
+                                  </span>
+                                  <span className="block text-sm font-bold text-slate-800">
+                                    {new Date(meeting.date_time).getDate()}
+                                  </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-xs font-semibold text-slate-800 line-clamp-1">
+                                    {meeting.title}
+                                  </h4>
+                                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500">
+                                    <Clock className="w-3 h-3" />
+                                    {new Date(
+                                      meeting.date_time,
+                                    ).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </div>
+                                  {meeting.lots && meeting.lots.length > 0 && (
+                                    <div className="flex items-center gap-1 mt-1.5 overflow-hidden">
+                                      {meeting.lots.slice(0, 2).map((l) => (
+                                        <span
+                                          key={l.lot_id}
+                                          className="inline-flex px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-50 text-blue-600 truncate max-w-20"
+                                        >
+                                          {l.lot_id}
+                                        </span>
+                                      ))}
+                                      {meeting.lots.length > 2 && (
+                                        <span className="text-[9px] text-slate-400">
+                                          +{meeting.lots.length - 2}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                  {meeting.participants &&
+                                    meeting.participants.length > 0 && (
+                                      <div className="flex items-center gap-1 mt-2">
+                                        <div className="flex -space-x-2">
+                                          {meeting.participants
+                                            .slice(0, 3)
+                                            .map((participant) => (
+                                              <div
+                                                key={participant.id}
+                                                className="relative group"
+                                                title={`${participant.employee?.first_name || ""} ${participant.employee?.last_name || participant.username || ""}`}
+                                              >
+                                                {participant.employee?.image ? (
+                                                  <img
+                                                    src={
+                                                      participant.employee.image
+                                                    }
+                                                    alt={`${participant.employee.first_name} ${participant.employee.last_name}`}
+                                                    className="w-6 h-6 rounded-full border-2 border-white object-cover"
+                                                  />
+                                                ) : (
+                                                  <div className="w-6 h-6 rounded-full border-2 border-white bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-white uppercase">
+                                                      {participant.employee
+                                                        ?.first_name?.[0] ||
+                                                        participant
+                                                          .username?.[0] ||
+                                                        "?"}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ))}
+                                        </div>
+                                        {meeting.participants.length > 3 && (
+                                          <span className="text-[9px] text-slate-400 ml-1">
+                                            +{meeting.participants.length - 3}
+                                          </span>
+                                        )}
+                                        <span className="text-[9px] text-slate-500 ml-1">
+                                          {meeting.participants
+                                            .slice(0, 2)
+                                            .map((p, idx) => (
+                                              <span key={p.id}>
+                                                {idx > 0 && ", "}
+                                                {p.employee?.first_name ||
+                                                  p.username}
+                                              </span>
+                                            ))}
+                                          {meeting.participants.length > 2 &&
+                                            "..."}
+                                        </span>
+                                      </div>
+                                    )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-8 text-center">
+                            <p className="text-xs text-slate-500">
+                              No upcoming meetings
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3 border-t border-slate-100 bg-slate-50 shrink-0">
+                        <button
+                          onClick={() => router.push("/app/calendar")}
+                          className="cursor-pointer w-full py-2 text-xs font-medium text-slate-600 hover:text-blue-600 hover:bg-white rounded-lg border border-slate-200 transition-all text-center"
+                        >
+                          View All Meetings
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Stages Due */}
-                <ChartCard title="Upcoming Stage Deadlines">
-                  {sortedStagesDue.length > 0 ? (
-                    <div className="overflow-x-auto max-h-75 overflow-y-auto">
-                      <table className="w-full">
-                        <thead className="sticky top-0 bg-white">
-                          <tr className="border-b border-slate-100">
-                            <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                              Stage
-                            </th>
-                            <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                              Project / Lot
-                            </th>
-                            <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                              Status
-                            </th>
-                            <th className="text-left py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                              Due Date
-                            </th>
-                            <th className="text-right py-3 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                              Time Left
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sortedStagesDue.map((stage: Stage) => {
-                            const daysLeft = getDaysLeft(stage.endDate);
-                            const badge = getDaysLeftBadge(daysLeft);
-                            return (
-                              <tr
-                                key={stage.stage_id}
-                                className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
-                              >
-                                <td className="py-3 px-3">
-                                  <span className="inline-flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-slate-400" />
-                                    <span className="text-sm font-medium text-slate-700 capitalize">
-                                      {stage.name}
-                                    </span>
-                                  </span>
-                                </td>
-                                <td className="py-3 px-3 text-sm text-slate-600">
-                                  {stage.lot?.project?.name ? (
-                                    <span>
-                                      <span className="font-medium">
-                                        {stage.lot.project.name}
-                                      </span>
-                                      <span className="text-slate-400 mx-1">
-                                        /
-                                      </span>
-                                      <span>{stage.lot_id}</span>
-                                    </span>
-                                  ) : (
-                                    stage.lot_id
-                                  )}
-                                </td>
-                                <td className="py-3 px-3">
-                                  <span
-                                    className={`text-[10px] font-semibold px-2 py-1 rounded-full uppercase ${getStatusColor(
-                                      stage.status,
-                                    )}`}
-                                  >
-                                    {stage.status?.replace(/_/g, " ")}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-3 text-sm text-slate-600">
-                                  {stage.endDate &&
-                                  new Date(stage.endDate).getFullYear() > 2000
-                                    ? new Date(
-                                        stage.endDate,
-                                      ).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                      })
-                                    : "-"}
-                                </td>
-                                <td className="py-3 px-3 text-right">
-                                  <span
-                                    className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${badge.color}`}
-                                  >
-                                    <Clock className="w-3 h-3" />
-                                    {badge.text}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="py-12 text-center text-slate-400 text-sm">
-                      No upcoming stage deadlines
-                    </div>
-                  )}
-                </ChartCard>
-
-                {/* Status Charts */}
+                {/* Upcoming Meetings & Status Charts */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Lots by Stage */}
                   <ChartCard title="Lots by Stage">
                     {lotsByStageChartData ? (
                       <div style={{ height: "250px" }}>
-                        <Doughnut
+                        <Bar
                           data={lotsByStageChartData}
-                          options={doughnutChartOptions}
+                          options={barChartOptions}
                         />
                       </div>
                     ) : (
-                      <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-62 flex items-center justify-center text-slate-400 text-sm">
                         No lot data available
                       </div>
                     )}
@@ -1115,7 +1301,7 @@ export default function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-62 flex items-center justify-center text-slate-400 text-sm">
                         No MTO data available
                       </div>
                     )}
@@ -1131,7 +1317,7 @@ export default function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+                      <div className="h-62 flex items-center justify-center text-slate-400 text-sm">
                         No purchase order data available
                       </div>
                     )}
@@ -1142,8 +1328,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Top 10 Items */}
                   <ChartCard title="Top 10 Items">
-                    {dashboardData &&
-                    dashboardData.top10items &&
+                    {dashboardData?.top10items &&
                     dashboardData.top10items.length > 0 ? (
                       <div className="overflow-x-auto max-h-100 overflow-y-auto">
                         <table className="w-full">
@@ -1164,70 +1349,64 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {dashboardData &&
-                              dashboardData.top10items &&
-                              dashboardData.top10items.map(
-                                (item: Item, index: number) => (
-                                  <tr
-                                    key={item.id}
-                                    className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
-                                  >
-                                    <td className="py-3 px-2 text-center">
-                                      <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-linear-to-br from-slate-600 to-slate-700 rounded-full">
-                                        {index + 1}
-                                      </span>
-                                    </td>
-                                    <td className="py-3 px-3">
-                                      <span className="inline-flex items-center gap-2">
-                                        <Package className="w-4 h-4 text-slate-400" />
-                                        <span className="text-xs font-medium text-slate-700">
-                                          {item.category}
-                                        </span>
-                                      </span>
-                                    </td>
-                                    <td className="py-3 px-3 text-xs text-slate-600">
-                                      {item.sheet && (
-                                        <span className="bg-slate-100 px-2 py-1 rounded-full">
-                                          {item.sheet.brand} -{" "}
-                                          {item.sheet.color}
-                                        </span>
-                                      )}
-                                      {item.handle && (
-                                        <span className="bg-slate-100 px-2 py-1 rounded-full">
-                                          {item.handle.brand} -{" "}
-                                          {item.handle.color}
-                                        </span>
-                                      )}
-                                      {item.hardware && (
-                                        <span className="bg-slate-100 px-2 py-1 rounded-full">
-                                          {item.hardware.brand} -{" "}
-                                          {item.hardware.name}
-                                        </span>
-                                      )}
-                                      {item.accessory && (
-                                        <span className="bg-slate-100 px-2 py-1 rounded-full">
-                                          {item.accessory.name}
-                                        </span>
-                                      )}
-                                      {item.edging_tape && (
-                                        <span className="bg-slate-100 px-2 py-1 rounded-full">
-                                          {item.edging_tape.brand} -{" "}
-                                          {item.edging_tape.color}
-                                        </span>
-                                      )}
-                                      {!item.sheet &&
-                                        !item.handle &&
-                                        !item.hardware &&
-                                        !item.accessory &&
-                                        !item.edging_tape &&
-                                        (item.description || "-")}
-                                    </td>
-                                    <td className="py-3 px-3 text-xs text-slate-700 text-right font-medium">
-                                      {item.quantity}
-                                    </td>
-                                  </tr>
-                                ),
-                              )}
+                            {dashboardData.top10items.map((item, index) => (
+                              <tr
+                                key={item.id}
+                                className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                              >
+                                <td className="py-3 px-2 text-center">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-linear-to-br from-slate-600 to-slate-700 rounded-full">
+                                    {index + 1}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3">
+                                  <span className="inline-flex items-center gap-2">
+                                    <Package className="w-4 h-4 text-slate-400" />
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.category}
+                                    </span>
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-xs text-slate-600">
+                                  {item.sheet && (
+                                    <span className="bg-slate-100 px-2 py-1 rounded-full">
+                                      {item.sheet.brand} - {item.sheet.color}
+                                    </span>
+                                  )}
+                                  {item.handle && (
+                                    <span className="bg-slate-100 px-2 py-1 rounded-full">
+                                      {item.handle.brand} - {item.handle.color}
+                                    </span>
+                                  )}
+                                  {item.hardware && (
+                                    <span className="bg-slate-100 px-2 py-1 rounded-full">
+                                      {item.hardware.brand} -{" "}
+                                      {item.hardware.name}
+                                    </span>
+                                  )}
+                                  {item.accessory && (
+                                    <span className="bg-slate-100 px-2 py-1 rounded-full">
+                                      {item.accessory.name}
+                                    </span>
+                                  )}
+                                  {item.edging_tape && (
+                                    <span className="bg-slate-100 px-2 py-1 rounded-full">
+                                      {item.edging_tape.brand} -{" "}
+                                      {item.edging_tape.color}
+                                    </span>
+                                  )}
+                                  {!item.sheet &&
+                                    !item.handle &&
+                                    !item.hardware &&
+                                    !item.accessory &&
+                                    !item.edging_tape &&
+                                    (item.description || "-")}
+                                </td>
+                                <td className="py-3 px-3 text-xs text-slate-700 text-right font-medium">
+                                  {item.quantity}
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
@@ -1240,13 +1419,14 @@ export default function DashboardPage() {
 
                   {/* Recent Logs */}
                   <ChartCard title="Recent Activity">
-                    {logsLoading ? (
+                    {loading ? (
                       <div className="h-100 flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
                       </div>
-                    ) : logsData.length > 0 ? (
+                    ) : dashboardData?.recentLogs &&
+                      dashboardData.recentLogs.length > 0 ? (
                       <div className="max-h-100 overflow-y-auto space-y-3">
-                        {logsData.map((log: Log) => (
+                        {dashboardData.recentLogs.map((log) => (
                           <div
                             key={log.id}
                             className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100"
@@ -1272,9 +1452,11 @@ export default function DashboardPage() {
                                   `${log.action} on ${log.entity_type}`}
                               </p>
                               <div className="flex items-center gap-1 mt-1">
-                                <User className="w-3 h-3 text-slate-400" />
+                                <UserIcon className="w-3 h-3 text-slate-400" />
                                 <span className="text-[10px] text-slate-400">
-                                  {log.user?.username || "System"}
+                                  {log.user?.username ||
+                                    log.user?.email ||
+                                    "System"}
                                 </span>
                               </div>
                             </div>

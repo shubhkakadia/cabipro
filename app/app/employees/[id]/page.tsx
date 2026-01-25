@@ -81,7 +81,7 @@ interface Employee {
 
 interface User {
   id: string;
-  username?: string;
+  email?: string;
   password?: string;
   user_type?: string;
   is_active?: boolean;
@@ -117,7 +117,7 @@ interface EditData {
 }
 
 interface UserEditData {
-  username?: string;
+  email?: string;
   password?: string;
   user_type?: string;
   is_active?: boolean;
@@ -869,7 +869,7 @@ export default function EmployeeDetailPage() {
   const handleCreateUser = () => {
     if (employee) {
       setUserEditData({
-        username: employee.email || "",
+        email: employee.email || "",
         password: "",
         user_type: "",
         is_active: false,
@@ -898,7 +898,7 @@ export default function EmployeeDetailPage() {
 
       // Validate required fields
       if (
-        !userEditData.username ||
+        !userEditData.email ||
         !userEditData.password ||
         !userEditData.user_type
       ) {
@@ -907,7 +907,7 @@ export default function EmployeeDetailPage() {
       }
 
       const createData = {
-        username: userEditData.username,
+        email: userEditData.email,
         password: userEditData.password,
         user_type: userEditData.user_type,
         is_active: userEditData.is_active,
@@ -2131,9 +2131,9 @@ export default function EmployeeDetailPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                        Username
+                        Email
                       </div>
-                      <div className="text-slate-700">{user.username}</div>
+                      <div className="text-slate-700">{user.email}</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
@@ -2163,20 +2163,20 @@ export default function EmployeeDetailPage() {
                     </div>
                   )}
 
-                  {/* Username and User Type - Side by side */}
+                  {/* Email and User Type - Side by side */}
                   <div className="grid grid-cols-2 gap-3">
                     {isCreatingUser && (
                       <div>
                         <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                          Username <span className="text-red-500">*</span>
+                          Email <span className="text-red-500">*</span>
                         </div>
                         <input
                           type="email"
-                          value={userEditData.username || ""}
+                          value={userEditData.email || ""}
                           onChange={(e) =>
-                            handleUserInputChange("username", e.target.value)
+                            handleUserInputChange("email", e.target.value)
                           }
-                          placeholder="Enter username (email)"
+                          placeholder="Enter email"
                           className="w-full text-sm text-slate-800 px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none"
                         />
                       </div>

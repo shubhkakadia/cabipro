@@ -1,12 +1,10 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// import { AdminRoute } from "@/components/ProtectedRoute";
-// import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import axios, { AxiosProgressEvent } from "axios";
 import { toast } from "react-toastify";
-import heic2any from "heic2any";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
+import imageCompression from "browser-image-compression";
 import {
   ChevronDown,
   ChevronUp,
@@ -26,6 +24,8 @@ import {
   Phone,
   MessageSquare,
   HelpCircle,
+  Settings,
+  Download,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -103,7 +103,7 @@ interface SelectedFile extends File {
 
 interface UserData {
   user?: {
-    username?: string;
+    email?: string;
     employee_id?: string;
     [key: string]: unknown;
   };
@@ -125,10 +125,37 @@ export default function SitePhotosPage() {
       fileCount: number,
     ) => (progressEvent: AxiosProgressEvent) => void;
   };
+  const TAB_KINDS = {
+    DELIVERY: "delivery_photos",
+    INSTALLATION: "installation_photos",
+    MAINTENANCE: "maintenance_photos",
+    SITE_PHOTOS: "site_photos",
+    MEASUREMENT_PHOTOS: "measurement_photos",
+  };
+
+  const TAB_LABELS = {
+    [TAB_KINDS.DELIVERY]: "Delivery",
+    [TAB_KINDS.INSTALLATION]: "Installation",
+    [TAB_KINDS.MAINTENANCE]: "Maintenance",
+    [TAB_KINDS.SITE_PHOTOS]: "Site",
+    [TAB_KINDS.MEASUREMENT_PHOTOS]: "Measurement",
+  };
+
+  // Map tab kind to actual tab name for API calls
+  const TAB_KIND_TO_API_TAB = {
+    [TAB_KINDS.SITE_PHOTOS]: "site_measurements",
+    [TAB_KINDS.MEASUREMENT_PHOTOS]: "site_measurements",
+  };
+
+  // Map tab kind to site_group for site measurements
+  const TAB_KIND_TO_SITE_GROUP = {
+    [TAB_KINDS.SITE_PHOTOS]: "SITE_PHOTOS",
+    [TAB_KINDS.MEASUREMENT_PHOTOS]: "MEASUREMENT_PHOTOS",
+  };
+
   const [lots, setLots] = useState<Lot[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // Store all lots for filtering
   const [loading, setLoading] = useState<boolean>(true);
-  const [expandedLots, setExpandedLots] = useState<Set<string>>(new Set());
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [savingFileNotes, setSavingFileNotes] = useState<
@@ -143,13 +170,37 @@ export default function SitePhotosPage() {
   const [pendingUploads, setPendingUploads] = useState<PendingUploads | null>(
     null,
   );
+  const [expandedLot, setExpandedLot] = useState<string | null>(null);
+  const [loadingLot, setLoadingLot] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [uploadProgressState, setUploadProgressState] = useState<
+    Record<string, number>
+  >({});
   const [employeeRole, setEmployeeRole] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [showSupportDropdown, setShowSupportDropdown] =
     useState<boolean>(false);
+  const [showSettingsDropdown, setShowSettingsDropdown] =
+    useState<boolean>(false);
+  const [showPhotoTypeDropdown, setShowPhotoTypeDropdown] =
+    useState<boolean>(false);
+  const [selectedPhotoType, setSelectedPhotoType] = useState<string>(
+    TAB_KINDS.DELIVERY,
+  );
+  // Notification state
+  const [notificationConfig, setNotificationConfig] = useState<{
+    assign_installer: boolean;
+  }>({
+    assign_installer: false,
+  });
+  const [notificationLoading, setNotificationLoading] =
+    useState<boolean>(false);
+  const [isUpdatingNotifications, setIsUpdatingNotifications] =
+    useState<boolean>(false);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const supportDropdownRef = useRef<HTMLDivElement | null>(null);
+  const settingsDropdownRef = useRef<HTMLDivElement | null>(null);
+  const photoTypeDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Get user data from localStorage
   useEffect(() => {
@@ -163,6 +214,38 @@ export default function SitePhotosPage() {
       }
     }
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        supportDropdownRef.current &&
+        !supportDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowSupportDropdown(false);
+      }
+      if (
+        settingsDropdownRef.current &&
+        !settingsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowSettingsDropdown(false);
+      }
+      if (
+        photoTypeDropdownRef.current &&
+        !photoTypeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowPhotoTypeDropdown(false);
+      }
+    };
+
+    if (showSupportDropdown || showSettingsDropdown || showPhotoTypeDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSupportDropdown, showSettingsDropdown, showPhotoTypeDropdown]);
 
   const fetchEmployeeRole = useCallback(async () => {
     try {
@@ -292,27 +375,6 @@ export default function SitePhotosPage() {
     fetchActiveLots();
   }, [fetchEmployeeRole, fetchActiveLots]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (
-        supportDropdownRef.current &&
-        !supportDropdownRef.current.contains(target)
-      ) {
-        setShowSupportDropdown(false);
-      }
-    };
-
-    if (showSupportDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showSupportDropdown]);
-
   // Filter lots based on search term
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -324,6 +386,18 @@ export default function SitePhotosPage() {
       setLots(filtered);
     }
   }, [searchTerm, allLots]);
+
+  // Update selected photo type when employee role is loaded
+  useEffect(() => {
+    if (employeeRole !== null) {
+      const allowedTabs = getAllowedTabs();
+      const defaultTab = allowedTabs[0] || TAB_KINDS.DELIVERY;
+      // Only update if current selection is not in allowed tabs
+      if (!allowedTabs.includes(selectedPhotoType)) {
+        setSelectedPhotoType(defaultTab);
+      }
+    }
+  }, [employeeRole]);
 
   // Refetch lots when employee role is determined to be "installer" (for filtering)
   useEffect(() => {
@@ -375,13 +449,13 @@ export default function SitePhotosPage() {
       );
       // Clear localStorage
       localStorage.removeItem("userData");
-      router.push("/admin/login");
+      router.push("/login");
       router.refresh();
     } catch (err) {
       console.error("Error logging out:", err);
       // Still redirect even if API call fails
       localStorage.removeItem("userData");
-      router.push("/admin/login");
+      router.push("/login");
     }
   };
 
@@ -398,6 +472,11 @@ export default function SitePhotosPage() {
     );
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
     setShowSupportDropdown(false);
+  };
+
+  const handleNotificationToggle = async () => {
+    // TODO: Implement notification toggle logic
+    console.log("Toggle notification");
   };
 
   const fetchLotDetails = async (lotId: string) => {
@@ -426,16 +505,16 @@ export default function SitePhotosPage() {
     }
   };
 
-  const toggleLot = async (lotId: string) => {
-    const newExpanded = new Set(expandedLots);
-    if (newExpanded.has(lotId)) {
-      newExpanded.delete(lotId);
+  const toggleLot = (lotId: string) => {
+    if (expandedLot === lotId) {
+      // If clicking the same lot, close it
+      setExpandedLot(null);
     } else {
-      newExpanded.add(lotId);
-      // Fetch detailed lot data when expanding
-      await fetchLotDetails(lotId);
+      // Open the clicked lot immediately and fetch data in parallel
+      setExpandedLot(lotId);
+      // Fetch detailed lot data in the background (don't await)
+      fetchLotDetails(lotId);
     }
-    setExpandedLots(newExpanded);
   };
 
   const setActiveTab = (lotId: string, tabKind: string) => {
@@ -443,12 +522,22 @@ export default function SitePhotosPage() {
   };
 
   const getTabForLot = (lot: Lot, tabKind: string): Tab | undefined => {
-    return lot.tabs?.find((tab: Tab) => tab.tab === tabKind.toUpperCase());
+    // Check if this tab kind needs to be mapped to a different API tab name
+    const apiTabKind = TAB_KIND_TO_API_TAB[tabKind] || tabKind;
+    return lot.tabs?.find((tab) => tab.tab === apiTabKind.toUpperCase());
   };
 
   const getFilesForTab = (lot: Lot, tabKind: string): File[] => {
     const tab = getTabForLot(lot, tabKind);
-    return tab?.files || [];
+    const files = tab?.files || [];
+
+    // If this is a site measurement type, filter by the site_group
+    const siteGroup = TAB_KIND_TO_SITE_GROUP[tabKind];
+    if (siteGroup) {
+      return files.filter((file) => file.site_group === siteGroup);
+    }
+
+    return files;
   };
 
   const isHeicFile = (file: globalThis.File): boolean => {
@@ -470,6 +559,7 @@ export default function SitePhotosPage() {
     file: globalThis.File,
   ): Promise<globalThis.File> => {
     try {
+      const heic2any = (await import("heic2any")).default;
       const convertedBlob = await heic2any({
         blob: file,
         toType: "image/jpeg",
@@ -509,37 +599,86 @@ export default function SitePhotosPage() {
     });
   };
 
+  const processImage = async (
+    file: globalThis.File,
+  ): Promise<globalThis.File> => {
+    try {
+      // Options for browser-image-compression
+      const options = {
+        maxSizeMB: 10, // Adjust as needed, keeps high quality
+        maxWidthOrHeight: 2560, // Reasonable max dimension for photos
+        useWebWorker: true,
+        fileType: "image/jpeg",
+        initialQuality: 0.9, // High quality
+      };
+
+      // browser-image-compression handles EXIF orientation automatically
+      const compressedFile = await imageCompression(file, options);
+
+      // Create a new File object to preserve original properties if needed
+      return new File([compressedFile], file.name, {
+        type: compressedFile.type,
+        lastModified: Date.now(),
+      });
+    } catch (error) {
+      console.error("Error processing image:", error);
+      // Fallback to original file if processing fails
+      return file;
+    }
+  };
+
   const handleFileSelect = async (
     lot: Lot,
     tabKind: string,
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    if (!event.target.files) return;
-    const files = Array.from(event.target.files);
+    const fileList = event.target.files;
+    if (!fileList) return;
+    const files = Array.from(fileList);
     if (files.length === 0) return;
 
     try {
-      // Check for HEIC files
-      const heicFiles = files.filter((file: globalThis.File) =>
-        isHeicFile(file),
-      );
-      if (heicFiles.length > 0) {
-        toast.info(`Converting ${heicFiles.length} HEIC file(s) to JPEG...`);
+      // Show processing toast if many files
+      if (files.length > 0) {
+        toast.info(
+          `Processing ${files.length} file(s)... This may take a moment.`,
+          { autoClose: 2000 },
+        );
       }
 
-      // Convert HEIC files to JPEG
-      const processedFiles = await Promise.all(
-        files.map(async (file: globalThis.File) => {
-          if (isHeicFile(file)) {
-            return await convertHeicToJpeg(file);
-          }
-          return file;
-        }),
-      );
+      const processedFiles = [];
+
+      for (const file of files) {
+        let processedFile = file;
+
+        // processing logic:
+        // 1. If PDF, skip processing (keep as is)
+        // 2. If HEIC, convert to JPEG (heic2any)
+        // 3. If Image (JPEG/PNG/etc), run through browser-image-compression to fix orientation
+        // 4. Otherwise (Video), keep as is
+
+        if (
+          file.type === "application/pdf" ||
+          file.name.toLowerCase().endsWith(".pdf")
+        ) {
+          // Skip processing for PDFs
+        } else if (isHeicFile(file)) {
+          processedFile = await convertHeicToJpeg(file);
+          // After conversion, we can optionally run it through compression too
+          // to ensure consistent sizing/quality, but heic2any usually does a good job.
+          // Let's run it through to be safe about orientation if heic2any didn't handle it perfectly
+          // (though heic2any usually does).
+          processedFile = await processImage(processedFile);
+        } else if (file.type.startsWith("image/")) {
+          processedFile = await processImage(file);
+        }
+
+        processedFiles.push(processedFile);
+      }
 
       // Create previews for all files
       const filesWithPreviews = await Promise.all(
-        processedFiles.map(async (file: globalThis.File) => {
+        processedFiles.map(async (file) => {
           const preview = await createPreview(file);
           return {
             file,
@@ -557,19 +696,18 @@ export default function SitePhotosPage() {
         files: filesWithPreviews,
         currentIndex: 0,
       });
-    } catch (err) {
-      console.error("Error processing files:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to process files. Please try again.";
-      toast.error(errorMessage);
+    } catch (error) {
+      console.error("Error processing files:", error);
+      toast.error(
+        (error as Error).message ||
+          "Failed to process files. Please try again.",
+      );
     }
 
     // Reset input
     const inputKey = `${lot.id}_${tabKind}`;
     if (fileInputRefs.current[inputKey]) {
-      fileInputRefs.current[inputKey]!.value = "";
+      fileInputRefs.current[inputKey].value = "";
     }
   };
 
@@ -582,6 +720,7 @@ export default function SitePhotosPage() {
     const uploadKey = `${lot.id}_${tabKind}`;
     try {
       setUploading((prev) => ({ ...prev, [uploadKey]: true }));
+      setUploadProgressState((prev) => ({ ...prev, [uploadKey]: 0 }));
 
       if (!lot.project?.project_id || !lot.lot_id) {
         toast.error("Project or lot information missing");
@@ -589,20 +728,37 @@ export default function SitePhotosPage() {
       }
 
       const formData = new FormData();
-      files.forEach((file: globalThis.File) => {
+      files.forEach((file) => {
         formData.append("file", file);
       });
 
-      const apiUrl = `/api/uploads/lots/${lot.project.project_id.toUpperCase()}/${
-        lot.lot_id
-      }/${tabKind}`;
+      // Add site_group for site measurements
+      const siteGroup = TAB_KIND_TO_SITE_GROUP[tabKind];
+      if (siteGroup) {
+        formData.append("site_group", siteGroup);
+      }
+
+      // Use the API tab kind (maps site_photos/measurement_photos to site_measurements)
+      const apiTabKind = TAB_KIND_TO_API_TAB[tabKind] || tabKind;
+      const apiUrl = `/api/uploads/lots/${lot.project.project_id.toUpperCase()}/${lot.lot_id}/${apiTabKind}`;
 
       // Show progress toast
       showProgressToast(files.length);
 
       const response = await axios.post(apiUrl, formData, {
         withCredentials: true,
-        onUploadProgress: getUploadProgressHandler(files.length),
+        onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+          getUploadProgressHandler(files.length)(progressEvent);
+          if (progressEvent.total) {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            setUploadProgressState((prev) => ({
+              ...prev,
+              [uploadKey]: percent,
+            }));
+          }
+        },
       });
 
       if (response.data.status) {
@@ -633,8 +789,8 @@ export default function SitePhotosPage() {
                         },
                       },
                     );
-                  } catch (err) {
-                    console.error("Error saving notes for file:", err);
+                  } catch (error) {
+                    console.error("Error saving notes for file:", error);
                   }
                 }
               },
@@ -651,17 +807,10 @@ export default function SitePhotosPage() {
           response.data.message || "Failed to upload files. Please try again.",
         );
       }
-    } catch (err) {
-      console.error("Error uploading files:", err);
+    } catch (error) {
+      console.error("Error uploading files:", error);
       dismissProgressToast();
-      if (axios.isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message ||
-            "Failed to upload files. Please try again.",
-        );
-      } else {
-        toast.error("Failed to upload files. Please try again.");
-      }
+      toast.error("Failed to upload files. Please try again.");
     } finally {
       setUploading((prev) => ({ ...prev, [uploadKey]: false }));
     }
@@ -706,7 +855,7 @@ export default function SitePhotosPage() {
     const { lot, tabKind, files } = pendingUploads;
 
     // Create notes map - use array index as key to match upload order
-    const notesMap: Record<string | number, string> = {};
+    const notesMap: Record<number, string> = {};
     files.forEach((fileItem, index) => {
       notesMap[index] = fileItem.notes || "";
     });
@@ -723,7 +872,7 @@ export default function SitePhotosPage() {
     if (!pendingUploads) return;
     setPendingUploads({
       ...pendingUploads,
-      files: pendingUploads.files.map((fileItem: PendingFile) =>
+      files: pendingUploads.files.map((fileItem) =>
         fileItem.id === fileId ? { ...fileItem, notes } : fileItem,
       ),
     });
@@ -758,10 +907,10 @@ export default function SitePhotosPage() {
         `/api/lot_file/${fileId}`,
         { notes: notesToSave },
         {
-          withCredentials: true,
           headers: {
             "Content-Type": "application/json",
           },
+          withCredentials: true,
         },
       );
 
@@ -778,16 +927,9 @@ export default function SitePhotosPage() {
       } else {
         toast.error(response.data.message || "Failed to save notes");
       }
-    } catch (err) {
-      console.error("Error saving file notes:", err);
-      if (axios.isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message ||
-            "Failed to save notes. Please try again.",
-        );
-      } else {
-        toast.error("Failed to save notes. Please try again.");
-      }
+    } catch (error) {
+      console.error("Error saving file notes:", error);
+      toast.error("Failed to save notes. Please try again.");
     } finally {
       setSavingFileNotes((prev) => ({ ...prev, [fileId]: false }));
     }
@@ -840,9 +982,7 @@ export default function SitePhotosPage() {
       // Convert tab enum to slug format (e.g., DELIVERY_PHOTOS -> delivery_photos)
       const tabSlug = tab.tab.toLowerCase();
 
-      const deleteUrl = `/api/uploads/lots/${lot.project.project_id.toUpperCase()}/${
-        lot.lot_id
-      }/${tabSlug}/${selectedFile.filename}`;
+      const deleteUrl = `/api/uploads/lots/${lot.project.project_id.toUpperCase()}/${lot.lot_id}/${tabSlug}/${selectedFile.filename}`;
 
       const response = await axios.delete(deleteUrl, {
         withCredentials: true,
@@ -855,16 +995,9 @@ export default function SitePhotosPage() {
       } else {
         toast.error(response.data.message || "Failed to delete file");
       }
-    } catch (err) {
-      console.error("Error deleting file:", err);
-      if (axios.isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message ||
-            "Failed to delete file. Please try again.",
-        );
-      } else {
-        toast.error("Failed to delete file. Please try again.");
-      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      toast.error("Failed to delete file. Please try again.");
     } finally {
       setDeletingFile(null);
     }
@@ -872,11 +1005,11 @@ export default function SitePhotosPage() {
 
   const getFileUrl = (file: File): string | null => {
     if (!file.url) return null;
-    // Remove 'mediauploads/' prefix if present, as the API route expects segments after mediauploads
-    const pathWithoutPrefix = file.url.startsWith("uploads/")
-      ? file.url.substring("uploads/".length)
-      : file.url;
-    return `/api/uploads/lots/${pathWithoutPrefix}`;
+    // Ensure relative paths start with /
+    if (!file.url.startsWith("/") && !file.url.startsWith("http")) {
+      return `/${file.url}`;
+    }
+    return file.url;
   };
 
   const getFileIcon = (fileKind: string | undefined): React.ReactNode => {
@@ -910,8 +1043,8 @@ export default function SitePhotosPage() {
             <div className="pb-2 border-b border-gray-100">
               <p className="text-sm text-gray-700">
                 Welcome,{" "}
-                <span className="font-semibold text-secondary">
-                  {userData.user.username}
+                <span className="font-semibold text-primary">
+                  {userData.user.username as string}
                 </span>
                 !
               </p>
@@ -956,6 +1089,44 @@ export default function SitePhotosPage() {
                   </div>
                 )}
               </div>
+              {/* Settings Button */}
+              <div className="relative" ref={settingsDropdownRef}>
+                <button
+                  onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative"
+                  title="Settings"
+                >
+                  <Settings className="w-5 h-5 text-gray-700" />
+                </button>
+                {showSettingsDropdown && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                    <div className="px-4 py-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">
+                          Notifications
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Installer updates
+                        </p>
+                      </div>
+                      {notificationLoading ? (
+                        <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={notificationConfig.assign_installer}
+                            onChange={handleNotificationToggle}
+                            disabled={isUpdatingNotifications}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={handleLogout}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -971,11 +1142,55 @@ export default function SitePhotosPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by project name..."
+              placeholder="Search by client or project name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent text-sm"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
             />
+          </div>
+          {/* Sticky Photo Type Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Photo Type
+            </label>
+            <div className="relative" ref={photoTypeDropdownRef}>
+              <button
+                onClick={() => setShowPhotoTypeDropdown(!showPhotoTypeDropdown)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-gray-900">
+                  {TAB_LABELS[selectedPhotoType]}
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-500 transition-transform ${showPhotoTypeDropdown ? "rotate-180" : ""}`}
+                />
+              </button>
+              {showPhotoTypeDropdown && (
+                <div className="absolute top-full mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  {getAllowedTabs().map((tabKind, index) => (
+                    <button
+                      key={`${tabKind}-${index}`}
+                      onClick={() => {
+                        setSelectedPhotoType(tabKind);
+                        setShowPhotoTypeDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors text-left ${
+                        selectedPhotoType === tabKind ? "bg-primary/5" : ""
+                      }`}
+                    >
+                      <span
+                        className={`text-sm ${selectedPhotoType === tabKind ? "text-primary font-medium" : "text-gray-700"}`}
+                      >
+                        {TAB_LABELS[tabKind]}
+                      </span>
+                      {selectedPhotoType === tabKind && (
+                        <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -988,11 +1203,8 @@ export default function SitePhotosPage() {
             <p className="text-gray-600">No active lots found</p>
           </div>
         ) : (
-          lots.map((lot: Lot) => {
-            const isExpanded = expandedLots.has(lot.id);
-            const allowedTabs = getAllowedTabs();
-            const defaultTab = allowedTabs[0] || TAB_KINDS.DELIVERY;
-            const activeTab = activeTabs[lot.id] || defaultTab;
+          lots.map((lot) => {
+            const isExpanded = expandedLot === lot.id;
 
             return (
               <div
@@ -1005,9 +1217,18 @@ export default function SitePhotosPage() {
                   className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-gray-900">
-                      {lot.project?.name || "No project"}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-gray-900">
+                        {(lot.project?.project_name as string) ||
+                          (lot.project?.name as string) ||
+                          "No project"}
+                      </h3>
+                      {(lot.project?.client?.name) && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                          {(lot.project?.client?.name) || "No client"}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 mt-1">
                       Lot ID: {lot.lot_id || lot.id}
                     </p>
@@ -1022,128 +1243,152 @@ export default function SitePhotosPage() {
                 {/* Expanded Content */}
                 {isExpanded && (
                   <div className="border-t border-gray-200">
-                    {/* Tabs */}
-                    <div className="flex border-b border-gray-200 bg-gray-50">
-                      {getAllowedTabs().map((tabKind) => (
-                        <button
-                          key={tabKind}
-                          onClick={() => setActiveTab(lot.id, tabKind)}
-                          className={`flex-1 px-3 py-2.5 text-sm font-medium transition-colors ${
-                            activeTab === tabKind
-                              ? "bg-white text-secondary border-b-2 border-secondary"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          {TAB_LABELS[tabKind].split(" ")[0]}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="p-4">
-                      {/* Upload Section */}
-                      <div className="mb-4">
-                        <label
-                          className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                            uploading[`${lot.id}_${activeTab}`]
-                              ? "border-gray-300 bg-gray-50 cursor-not-allowed pointer-events-none"
-                              : "border-secondary hover:border-secondary/70 hover:bg-secondary/5"
-                          }`}
-                        >
-                          <input
-                            ref={(el) => {
-                              const key = `${lot.id}_${activeTab}`;
-                              fileInputRefs.current[key] = el;
-                            }}
-                            type="file"
-                            accept="image/*,video/*,image/heic,image/heif,.heic,.heif"
-                            capture="environment"
-                            multiple
-                            onChange={(e) =>
-                              handleFileSelect(lot, activeTab, e)
-                            }
-                            className="hidden"
-                            disabled={uploading[`${lot.id}_${activeTab}`]}
-                          />
-                          {uploading[`${lot.id}_${activeTab}`] ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                              <span className="text-sm text-gray-500">
-                                Uploading...
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Camera className="w-5 h-5 text-secondary" />
-                              <span className="text-sm font-medium text-secondary">
-                                Take/Select Photos
-                              </span>
-                            </>
-                          )}
-                        </label>
+                    {/* Show loading indicator while fetching lot details */}
+                    {loadingLot === lot.id ? (
+                      <div className="p-8 flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                        <p className="text-sm text-gray-600">
+                          Loading photos...
+                        </p>
                       </div>
+                    ) : (
+                      <>
+                        {/* Tab Content */}
+                        <div className="p-4">
+                          {/* Upload Section */}
+                          <div className="mb-4">
+                            <label
+                              className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                                uploading[`${lot.id}_${selectedPhotoType}`]
+                                  ? "border-gray-300 bg-gray-50 cursor-not-allowed pointer-events-none"
+                                  : "border-primary hover:border-primary/70 hover:bg-primary/5"
+                              }`}
+                            >
+                              <input
+                                ref={(el) => {
+                                  const key = `${lot.id}_${selectedPhotoType}`;
+                                  fileInputRefs.current[key] = el;
+                                }}
+                                type="file"
+                                accept={
+                                  selectedPhotoType === TAB_KINDS.SITE_PHOTOS ||
+                                  selectedPhotoType ===
+                                    TAB_KINDS.MEASUREMENT_PHOTOS
+                                    ? "image/*,video/*,image/heic,image/heif,.heic,.heif,.pdf,application/pdf"
+                                    : "image/*,video/*,image/heic,image/heif,.heic,.heif"
+                                }
+                                multiple
+                                onChange={(e) =>
+                                  handleFileSelect(lot, selectedPhotoType, e)
+                                }
+                                className="hidden"
+                                disabled={
+                                  uploading[`${lot.id}_${selectedPhotoType}`]
+                                }
+                              />
+                              {uploading[`${lot.id}_${selectedPhotoType}`] ? (
+                                <div className="flex flex-col items-center justify-center w-full px-4">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                                    <span className="text-sm text-gray-500">
+                                      Uploading...{" "}
+                                      {uploadProgressState[
+                                        `${lot.id}_${selectedPhotoType}`
+                                      ] || 0}
+                                      %
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-primary transition-all duration-300 ease-out"
+                                      style={{
+                                        width: `${uploadProgressState[`${lot.id}_${selectedPhotoType}`] || 0}%`,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <Camera className="w-5 h-5 text-primary" />
+                                  <span className="text-sm font-medium text-primary">
+                                    Take/Select Photos
+                                  </span>
+                                </>
+                              )}
+                            </label>
+                          </div>
 
-                      {/* Files Grid */}
-                      {(() => {
-                        const files = getFilesForTab(lot, activeTab);
-                        if (files.length === 0) {
-                          return (
-                            <div className="text-center py-8 text-gray-500">
-                              <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                              <p className="text-sm">No files uploaded yet</p>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div className="grid grid-cols-3 gap-2 mb-4">
-                            {files.map((file: File) => {
-                              const fileUrl = getFileUrl(file);
-                              const hasNotes =
-                                fileNotes[file.id] &&
-                                fileNotes[file.id].trim() !== "";
+                          {/* Files Grid */}
+                          {(() => {
+                            const files = getFilesForTab(
+                              lot,
+                              selectedPhotoType,
+                            );
+                            if (files.length === 0) {
                               return (
-                                <div
-                                  key={file.id}
-                                  onClick={() => openFileModal(file, lot)}
-                                  className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer"
-                                >
-                                  {file.file_kind === "PHOTO" && fileUrl ? (
-                                    <Image
-                                      src={fileUrl}
-                                      alt={file.filename}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : file.file_kind === "VIDEO" && fileUrl ? (
-                                    <video
-                                      src={fileUrl}
-                                      className="w-full h-full object-cover"
-                                      muted
-                                      playsInline
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                      {getFileIcon(file.file_kind)}
-                                    </div>
-                                  )}
-                                  {file.file_kind === "VIDEO" && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                      <Video className="w-8 h-8 text-white" />
-                                    </div>
-                                  )}
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                                  {hasNotes && (
-                                    <div className="absolute top-1 right-1 bg-secondary/90 text-white rounded-full p-1">
-                                      <FileText className="w-3 h-3" />
-                                    </div>
-                                  )}
+                                <div className="text-center py-8 text-gray-500">
+                                  <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                  <p className="text-sm">
+                                    No files uploaded yet
+                                  </p>
                                 </div>
                               );
-                            })}
-                          </div>
-                        );
-                      })()}
-                    </div>
+                            }
+
+                            return (
+                              <div className="grid grid-cols-3 gap-2 mb-4">
+                                {files.map((file) => {
+                                  const fileUrl = getFileUrl(file);
+                                  const hasNotes =
+                                    fileNotes[file.id] &&
+                                    fileNotes[file.id].trim() !== "";
+                                  return (
+                                    <div
+                                      key={file.id}
+                                      onClick={() => openFileModal(file, lot)}
+                                      className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer"
+                                    >
+                                      {file.file_kind === "PHOTO" && fileUrl ? (
+                                        <Image
+                                          width={200}
+                                          height={200}
+                                          src={fileUrl}
+                                          alt={file.filename}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : file.file_kind === "VIDEO" &&
+                                        fileUrl ? (
+                                        <video
+                                          src={fileUrl}
+                                          className="w-full h-full object-cover"
+                                          muted
+                                          playsInline
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                          {getFileIcon(file.file_kind)}
+                                        </div>
+                                      )}
+                                      {file.file_kind === "VIDEO" && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                          <Video className="w-8 h-8 text-white" />
+                                        </div>
+                                      )}
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                      {hasNotes && (
+                                        <div className="absolute top-1 right-1 bg-primary/90 text-white rounded-full p-1">
+                                          <FileText className="w-3 h-3" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -1168,6 +1413,16 @@ export default function SitePhotosPage() {
                 {selectedFile.filename}
               </h3>
               <div className="flex items-center gap-2">
+                <a
+                  href={getFileUrl(selectedFile)}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
+                  title="Download file"
+                >
+                  <Download className="w-5 h-5" />
+                </a>
                 <button
                   onClick={handleDeleteFile}
                   disabled={deletingFile === selectedFile.id}
@@ -1191,31 +1446,39 @@ export default function SitePhotosPage() {
 
             {/* File Preview */}
             <div className="p-4">
-              {selectedFile.file_kind === "PHOTO" &&
-              getFileUrl(selectedFile) ? (
-                <Image
-                  src={getFileUrl(selectedFile) || ""}
-                  alt={selectedFile.filename}
-                  width={800}
-                  height={600}
-                  className="w-full rounded-lg mb-4"
-                  unoptimized
-                />
-              ) : selectedFile.file_kind === "VIDEO" &&
-                getFileUrl(selectedFile) ? (
-                <video
-                  src={getFileUrl(selectedFile) || ""}
-                  controls
-                  playsInline
-                  className="w-full rounded-lg mb-4"
-                >
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="w-full aspect-video bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                  {getFileIcon(selectedFile.file_kind)}
-                </div>
-              )}
+              {(() => {
+                const fileUrl = getFileUrl(selectedFile);
+                if (fileUrl && selectedFile.file_kind === "PHOTO") {
+                  return (
+                    <Image
+                      width={200}
+                      height={200}
+                      src={fileUrl}
+                      alt={selectedFile.filename}
+                      className="w-full rounded-lg mb-4"
+                    />
+                  );
+                }
+                if (fileUrl && selectedFile.file_kind === "VIDEO") {
+                  return (
+                    <video
+                      src={fileUrl}
+                      controls
+                      playsInline
+                      className="w-full rounded-lg mb-4"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  );
+                }
+
+                // Fallback for PDF or checks failed
+                return (
+                  <div className="w-full aspect-video bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                    {getFileIcon(selectedFile.file_kind)}
+                  </div>
+                );
+              })()}
 
               {/* Notes Section */}
               <div>
@@ -1233,14 +1496,14 @@ export default function SitePhotosPage() {
                   }
                   placeholder="Add notes for this file..."
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
                 />
                 <button
                   onClick={() =>
                     saveFileNotes(selectedFile.id, selectedFile.lotId)
                   }
                   disabled={savingFileNotes[selectedFile.id]}
-                  className="mt-2 w-full px-4 py-2 bg-secondary text-white rounded-lg font-medium hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="mt-2 w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {savingFileNotes[selectedFile.id] ? (
                     <>
@@ -1323,10 +1586,17 @@ export default function SitePhotosPage() {
                       <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
                         {fileItem.preview ? (
                           <Image
+                            width={200}
+                            height={200}
                             src={fileItem.preview}
                             alt={fileItem.file.name}
                             className="w-full h-full object-contain"
                           />
+                        ) : fileItem.file.type === "application/pdf" ||
+                          fileItem.file.name.toLowerCase().endsWith(".pdf") ? (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <FileText className="w-16 h-16 text-gray-400" />
+                          </div>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ImageIcon className="w-16 h-16 text-gray-400" />
@@ -1351,16 +1621,28 @@ export default function SitePhotosPage() {
                           }
                           placeholder="Add notes for this photo..."
                           rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
                           autoFocus
                         />
                       </div>
 
+                      {/* Progress Bar in Modal */}
+                      {uploading[
+                        `${pendingUploads.lot.id}_${pendingUploads.tabKind}`
+                      ] && (
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+                          <div
+                            className="h-full bg-primary transition-all duration-300 ease-out"
+                            style={{
+                              width: `${uploadProgressState[`${pendingUploads.lot.id}_${pendingUploads.tabKind}`] || 0}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+
                       {/* Action Buttons */}
                       <div
-                        className={`flex gap-2 pt-2 ${
-                          pendingUploads.files.length > 1 ? "" : ""
-                        }`}
+                        className={`flex gap-2 pt-2 ${pendingUploads.files.length > 1 ? "" : ""}`}
                       >
                         {pendingUploads.files.length > 1 && (
                           <button
@@ -1377,7 +1659,13 @@ export default function SitePhotosPage() {
                             ] ? (
                               <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Uploading...</span>
+                                <span>
+                                  Uploading...{" "}
+                                  {uploadProgressState[
+                                    `${pendingUploads.lot.id}_${pendingUploads.tabKind}`
+                                  ] || 0}
+                                  %
+                                </span>
                               </>
                             ) : (
                               <>
@@ -1394,18 +1682,20 @@ export default function SitePhotosPage() {
                               `${pendingUploads.lot.id}_${pendingUploads.tabKind}`
                             ]
                           }
-                          className={`${
-                            pendingUploads.files.length > 1
-                              ? "flex-1"
-                              : "w-full"
-                          } px-4 py-2 bg-secondary text-white rounded-lg font-medium hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                          className={`${pendingUploads.files.length > 1 ? "flex-1" : "w-full"} px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                         >
                           {uploading[
                             `${pendingUploads.lot.id}_${pendingUploads.tabKind}`
                           ] ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Uploading...</span>
+                              <span>
+                                Uploading...{" "}
+                                {uploadProgressState[
+                                  `${pendingUploads.lot.id}_${pendingUploads.tabKind}`
+                                ] || 0}
+                                %
+                              </span>
                             </>
                           ) : (
                             <>
