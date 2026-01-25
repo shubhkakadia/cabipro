@@ -9,9 +9,15 @@ import {
   FileImage,
   Truck,
   Users,
-  Hammer,
   Building2,
   ChevronDown,
+  Bot,
+  Sparkles,
+  Brain,
+  Cpu,
+  SquareArrowOutUpRight,
+  Send,
+  Hammer,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -324,6 +330,230 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* AI Assistant Section */}
+      <section className="relative overflow-hidden bg-gray-900 px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+        {/* Background Effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Floating circles */}
+          <div className="absolute top-20 left-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-float-1"></div>
+          <div className="absolute top-60 right-20 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-float-2"></div>
+          <div className="absolute bottom-40 left-1/4 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl animate-float-3"></div>
+
+          {/* Grid pattern */}
+          <svg
+            className="absolute inset-0 w-full h-full opacity-10 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <pattern
+                id="grid-ai-home"
+                width="40"
+                height="40"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 40 0 L 0 0 0 40"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+              </pattern>
+            </defs>
+            <rect
+              width="100%"
+              height="100%"
+              fill="url(#grid-ai-home)"
+              className="animate-grid-move"
+            />
+          </svg>
+
+          {/* Geometric shapes */}
+          <div className="absolute top-1/4 right-1/4 w-32 h-32 border-2 border-white/10 rounded-lg rotate-45 animate-spin-slow"></div>
+          <div className="absolute bottom-1/3 left-1/3 w-24 h-24 border-2 border-white/10 rounded-full animate-pulse-slow"></div>
+          <svg
+            className="absolute top-1/2 left-1/2 w-48 h-48 text-white/10 animate-rotate-slow"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+            />
+          </svg>
+        </div>
+
+        <div className="relative mx-auto max-w-7xl">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+            {/* Content */}
+            <div className="mb-12 lg:mb-0" data-aos="fade-right">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-sm font-medium mb-6">
+                <Sparkles className="h-4 w-4" />
+                <span>New Intelligence Feature</span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-6">
+                Meet Your New{" "}
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
+                  AI Assistant
+                </span>
+              </h2>
+
+              <p className="text-lg text-gray-300 mb-8 leading-relaxed">
+                Unlock the power of artificial intelligence in your workshop.
+                Our integrated AI assistant helps you optimize production,
+                predict material needs, and answer complex queries about your
+                projects instantly.
+              </p>
+
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="shrink-0 mt-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 border border-gray-700">
+                      <Brain className="h-5 w-5 text-purple-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">
+                      Smart Suggestions
+                    </h3>
+                    <p className="text-gray-400">
+                      Get automatic recommendations for material usage and cut
+                      lists to minimize waste.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="shrink-0 mt-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 border border-gray-700">
+                      <Bot className="h-5 w-5 text-blue-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">
+                      Instant Answers
+                    </h3>
+                    <p className="text-gray-400">
+                      Ask questions like "Which jobs are due this week?" or "Do
+                      we have enough prime oak matt sheets?" and get instant
+                      answers.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="shrink-0 mt-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 border border-gray-700">
+                      <Cpu className="h-5 w-5 text-indigo-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">
+                      Production Analytics
+                    </h3>
+                    <p className="text-gray-400">
+                      Advanced analysis of your factory performance identified
+                      bottlenecks before they become problems.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual */}
+            <div className="relative" data-aos="fade-left">
+              <div className="relative rounded-2xl bg-gray-800/80 border border-gray-700 p-6 shadow-2xl backdrop-blur-sm">
+                {/* Mock Chat Interface */}
+                <div className="space-y-4">
+                  {/* User Message */}
+                  <div className="flex justify-end">
+                    <div className="bg-blue-600 text-white px-4 py-2 rounded-2xl rounded-tr-sm text-sm max-w-[80%]">
+                      Calculate material requirements for the Johnson Kitchen
+                      project.
+                    </div>
+                  </div>
+
+                  {/* AI Response */}
+                  <div className="flex gap-3">
+                    <div className="relative h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden">
+                      <Image
+                        src="/logo 2 copy.png"
+                        alt="AI Assistant"
+                        fill
+                        className="object-contain p-1"
+                      />
+                    </div>
+                    <div className="space-y-2 max-w-[90%]">
+                      <div className="bg-gray-700/50 text-gray-200 px-4 py-3 rounded-2xl rounded-tl-sm text-sm border border-gray-600">
+                        <p className="mb-2">
+                          Scanning project "Johnson Kitchen"...
+                        </p>
+                        <p className="mb-3">
+                          Here is the estimated material list:
+                        </p>
+
+                        <div className="bg-gray-800 rounded p-2 mb-2 text-xs font-mono border border-gray-600">
+                          <div className="flex justify-between mb-1">
+                            <span>16mm White Melamine</span>
+                            <span className="text-green-400">12 Sheets</span>
+                          </div>
+                          <div className="flex justify-between mb-1">
+                            <span>18mm MDF Raw</span>
+                            <span className="text-green-400">5 Sheets</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Blum Hinges</span>
+                            <span className="text-yellow-400">
+                              24 Units (Low Stock)
+                            </span>
+                          </div>
+                        </div>
+
+                        <p>Warning: Hinges are running low. Order some now?</p>
+                      </div>
+
+                      {/* Interactive Buttons */}
+                      <div className="flex gap-2">
+                        <div className="px-3 py-1.5 flex items-center gap-1 rounded-full bg-gray-700 hover:bg-gray-600 border border-gray-600 text-xs text-white cursor-pointer transition-colors">
+                          Supplier / Blum{" "}
+                          <SquareArrowOutUpRight className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <div className="px-3 py-1.5 rounded-full bg-gray-700 hover:bg-gray-600 border border-gray-600 text-xs text-white cursor-pointer transition-colors">
+                          Remind me later
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mock Input Field */}
+                <div className="mt-4 flex gap-2 border-t border-gray-700/50 pt-4">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Ask anything..."
+                      className="w-full rounded-xl bg-gray-900/50 border border-gray-700 px-4 py-2.5 text-sm text-gray-300 placeholder-gray-500 focus:outline-none cursor-default"
+                      readOnly
+                    />
+                  </div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-900/20">
+                    <Send className="h-4 w-4" />
+                  </div>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute -z-10 -inset-4 bg-linear-to-r from-purple-600 to-blue-600 rounded-2xl opacity-20 blur-lg"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

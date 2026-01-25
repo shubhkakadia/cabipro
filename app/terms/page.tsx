@@ -336,7 +336,7 @@ export default function TermsOfService() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-5">
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed font-semibold mb-2">CabiPro Support</p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed mb-2">
-                <a href="mailto:shubhkakadia@gmail.com" className="text-gray-900 hover:underline font-medium wrap-break-words">shubhkakadia@gmail.com</a>
+                <a href="mailto:cabipro16@gmail.com" className="text-gray-900 hover:underline font-medium wrap-break-words">cabipro16@gmail.com</a>
               </p>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                 Australia

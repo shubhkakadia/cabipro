@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const data = await mg.messages.create("cabipro.com", {
       from: "CabiPro Contact Form <postmaster@cabipro.com>",
-      to: ["shubhkakadia@gmail.com"],
+      to: ["cabipro16@gmail.com"],
       subject: `New Contact Form Submission from ${name}`,
       text: emailText,
       html: emailHtml,
