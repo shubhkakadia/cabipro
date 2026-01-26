@@ -7,11 +7,13 @@ export async function GET(request: NextRequest) {
     // Verify authentication
     const user = await requireAuth(request);
 
-    // Fetch completed MTOs with their items and ordered items
+    // Fetch MTOs that are fully ordered but NOT yet marked as used_material_completed
+    // (Completed MTOs are fetched separately in the frontend)
     const completedMTOs = await prisma.materials_to_order.findMany({
       where: {
         organization_id: user.organizationId,
         status: "FULLY_ORDERED",
+        used_material_completed: false, // Exclude MTOs already marked as completed
       },
       include: {
         items: {
@@ -52,6 +54,13 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        purchase_order: {
+          select: {
+            id: true,
+            order_no: true,
+            status: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -72,17 +81,49 @@ export async function GET(request: NextRequest) {
 
       // Check if all items are ready (either received via PO or reserved from stock)
       const allItemsReceived = mto.items.every((item) => {
-        // Check if this item has reserved stock
-        const hasReservedStock =
-          item.reserve_item_stock && item.reserve_item_stock.length > 0;
+        // Calculate total reserved quantity from all stock reservations
+        const totalReserved = (item.reserve_item_stock || []).reduce(
+          (sum, reservation) => sum + (reservation.quantity || 0),
+          0,
+        );
+
+        // Calculate how much has been used
+        const quantityUsed = Number(item.quantity_used || 0);
+
+        // Check if there's AVAILABLE reserved stock (not fully used)
+        // Since we no longer delete entries, we need to check available quantity
+        const availableReservedStock = (item.reserve_item_stock || []).reduce(
+          (sum, reservation) => {
+            const available =
+              (reservation.quantity || 0) - (reservation.used_quantity || 0);
+            return sum + available;
+          },
+          0,
+        );
+        const hasAvailableReservedStock = availableReservedStock > 0;
 
         // Check if this item has received purchase orders
         const hasReceivedPO = item.ordered_items?.some(
           (orderedItem) => orderedItem.order?.status === "FULLY_RECEIVED",
         );
 
-        // Item is ready if it has reserved stock OR received PO
-        return hasReservedStock || hasReceivedPO;
+        // FALLBACK: For cases where mto_item_id wasn't set on PO items
+        // Check if: (1) the item is fully ordered AND (2) the MTO has at least one fully received PO
+        // This handles existing POs that don't have the foreign key relationship established
+        const quantityOrderedPO = Number(item.quantity_ordered_po || 0);
+        const quantityRequired = Number(item.quantity || 0);
+        const isFullyOrdered =
+          quantityOrderedPO >= quantityRequired && quantityRequired > 0;
+
+        const mtoHasReceivedPO = mto.purchase_order?.some(
+          (po) => po.status === "FULLY_RECEIVED",
+        );
+        const fullyOrderedAndReceived = isFullyOrdered && mtoHasReceivedPO;
+
+        // Item is ready if it has available reserved stock OR received PO OR (fully ordered AND MTO has received POs)
+        return (
+          hasAvailableReservedStock || hasReceivedPO || fullyOrderedAndReceived
+        );
       });
 
       // Calculate statistics
@@ -97,13 +138,29 @@ export async function GET(request: NextRequest) {
       let pendingItems = 0;
 
       mto.items.forEach((item) => {
-        const hasReservedStock =
-          item.reserve_item_stock && item.reserve_item_stock.length > 0;
+        // Calculate total reserved quantity
+        const totalReserved = (item.reserve_item_stock || []).reduce(
+          (sum, reservation) => sum + (reservation.quantity || 0),
+          0,
+        );
+        const quantityUsed = Number(item.quantity_used || 0);
+
+        // Check available reserved stock (not fully used)
+        const availableReservedStock = (item.reserve_item_stock || []).reduce(
+          (sum, reservation) => {
+            const available =
+              (reservation.quantity || 0) - (reservation.used_quantity || 0);
+            return sum + available;
+          },
+          0,
+        );
+        const hasAvailableReservedStock = availableReservedStock > 0;
+
         const hasReceivedPO = item.ordered_items?.some(
           (orderedItem) => orderedItem.order?.status === "FULLY_RECEIVED",
         );
 
-        if (hasReservedStock || hasReceivedPO) {
+        if (hasAvailableReservedStock || hasReceivedPO) {
           receivedItems++;
         } else {
           pendingItems++;
@@ -150,17 +207,77 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Fetch completed MTOs (where used_material_completed = true)
+    const completedMTOsData = await prisma.materials_to_order.findMany({
+      where: {
+        organization_id: user.organizationId,
+        used_material_completed: true,
+      },
+      include: {
+        items: {
+          include: {
+            item: {
+              include: {
+                image: true,
+                sheet: true,
+                handle: true,
+                hardware: true,
+                accessory: true,
+                edging_tape: true,
+                supplier: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+            ordered_items: {
+              include: {
+                order: {
+                  select: {
+                    id: true,
+                    order_no: true,
+                    status: true,
+                  },
+                },
+              },
+            },
+            reserve_item_stock: true,
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        purchase_order: {
+          select: {
+            id: true,
+            order_no: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
     return NextResponse.json(
       {
         status: true,
         data: {
           ready_to_use: readyToUse,
           upcoming: upcoming,
+          completed: completedMTOsData,
         },
         counts: {
           ready_to_use: readyToUse.length,
           upcoming: upcoming.length,
-          total: readyToUse.length + upcoming.length,
+          completed: completedMTOsData.length,
+          total: readyToUse.length + upcoming.length + completedMTOsData.length,
         },
         message: "Used material list fetched successfully",
       },

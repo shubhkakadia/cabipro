@@ -4,6 +4,7 @@ import { requireAuth, AuthenticationError } from "@/lib/auth-middleware";
 import { uploadFile, getFileFromFormData } from "@/lib/filehandler";
 import { withLogging } from "@/lib/withLogging";
 import { getOrganizationSlugFromRequest } from "@/lib/tenant";
+import { checkAndUpdateMTOStatus } from "@/lib/mtoStatusHelper";
 
 export async function POST(request: NextRequest) {
   try {
@@ -236,6 +237,26 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      // If linked to an MTO, fetch MTO items FIRST so we can set mto_item_id on PO items
+      let itemIdToMtoItem: Map<string, any> | null = null;
+      if (mto_id && Array.isArray(items) && items.length > 0) {
+        const mtoItems = await tx.materials_to_order_item.findMany({
+          where: {
+            mto_id: mto_id,
+            mto: {
+              organization_id: user.organizationId,
+            },
+          },
+          select: {
+            id: true,
+            item_id: true,
+            quantity: true,
+            quantity_ordered_po: true,
+          },
+        });
+        itemIdToMtoItem = new Map(mtoItems.map((mi) => [mi.item_id, mi]));
+      }
+
       // Create PO and items
       const createdPO = await tx.purchase_order.create({
         data: {
@@ -254,6 +275,8 @@ export async function POST(request: NextRequest) {
               ? {
                   create: items.map((item) => ({
                     item_id: item.item_id,
+                    // Set mto_item_id if this PO is linked to an MTO
+                    mto_item_id: itemIdToMtoItem?.get(item.item_id)?.id || null,
                     quantity: Number(item.quantity),
                     notes: item.notes || null,
                     unit_price:
@@ -270,25 +293,12 @@ export async function POST(request: NextRequest) {
       });
 
       // If linked to an MTO and items provided, update MTOI quantities and MTO status
-      if (createdPO.mto_id && createdPO.items && createdPO.items.length > 0) {
-        // Fetch all MTO items for the MTO
-        const mtoItems = await tx.materials_to_order_item.findMany({
-          where: {
-            mto_id: createdPO.mto_id,
-            mto: {
-              organization_id: user.organizationId,
-            },
-          },
-          select: {
-            id: true,
-            item_id: true,
-            quantity: true,
-            quantity_ordered_po: true,
-          },
-        });
-
-        const itemIdToMtoItem = new Map(mtoItems.map((mi) => [mi.item_id, mi]));
-
+      if (
+        createdPO.mto_id &&
+        createdPO.items &&
+        createdPO.items.length > 0 &&
+        itemIdToMtoItem
+      ) {
         // Apply cumulative ordered quantity per matching item
         for (const poi of createdPO.items) {
           const mtoItem = itemIdToMtoItem.get(poi.item_id);
@@ -308,27 +318,19 @@ export async function POST(request: NextRequest) {
             mtoItem.quantity_ordered_po = cappedOrdered;
           }
         }
-
-        // Determine MTO status based on whether all items are fully ordered
-        const allFullyOrdered =
-          mtoItems.length > 0 &&
-          mtoItems.every(
-            (mi) =>
-              Number(mi.quantity_ordered_po || 0) === Number(mi.quantity || 0),
-          );
-        await tx.materials_to_order.update({
-          where: {
-            id: createdPO.mto_id,
-            organization_id: user.organizationId,
-          },
-          data: {
-            status: allFullyOrdered ? "FULLY_ORDERED" : "PARTIALLY_ORDERED",
-          },
-        });
       }
 
       return createdPO;
     });
+
+    // Update MTO status after PO creation, considering both reserved stock and ordered items
+    if (result.mto_id && result.items && result.items.length > 0) {
+      // Get first item that has mto_item_id to trigger status check for the entire MTO
+      const itemWithMtoId = result.items.find((item) => item.mto_item_id);
+      if (itemWithMtoId?.mto_item_id) {
+        await checkAndUpdateMTOStatus(itemWithMtoId.mto_item_id);
+      }
+    }
 
     const logged = await withLogging(
       request,

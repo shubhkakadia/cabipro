@@ -118,7 +118,7 @@ async function handleUsedTransaction(data: UsedTransactionData) {
         },
       });
 
-      // Use from reservations first - consume entire reservation and delete it
+      // Use from reservations first - update used_quantity instead of deleting
       for (const reservation of reservations) {
         if (remainingQuantity <= 0) break;
 
@@ -127,10 +127,7 @@ async function handleUsedTransaction(data: UsedTransactionData) {
           reservation.quantity - reservation.used_quantity;
 
         if (availableInReservation <= 0) {
-          // This reservation is already fully consumed, delete it
-          await tx.reserve_item_stock.delete({
-            where: { id: reservation.id },
-          });
+          // This reservation is already fully consumed, skip it
           continue;
         }
 
@@ -140,24 +137,15 @@ async function handleUsedTransaction(data: UsedTransactionData) {
           remainingQuantity,
         );
 
-        // If we're using all the available quantity, delete the reservation
-        // Otherwise, update the used_quantity
-        if (quantityToUseFromReservation >= availableInReservation) {
-          // Fully consumed - delete the reservation entry
-          await tx.reserve_item_stock.delete({
-            where: { id: reservation.id },
-          });
-        } else {
-          // Partially consumed - update used_quantity
-          await tx.reserve_item_stock.update({
-            where: { id: reservation.id },
-            data: {
-              used_quantity: {
-                increment: quantityToUseFromReservation,
-              },
+        // Update the used_quantity (keep the entry, don't delete)
+        await tx.reserve_item_stock.update({
+          where: { id: reservation.id },
+          data: {
+            used_quantity: {
+              increment: quantityToUseFromReservation,
             },
-          });
-        }
+          },
+        });
 
         remainingQuantity -= quantityToUseFromReservation;
       }

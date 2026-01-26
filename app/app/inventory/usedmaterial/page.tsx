@@ -206,7 +206,7 @@ export default function UsedMaterialPage() {
     try {
       setLoading(true);
 
-      // Fetch Active and Upcoming
+      // Fetch Active, Upcoming, and Completed from single endpoint
       const responseUsed = await axios.get(
         "/api/materials_to_order/used_material_list",
         {
@@ -214,27 +214,21 @@ export default function UsedMaterialPage() {
         },
       );
 
-      // Fetch All to get Completed
-      const responseAll = await axios.get("/api/materials_to_order/all", {
-        withCredentials: true,
-      });
-
       if (responseUsed.data.status) {
-        const { ready_to_use = [], upcoming = [] } = responseUsed.data.data;
+        const {
+          ready_to_use = [],
+          upcoming = [],
+          completed = [],
+        } = responseUsed.data.data;
         setActiveMtos(ready_to_use);
         setUpcomingMtos(upcoming);
+        setCompletedMtos(completed);
       } else {
         // If fail, just set empty
         console.error("Failed to fetch used material list");
-      }
-
-      if (responseAll.data.status) {
-        const allMtos = responseAll.data.data as MTO[];
-        // Filter for completed
-        const completed = allMtos.filter(
-          (m) => m.used_material_completed === true,
-        );
-        setCompletedMtos(completed);
+        setActiveMtos([]);
+        setUpcomingMtos([]);
+        setCompletedMtos([]);
       }
     } catch (err) {
       console.error("Error fetching MTOs:", err);
@@ -1480,164 +1474,172 @@ export default function UsedMaterialPage() {
                                                             )}
                                                           </div>
 
-                                                          {/* Input Field Column */}
-                                                          <div className="text-center min-w-25">
-                                                            <div className="text-sm text-slate-500 mb-1.5 font-medium">
-                                                              New Used
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                              <input
-                                                                type="number"
-                                                                min="0"
-                                                                max={
-                                                                  mtoItem.quantity
-                                                                }
-                                                                value={
-                                                                  quantityInputs[
-                                                                    mtoItem.id
-                                                                  ] !==
-                                                                  undefined
-                                                                    ? quantityInputs[
-                                                                        mtoItem
-                                                                          .id
-                                                                      ]
-                                                                    : String(
-                                                                        mtoItem.quantity_used ||
-                                                                          0,
-                                                                      )
-                                                                }
-                                                                onChange={(
-                                                                  e: React.ChangeEvent<HTMLInputElement>,
-                                                                ) => {
-                                                                  // Store raw string value to allow empty input
-                                                                  const value =
-                                                                    e.target
-                                                                      .value;
-                                                                  handleQuantityInputChange(
-                                                                    mtoItem.id,
-                                                                    value,
-                                                                  );
-                                                                }}
-                                                                className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-center font-medium"
-                                                                disabled={
-                                                                  saving
-                                                                }
-                                                              />
-                                                              {mtoItem.item
-                                                                ?.measurement_unit && (
-                                                                <div className="text-xs text-slate-500 mt-1">
-                                                                  {
-                                                                    mtoItem.item
-                                                                      .measurement_unit
-                                                                  }
-                                                                </div>
-                                                              )}
-                                                              {(() => {
-                                                                const inputString =
-                                                                  quantityInputs[
-                                                                    mtoItem.id
-                                                                  ];
-                                                                if (
-                                                                  inputString ===
-                                                                  undefined
-                                                                )
-                                                                  return null;
-                                                                const inputValue =
-                                                                  inputString ===
-                                                                  ""
-                                                                    ? 0
-                                                                    : parseFloat(
-                                                                        inputString,
-                                                                      );
-                                                                if (
-                                                                  !isNaN(
-                                                                    inputValue,
-                                                                  ) &&
-                                                                  inputValue >
+                                                          {/* Input Field Column - Hidden for completed tab */}
+                                                          {activeTab !==
+                                                            "completed" && (
+                                                            <div className="text-center min-w-25">
+                                                              <div className="text-sm text-slate-500 mb-1.5 font-medium">
+                                                                New Used
+                                                              </div>
+                                                              <div className="space-y-1">
+                                                                <input
+                                                                  type="number"
+                                                                  min="0"
+                                                                  max={
                                                                     mtoItem.quantity
-                                                                ) {
-                                                                  return (
-                                                                    <div className="text-xs text-red-600 font-medium">
-                                                                      Max:{" "}
-                                                                      {
-                                                                        mtoItem.quantity
-                                                                      }
-                                                                    </div>
-                                                                  );
-                                                                }
-                                                                return null;
-                                                              })()}
-                                                            </div>
-                                                          </div>
-
-                                                          {/* Actions Column */}
-                                                          <div className="text-center min-w-20">
-                                                            <div className="text-sm text-slate-500 mb-1.5 font-medium">
-                                                              Actions
-                                                            </div>
-                                                            {hasChanges ? (
-                                                              <div className="flex gap-1.5 justify-center">
-                                                                <button
-                                                                  onClick={() =>
-                                                                    handleCancelEdit(
-                                                                      mtoItem.id,
-                                                                    )
                                                                   }
+                                                                  value={
+                                                                    quantityInputs[
+                                                                      mtoItem.id
+                                                                    ] !==
+                                                                    undefined
+                                                                      ? quantityInputs[
+                                                                          mtoItem
+                                                                            .id
+                                                                        ]
+                                                                      : String(
+                                                                          mtoItem.quantity_used ||
+                                                                            0,
+                                                                        )
+                                                                  }
+                                                                  onChange={(
+                                                                    e: React.ChangeEvent<HTMLInputElement>,
+                                                                  ) => {
+                                                                    const value =
+                                                                      e.target
+                                                                        .value;
+                                                                    handleQuantityInputChange(
+                                                                      mtoItem.id,
+                                                                      value,
+                                                                    );
+                                                                  }}
+                                                                  className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:outline-none text-center font-medium"
                                                                   disabled={
                                                                     saving
                                                                   }
-                                                                  className="cursor-pointer p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
-                                                                  title="Cancel"
-                                                                >
-                                                                  <X className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                  onClick={() =>
-                                                                    handleSaveUsage(
-                                                                      mto.id,
-                                                                      mtoItem,
-                                                                    )
-                                                                  }
-                                                                  disabled={(() => {
-                                                                    if (saving)
-                                                                      return true;
-                                                                    const inputString =
-                                                                      quantityInputs[
-                                                                        mtoItem
-                                                                          .id
-                                                                      ];
-                                                                    if (
-                                                                      inputString ===
-                                                                      undefined
-                                                                    )
-                                                                      return false;
-                                                                    const inputValue =
-                                                                      inputString ===
-                                                                      ""
-                                                                        ? 0
-                                                                        : parseFloat(
-                                                                            inputString,
-                                                                          );
+                                                                />
+                                                                {mtoItem.item
+                                                                  ?.measurement_unit && (
+                                                                  <div className="text-xs text-slate-500 mt-1">
+                                                                    {
+                                                                      mtoItem
+                                                                        .item
+                                                                        .measurement_unit
+                                                                    }
+                                                                  </div>
+                                                                )}
+                                                                {(() => {
+                                                                  const inputString =
+                                                                    quantityInputs[
+                                                                      mtoItem.id
+                                                                    ];
+                                                                  if (
+                                                                    inputString ===
+                                                                    undefined
+                                                                  )
+                                                                    return null;
+                                                                  const inputValue =
+                                                                    inputString ===
+                                                                    ""
+                                                                      ? 0
+                                                                      : parseFloat(
+                                                                          inputString,
+                                                                        );
+                                                                  if (
+                                                                    !isNaN(
+                                                                      inputValue,
+                                                                    ) &&
+                                                                    inputValue >
+                                                                      mtoItem.quantity
+                                                                  ) {
                                                                     return (
-                                                                      !isNaN(
-                                                                        inputValue,
-                                                                      ) &&
-                                                                      inputValue >
-                                                                        mtoItem.quantity
+                                                                      <div className="text-xs text-red-600 font-medium">
+                                                                        Max:{" "}
+                                                                        {
+                                                                          mtoItem.quantity
+                                                                        }
+                                                                      </div>
                                                                     );
-                                                                  })()}
-                                                                  className="cursor-pointer p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                  title="Save"
-                                                                >
-                                                                  <Check className="w-4 h-4" />
-                                                                </button>
+                                                                  }
+                                                                  return null;
+                                                                })()}
                                                               </div>
-                                                            ) : (
-                                                              <div className="text-sm text-slate-400">
-                                                                -
+                                                            </div>
+                                                          )}
+
+                                                          {/* Actions Column - Hidden for completed tab */}
+                                                          {activeTab !==
+                                                            "completed" && (
+                                                            <div className="text-center min-w-20">
+                                                              <div className="text-sm text-slate-500 mb-1.5 font-medium">
+                                                                Actions
                                                               </div>
-                                                            )}
-                                                          </div>
+                                                              {hasChanges ? (
+                                                                <div className="flex gap-1.5 justify-center">
+                                                                  <button
+                                                                    onClick={() =>
+                                                                      handleCancelEdit(
+                                                                        mtoItem.id,
+                                                                      )
+                                                                    }
+                                                                    disabled={
+                                                                      saving
+                                                                    }
+                                                                    className="cursor-pointer p-1.5 rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
+                                                                    title="Cancel"
+                                                                  >
+                                                                    <X className="w-4 h-4" />
+                                                                  </button>
+                                                                  <button
+                                                                    onClick={() =>
+                                                                      handleSaveUsage(
+                                                                        mto.id,
+                                                                        mtoItem,
+                                                                      )
+                                                                    }
+                                                                    disabled={(() => {
+                                                                      if (
+                                                                        saving
+                                                                      )
+                                                                        return true;
+                                                                      const inputString =
+                                                                        quantityInputs[
+                                                                          mtoItem
+                                                                            .id
+                                                                        ];
+                                                                      if (
+                                                                        inputString ===
+                                                                        undefined
+                                                                      )
+                                                                        return false;
+                                                                      const inputValue =
+                                                                        inputString ===
+                                                                        ""
+                                                                          ? 0
+                                                                          : parseFloat(
+                                                                              inputString,
+                                                                            );
+                                                                      return (
+                                                                        !isNaN(
+                                                                          inputValue,
+                                                                        ) &&
+                                                                        inputValue >
+                                                                          mtoItem.quantity
+                                                                      );
+                                                                    })()}
+                                                                    className="cursor-pointer p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    title="Save"
+                                                                  >
+                                                                    <Check className="w-4 h-4" />
+                                                                  </button>
+                                                                </div>
+                                                              ) : (
+                                                                <div className="text-sm text-slate-400">
+                                                                  -
+                                                                </div>
+                                                              )}
+                                                            </div>
+                                                          )}
                                                         </div>
                                                       </div>
                                                     );

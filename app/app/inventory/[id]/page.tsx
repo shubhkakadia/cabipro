@@ -100,6 +100,28 @@ interface StockTransaction {
   };
 }
 
+interface Lot {
+  lot_id: string;
+}
+
+interface Project {
+  name: string;
+}
+
+interface MTO {
+  project?: Project;
+  lots?: Lot[];
+}
+
+interface ReserveItemStock {
+  id: string;
+  quantity: number;
+  used_quantity: number;
+  mto?: {
+    mto?: MTO;
+  };
+}
+
 interface Item {
   id: string;
   category: string;
@@ -123,6 +145,7 @@ interface Item {
   accessory?: Accessory;
   edging_tape?: EdgingTape;
   stock_transactions?: StockTransaction[];
+  reserve_item_stock?: ReserveItemStock[];
   [key: string]: unknown;
 }
 
@@ -2400,6 +2423,125 @@ export default function InventoryItemDetailPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Reserved Stock Section */}
+                      {item?.reserve_item_stock &&
+                        item.reserve_item_stock.length > 0 &&
+                        (() => {
+                          // Calculate total reserved quantity
+                          const totalReserved = item.reserve_item_stock.reduce(
+                            (sum, reservation) =>
+                              sum +
+                              (reservation.quantity -
+                                reservation.used_quantity),
+                            0,
+                          );
+
+                          return (
+                            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                  <Box className="w-4 h-4" />
+                                  Reserved Stock
+                                </h3>
+                                <div className="text-right">
+                                  <label className="text-xs uppercase tracking-wide text-slate-500">
+                                    Total Reserved
+                                  </label>
+                                  <p className="text-sm font-bold text-amber-600">
+                                    {totalReserved}
+                                    {item.measurement_unit && (
+                                      <span className="ml-1 text-xs text-slate-500 font-normal">
+                                        {item.measurement_unit}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b border-slate-200">
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        Project Name
+                                      </th>
+                                      <th className="text-left py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        Lot ID
+                                      </th>
+                                      <th className="text-right py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        Reserved Qty
+                                      </th>
+                                      <th className="text-right py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        Used Qty
+                                      </th>
+                                      <th className="text-right py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                                        Remaining
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {item.reserve_item_stock.map(
+                                      (reservation) => {
+                                        const remaining =
+                                          reservation.quantity -
+                                          reservation.used_quantity;
+                                        return (
+                                          <tr
+                                            key={reservation.id}
+                                            className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                                          >
+                                            <td className="py-2 px-3 text-slate-700">
+                                              {reservation.mto?.mto?.project
+                                                ?.name || "-"}
+                                            </td>
+                                            <td className="py-2 px-3 text-slate-700">
+                                              {reservation.mto?.mto?.lots &&
+                                              reservation.mto.mto.lots.length >
+                                                0 ? (
+                                                <span className="text-xs font-medium text-slate-800">
+                                                  {reservation.mto.mto.lots
+                                                    .map((lot) => lot.lot_id)
+                                                    .join(", ")}
+                                                </span>
+                                              ) : (
+                                                "-"
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-medium text-slate-800">
+                                              {reservation.quantity}
+                                              {item.measurement_unit && (
+                                                <span className="ml-1 text-xs text-slate-500 font-normal">
+                                                  {item.measurement_unit}
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-3 text-right text-slate-600">
+                                              {reservation.used_quantity}
+                                              {item.measurement_unit && (
+                                                <span className="ml-1 text-xs text-slate-500 font-normal">
+                                                  {item.measurement_unit}
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-medium text-slate-800">
+                                              {remaining}
+                                              {item.measurement_unit && (
+                                                <span className="ml-1 text-xs text-slate-500 font-normal">
+                                                  {item.measurement_unit}
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      },
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                       {/* Stock Transactions Section */}
                       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-4">

@@ -36,27 +36,44 @@ export async function checkAndUpdateMTOStatus(mtoItemId: string) {
       return false;
     }
 
-    let allItemsOrderedOrReserved = true;
-    let someItemsOrderedOrReserved = false;
+    let allItemsFullySatisfied = true;
+    let someItemsSatisfied = false;
 
     for (const item of mto.items) {
-      const isOrdered =
-        (item.quantity_ordered || 0) > 0 || (item.quantity_ordered_po || 0) > 0;
-      const isReserved =
-        item.reserve_item_stock && item.reserve_item_stock.length > 0;
+      // Calculate total reserved quantity from all stock reservations
+      const reservedQty =
+        item.reserve_item_stock?.reduce(
+          (sum, reservation) => sum + (reservation.quantity || 0),
+          0,
+        ) || 0;
 
-      if (isOrdered || isReserved) {
-        someItemsOrderedOrReserved = true;
-      } else {
-        allItemsOrderedOrReserved = false;
+      // Calculate total ordered quantity (manual + from POs)
+      const orderedQty =
+        (item.quantity_ordered || 0) + (item.quantity_ordered_po || 0);
+
+      // Total satisfied quantity from all sources
+      const satisfiedQty = reservedQty + orderedQty;
+      const requiredQty = item.quantity || 0;
+
+      // Check if this item is fully satisfied
+      const isFullySatisfied = satisfiedQty >= requiredQty;
+      const isPartiallySatisfied = satisfiedQty > 0;
+
+      if (isPartiallySatisfied) {
+        someItemsSatisfied = true;
+      }
+
+      if (!isFullySatisfied) {
+        allItemsFullySatisfied = false;
       }
     }
 
     // Determine the new status
-    let newStatus = null;
-    if (allItemsOrderedOrReserved) {
+    let newStatus: "DRAFT" | "PARTIALLY_ORDERED" | "FULLY_ORDERED" | null =
+      null;
+    if (allItemsFullySatisfied) {
       newStatus = "FULLY_ORDERED";
-    } else if (someItemsOrderedOrReserved) {
+    } else if (someItemsSatisfied) {
       newStatus = "PARTIALLY_ORDERED";
     } else {
       newStatus = "DRAFT";
