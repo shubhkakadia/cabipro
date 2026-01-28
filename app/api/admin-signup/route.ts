@@ -43,6 +43,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // check if user with this email already exists
+    const existingUser = await prisma.users.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "User with this email already exists" },
+        { status: 409 },
+      );
+    }
+
     // Check if admin with this email already exists
     const existingAdmin = await prisma.admin.findUnique({
       where: { email },

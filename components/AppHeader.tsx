@@ -46,8 +46,8 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
   // After hydration, mounted will be true and we'll use the actual logo from Redux
   const logoSrc =
     mounted && user.organizationLogo
-      ? normalizeLogoPath(user.organizationLogo) || "/versel.png"
-      : "/versel.png";
+      ? normalizeLogoPath(user.organizationLogo) || "/logo 2 copy.png"
+      : "/logo 2 copy.png";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -119,14 +119,14 @@ export default function AppHeader({ variant = "app" }: AppHeaderProps) {
             href={dashboardPath}
             className="flex items-center gap-2 text-xl font-bold text-slate-900 transition-colors hover:text-emerald-600"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg">
               <Image
                 loading="lazy"
                 src={logoSrc}
                 alt="logo"
                 width={120}
                 height={120}
-                className="drop-shadow-sm rounded-lg"
+                className="border border-gray-200 rounded-md shadow-sm"
                 suppressHydrationWarning
               />
             </div>

@@ -6,6 +6,7 @@ import {
   checkUserAuthFromCookies,
 } from "@/lib/auth-middleware";
 import AppHeader from "@/components/AppHeader";
+import AdminSidebar from "./components/sidebar";
 
 /**
  * Protected layout for admin routes
@@ -37,9 +38,12 @@ export default async function AdminLayout({
   }
 
   return (
-    <>
+    <div className="bg-tertiary">
       <AppHeader variant="admin" />
-      {children}
-    </>
+      <div className="flex h-[calc(100vh-4rem)]">
+        <AdminSidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
+      </div>
+    </div>
   );
 }
