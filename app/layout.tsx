@@ -20,11 +20,15 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
-  description: "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops. Track production, manage materials, schedule jobs, and optimize your manufacturing floor.",
+  title:
+    "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
+  description:
+    "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops. Track production, manage materials, schedule jobs, and optimize your manufacturing floor.",
   openGraph: {
-    title: "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
-    description: "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops.",
+    title:
+      "CabiPro - Cabinet Maker Software | Job Management for Cabinet Shops & Joinery",
+    description:
+      "Cabinet maker software to manage jobs, production, materials & installations. Built for cabinet makers, cabinet manufacturers, and joinery workshops.",
     images: [
       {
         url: "/CabiPro.svg",
@@ -37,7 +41,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "CabiPro - Cabinet Maker Software",
-    description: "Cabinet maker software to manage jobs, production, materials & installations.",
+    description:
+      "Cabinet maker software to manage jobs, production, materials & installations.",
     images: ["/CabiPro.svg"],
   },
 };
@@ -52,7 +57,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-white text-gray-900 antialiased font-sans">
         {/* Google tag (gtag.js) */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-Y66VP06VQN"
+          src="https://www.googletagmanager.com/gtag/js?id=G-2DM3GTTYZ6"
           strategy="afterInteractive"
         />
         <Script
@@ -63,15 +68,13 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-Y66VP06VQN');
+              gtag('config', 'G-2DM3GTTYZ6');
             `,
           }}
         />
         <AOSProvider>
           <Header />
-          <main className="flex-1">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
           <Footer />
         </AOSProvider>
       </body>
